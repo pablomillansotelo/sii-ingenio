@@ -1,0 +1,53 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Sistema Escolar{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Estilos propios -->
+    <link href="{% static 'css/estilos.css' %}" rel="stylesheet">
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- Header -->
+    <header class="bg-primary text-white p-3 shadow">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <h1 class="h4 mb-0">Sistema Integral de Información Escolar</h1>
+            <span class="fw-light">Bienvenido, {{ user.first_name }}</span>
+        </div>
+    </header>
+
+    <!-- Contenido principal -->
+    <div class="container-fluid flex-grow-1 d-flex">
+        <!-- Sidebar -->
+        <nav class="col-md-2 bg-light p-3 border-end">
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">🏠 Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'kardex' %}">📚 Kardex</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'horario' %}">🕒 Horario</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'pagos' %}">💳 Pagos</a></li>
+                <li class="nav-item mt-3"><a class="nav-link text-danger" href="{% url 'logout' %}">🚪 Cerrar sesión</a></li>
+            </ul>
+        </nav>
+
+        <!-- Área de contenido -->
+        <main class="col p-4">
+            {% block content %}
+            <!-- Aquí va el contenido específico de cada vista -->
+            {% endblock %}
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-2 mt-auto">
+        <small>&copy; {{ year|default:2025 }} Instituto Escolar - Todos los derechos reservados.</small>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
