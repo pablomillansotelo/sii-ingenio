@@ -84,6 +84,15 @@ DATABASES = {
         'HOST': config('DB_HOST'),
         'PORT': config('DB_PORT', default='5432'),
     },
+    'auth': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('AUTH_NAME'),
+        'USER': config('AUTH_USER'),
+        'PASSWORD': config('AUTH_PASSWORD'),
+        'HOST': config('AUTH_HOST'),
+        'PORT': config('AUTH_PORT', default='5432'),
+        # otros datos...
+    },
     'sqlite': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
@@ -133,3 +142,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Directorio donde collects
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]  # Directorio donde guardas tus archivos estáticos en desarrollo
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+DATABASE_ROUTERS = ['sii.dbrouters.auth_router.AuthRouter']
+
+
+LOGIN_REDIRECT_URL = '/alumnos/home/'
+LOGOUT_REDIRECT_URL = '/'
+LOGIN_URL = '/'
