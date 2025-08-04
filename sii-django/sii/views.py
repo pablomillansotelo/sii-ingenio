@@ -1,9 +1,9 @@
-from django.shortcuts import redirect
-from django.contrib.auth.views import LoginView
-from django.conf import settings
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 
-class CustomLoginView(LoginView):
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return redirect(settings.LOGIN_REDIRECT_URL)
-        return super().dispatch(request, *args, **kwargs)
+
+# Create your views here.
+@login_required
+def home(request):
+    print("Home view accessed")
+    return render(request, 'home.html')
