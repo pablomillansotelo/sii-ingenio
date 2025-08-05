@@ -5,13 +5,11 @@
 {% block content %}
 <div class="container mt-5 pt-5">
     <div class="row">
-        <div class="col-md-12">
-            <h1 class="text-center" style="color: #c0392b;">
-                Bienvenido al SII Ingenio
-            </h1>
-            <p class="text-center" style="color: #7f8c8d;">
-                Este es el sistema de información institucional para la gestión académica y administrativa.
-            </p>
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ user.first_name }} {{ user.last_name }}</h5>
+                <span class="fw-light">{{ user.email }}</span>
+            </div>
         </div>
     </div>
     <div class="row mt-4">
@@ -27,18 +25,18 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Kardex</h5>
-                    <p class="card-text">Consulta y gestiona tu kardex académico.</p>
-                    <a href="#" class="btn btn-primary">Ir al Kardex</a>
+                    <h5 class="card-title">Inscripciones</h5>
+                    <p class="card-text">Consulta y gestiona tus inscripciones académicas.</p>
+                    <a href="#" class="btn btn-primary">Ir a Inscripciones</a>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Kardex</h5>
-                    <p class="card-text">Consulta y gestiona tu kardex académico.</p>
-                    <a href="#" class="btn btn-primary">Ir al Kardex</a>
+                    <h5 class="card-title">Datos Personales</h5>
+                    <p class="card-text">Consulta y gestiona tus datos personales.</p>
+                    <a href="#" class="btn btn-primary">Ir a Datos Personales</a>
                 </div>
             </div>
         </div>

@@ -28,4 +28,7 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     path('dashboard/', include('sii.urls')),
     path('alumnos/', include('alumnos.urls')),
+    path('docente/', include('docente.urls')),
+    path('administrador/', include('administrador.urls')),
+    path('usuario/', include('usuario.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
