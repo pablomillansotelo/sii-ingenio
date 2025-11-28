@@ -28,6 +28,7 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     path('dashboard/', include('sii.urls')),
     path('alumnos/', include('alumnos.urls')),
+    path('', include('alumnos.api_urls')),  # API endpoints
     path('docente/', include('docente.urls')),
     path('administrador/', include('administrador.urls')),
     path('usuario/', include('usuario.urls')),
