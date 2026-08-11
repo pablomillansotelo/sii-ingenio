@@ -26,7 +26,7 @@ SECRET_KEY = config('SECRET_KEY', default='#%9g2p3)pba4-h0$b5bi5vw$q%lx%#x*odh&x
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['127.0.0.1', '.vercel.app', 'blog.juampamillan.com', '.github.dev', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', '.vercel.app', 'blog.juampamillan.com', '.github.dev', 'localhost', '.modeloingenio.xyz']
 
 
 # Application definition
