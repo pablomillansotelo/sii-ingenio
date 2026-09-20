@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Pagos · Ingenio{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Pagos" subtitle="Cobros aplicados a cada folio." action_modal="#modalAgregar" action_label="Registrar pago" %}
+
+{% if VentasPendientes %}
+<div class="alert alert-warning">Hay {{ VentasPendientes|length }} venta(s) con pago pendiente o parcial.</div>
+{% endif %}
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>Pago</th><th>Folio</th><th>Cliente</th><th>Monto</th><th>Método</th><th>Referencia</th><th>Fecha</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for i in Pagos %}
+        <tr>
+          <td>#{{ i.id_pago }}</td>
+          <td>{{ i.id_venta }}</td>
+          <td>{{ i.id_venta.id_cliente }}</td>
+          <td>${{ i.monto }}</td>
+          <td>{{ i.metodo }}</td>
+          <td>{{ i.referencia|default:"—" }}</td>
+          <td>{{ i.fecha_pago }}</td>
+          <td class="text-nowrap">
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editarPago({{ i.id_pago }})">Editar</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEliminar" onclick="eliminarPago({{ i.id_pago }})">Eliminar</button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-4">No hay pagos.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="modalAgregar" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form method="post" action="{% url 'AddPago' %}">{% csrf_token %}
+      <div class="modal-header"><h5 class="modal-title">Registrar pago</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">{% include "includes/form_fields.html" with form=form_pago %}</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+<div class="modal fade" id="modalEditar" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form method="post" action="{% url 'EditPago' %}">{% csrf_token %}
+      <div class="modal-header"><h5 class="modal-title">Editar pago</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">{% include "includes/form_fields.html" with form=form_editar_pago %}</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form method="post" action="{% url 'DeletePago' %}">{% csrf_token %}
+      <input type="hidden" id="id_pago_eliminar" name="id_pago_eliminar">
+      <div class="modal-header"><h5 class="modal-title">Eliminar pago</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">¿Eliminar este pago?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Eliminar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const pagos = {
+  {% for i in Pagos %}
+  {{ i.id_pago }}: {venta:"{{ i.id_venta_id }}", monto:"{{ i.monto }}", metodo:"{{ i.metodo|escapejs }}", referencia:"{{ i.referencia|escapejs }}", estado:"{{ i.estado|escapejs }}"},
+  {% endfor %}
+};
+function editarPago(id) {
+  const p = pagos[id]; if (!p) return;
+  document.getElementById("id_pago_editar").value = id;
+  document.getElementById("id_venta_pago_editar").value = p.venta;
+  document.getElementById("monto_pago_editar").value = p.monto;
+  document.getElementById("metodo_pago_editar").value = p.metodo;
+  document.getElementById("referencia_pago_editar").value = p.referencia;
+  document.getElementById("estado_pago_reg_editar").value = p.estado;
+}
+function eliminarPago(id) { document.getElementById("id_pago_eliminar").value = id; }
+</script>
+{% endblock %}

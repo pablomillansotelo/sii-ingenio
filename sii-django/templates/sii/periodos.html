@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Periodos · Ingenio{% endblock %}
+{% block page_heading %}Periodos{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Periodos" subtitle="Calendario académico." %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Periodo</th><th>Inicio</th><th>Fin</th></tr></thead>
+      <tbody>
+        {% for periodo in periodos %}
+        <tr>
+          <td>{{ periodo.nombre }}</td>
+          <td>{{ periodo.fecha_inicio }}</td>
+          <td>{{ periodo.fecha_fin }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="text-center text-muted py-4">No hay periodos.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

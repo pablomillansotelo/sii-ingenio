@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Docentes · Ingenio{% endblock %}
+{% block page_heading %}Docentes{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Docentes" subtitle="Planta académica." %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Nombre</th><th>Email</th><th>Especialidad</th><th>Estado</th></tr></thead>
+      <tbody>
+        {% for docente in docentes %}
+        <tr>
+          <td>{{ docente }}</td>
+          <td>{{ docente.email }}</td>
+          <td>{{ docente.especialidad|default:"—" }}</td>
+          <td><span class="badge text-bg-secondary">{{ docente.get_estado_display }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center text-muted py-4">No hay docentes.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

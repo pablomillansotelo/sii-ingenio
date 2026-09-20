@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Ediciones · Ingenio{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Ediciones" subtitle="Grupos y fechas de cada curso." action_modal="#modalAgregar" action_label="Nueva edición" %}
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>Código</th><th>Curso</th><th>Inicio</th><th>Fin</th><th>Cupo</th><th>Precio</th><th>Estado</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for i in Ediciones %}
+        <tr>
+          <td>{{ i.codigo_edicion }}</td>
+          <td>{{ i.id_curso }}</td>
+          <td>{{ i.fecha_inicio }}</td>
+          <td>{{ i.fecha_fin|default:"—" }}</td>
+          <td>{{ i.cupo_ocupado }}/{{ i.cupo_maximo }}</td>
+          <td>{% if i.precio_edicion %}${{ i.precio_edicion }}{% else %}—{% endif %}</td>
+          <td><span class="badge text-bg-secondary">{{ i.estado }}</span></td>
+          <td class="text-nowrap">
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editarEdicion({{ i.id_edicion }})">Editar</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEliminar" onclick="eliminarEdicion({{ i.id_edicion }})">Eliminar</button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-4">No hay ediciones.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="modalAgregar" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+    <form method="post" action="{% url 'AddEdicion' %}">{% csrf_token %}
+      <div class="modal-header"><h5 class="modal-title">Nueva edición</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">{% include "includes/form_fields.html" with form=form_edicion %}</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+<div class="modal fade" id="modalEditar" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+    <form method="post" action="{% url 'EditEdicion' %}">{% csrf_token %}
+      <div class="modal-header"><h5 class="modal-title">Editar edición</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">{% include "includes/form_fields.html" with form=form_editar_edicion %}</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form method="post" action="{% url 'DeleteEdicion' %}">{% csrf_token %}
+      <input type="hidden" id="id_edicion_eliminar" name="id_edicion_eliminar">
+      <div class="modal-header"><h5 class="modal-title">Eliminar edición</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">¿Eliminar esta edición?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Eliminar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const ediciones = {
+  {% for i in Ediciones %}
+  {{ i.id_edicion }}: {curso:"{{ i.id_curso_id }}", codigo:"{{ i.codigo_edicion|escapejs }}", inicio:"{{ i.fecha_inicio|date:'Y-m-d' }}", fin:"{{ i.fecha_fin|date:'Y-m-d'|default:'' }}", cupo:"{{ i.cupo_maximo }}", precio:"{{ i.precio_edicion|default:'' }}", estado:"{{ i.estado|escapejs }}", activo:{% if i.activo %}true{% else %}false{% endif %}},
+  {% endfor %}
+};
+function editarEdicion(id) {
+  const e = ediciones[id]; if (!e) return;
+  document.getElementById("id_edicion_editar").value = id;
+  document.getElementById("id_curso_edicion_editar").value = e.curso;
+  document.getElementById("codigo_edicion_editar").value = e.codigo;
+  document.getElementById("fecha_inicio_edicion_editar").value = e.inicio;
+  document.getElementById("fecha_fin_edicion_editar").value = e.fin;
+  document.getElementById("cupo_edicion_editar").value = e.cupo;
+  document.getElementById("precio_edicion_editar").value = e.precio;
+  document.getElementById("estado_edicion_editar").value = e.estado;
+  const activo = document.getElementById("activo_edicion_editar");
+  if (activo) activo.checked = e.activo;
+}
+function eliminarEdicion(id) { document.getElementById("id_edicion_eliminar").value = id; }
+</script>
+{% endblock %}

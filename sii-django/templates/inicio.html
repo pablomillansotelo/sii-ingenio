@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Inicio · Ingenio{% endblock %}
+
+{% block content %}
+{% include "includes/page_header.html" with title="Plataforma Ingenio" subtitle="Una sola sesión para ventas, control escolar y aula." %}
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <h2 class="h5"><i class="bi bi-cart3 me-2 text-primary"></i>Ventas</h2>
+        <p class="text-muted">Punto de venta, folios, pagos y catálogo comercial.</p>
+        <a class="btn btn-primary" href="{% url 'ventas_home' %}">Entrar a Ventas</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <h2 class="h5"><i class="bi bi-building me-2 text-primary"></i>SII</h2>
+        <p class="text-muted">Alumnos, cursos académicos, periodos e inscripciones.</p>
+        <a class="btn btn-primary" href="{% url 'sii_home' %}">Entrar al SII</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <h2 class="h5"><i class="bi bi-journal-bookmark me-2 text-primary"></i>Aula</h2>
+        <p class="text-muted">Cursos del alumno y kardex.</p>
+        <a class="btn btn-primary" href="{% url 'aula_dashboard' %}">Entrar al Aula</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  {% for stat in stats %}
+  <div class="col-6 col-lg">
+    <a href="{% url stat.href %}" class="text-decoration-none text-reset">
+      <div class="card shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="fs-3 fw-semibold text-primary">{{ stat.value }}</div>
+          <div class="small text-muted">{{ stat.label }}</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <strong>Últimas ventas</strong>
+    <a class="small" href="{% url 'Ventas' %}">Ver folios</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>Folio</th><th>Cliente</th><th>Pago</th></tr>
+      </thead>
+      <tbody>
+        {% for venta in ventas_recientes %}
+        <tr>
+          <td>{{ venta.folio|default:venta.id_venta }}</td>
+          <td>{{ venta.id_cliente }}</td>
+          <td><span class="badge text-bg-secondary">{{ venta.get_estado_pago_display }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="text-center text-muted py-4">Aún no hay ventas.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

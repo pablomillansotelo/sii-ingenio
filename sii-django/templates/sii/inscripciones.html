@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Inscripciones · Ingenio{% endblock %}
+{% block page_heading %}Inscripciones{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Inscripciones" subtitle="Relación alumno, curso y periodo." %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Alumno</th><th>Curso</th><th>Periodo</th><th>Calificación</th><th>Estado</th></tr></thead>
+      <tbody>
+        {% for item in inscripciones %}
+        <tr>
+          <td>{{ item.alumno }}</td>
+          <td>{{ item.curso }}</td>
+          <td>{{ item.periodo }}</td>
+          <td>{{ item.calificacion|default:"—" }}</td>
+          <td><span class="badge text-bg-secondary">{{ item.get_estado_display }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No hay inscripciones.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

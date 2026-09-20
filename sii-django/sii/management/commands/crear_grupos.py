@@ -15,3 +15,6 @@ class Command(BaseCommand):
             self.style.SUCCESS(f'Grupos creados exitosamente: {", ".join(grupos)}')
         )
 
+
+
+

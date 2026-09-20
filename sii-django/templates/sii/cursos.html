@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Cursos académicos · Ingenio{% endblock %}
+{% block page_heading %}Cursos{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Cursos académicos" subtitle="Cada curso se alinea con su oferta comercial en Ventas." %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Curso</th><th>Descripción</th><th>Oferta</th><th>Precio</th></tr></thead>
+      <tbody>
+        {% for curso in cursos %}
+        <tr>
+          <td>{{ curso.nombre }}</td>
+          <td>{{ curso.descripcion|default:"—" }}</td>
+          <td>{% if curso.oferta %}{{ curso.oferta.codigo|default:curso.oferta.producto }}{% else %}—{% endif %}</td>
+          <td>{% if curso.oferta %}${{ curso.oferta.precio_unitario }}{% else %}—{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center text-muted py-4">Aún no hay cursos académicos. El catálogo comercial está en Ventas → Cursos.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

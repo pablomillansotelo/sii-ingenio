@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Nueva venta · Ingenio{% endblock %}
+{% block page_heading %}Nueva venta{% endblock %}
+
+{% block content %}
+{% include "includes/page_header.html" with title="Nueva venta" subtitle="Elige cliente, agrega cursos y confirma el folio." %}
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white"><strong>Cliente y fecha</strong></div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label">Cliente</label>
+          {{ form_venta.id_cliente }}
+        </div>
+        <div class="mb-0">
+          <label class="form-label">Fecha</label>
+          {{ form_venta.fecha }}
+        </div>
+      </div>
+    </div>
+    <div class="card shadow-sm">
+      <div class="card-header bg-white"><strong>Agregar curso</strong></div>
+      <div class="card-body">
+        <form id="formAddProducto" onsubmit="event.preventDefault(); agregarProducto();">
+          <div class="mb-3">
+            <label class="form-label">{{ form_add_venta_detalle.id_producto.label }}</label>
+            {{ form_add_venta_detalle.id_producto }}
+          </div>
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">{{ form_add_venta_detalle.cantidad.label }}</label>
+              {{ form_add_venta_detalle.cantidad }}
+            </div>
+            <div class="col-6">
+              <label class="form-label">{{ form_add_venta_detalle.descuento.label }}</label>
+              {{ form_add_venta_detalle.descuento }}
+            </div>
+          </div>
+          <button type="submit" class="btn btn-outline-primary mt-3">Agregar al carrito</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white"><strong>Carrito</strong></div>
+      <div class="table-responsive">
+        <table class="table mb-0" id="tblProducts">
+          <thead>
+            <tr><th>Curso</th><th>Cantidad</th><th>Descuento</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="4" class="text-center text-muted py-4">El carrito está vacío.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-body border-top">
+        <button type="button" class="btn btn-primary" onclick="pagar_carrito()">Confirmar venta</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let carrito = [];
+
+function agregarProducto() {
+  const select = document.getElementById("id_producto_add");
+  const id_producto = select.value;
+  const nombre_producto = select.selectedOptions[0].text;
+  const cantidad = document.getElementById("cantidad_add").value;
+  const descuento = document.getElementById("descuento_add").value;
+  if (!id_producto || !cantidad) {
+    alert("Selecciona curso y cantidad");
+    return;
+  }
+  carrito.push({id_producto, nombre_producto, cantidad, descuento});
+  renderCarrito();
+  select.selectedIndex = 0;
+  document.getElementById("cantidad_add").value = "";
+  document.getElementById("descuento_add").value = "";
+}
+
+function renderCarrito() {
+  const tbody = document.querySelector("#tblProducts tbody");
+  if (!carrito.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">El carrito está vacío.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = carrito.map((item, idx) => `
+    <tr>
+      <td>${item.nombre_producto}</td>
+      <td>${item.cantidad}</td>
+      <td>${item.descuento || "—"}</td>
+      <td><button type="button" class="btn btn-outline-secondary btn-sm" onclick="eliminarProducto(${idx})">Quitar</button></td>
+    </tr>`).join("");
+}
+
+function eliminarProducto(idx) {
+  carrito.splice(idx, 1);
+  renderCarrito();
+}
+
+function pagar_carrito() {
+  const id_cliente = document.getElementById("id_cliente_add").value;
+  const fecha = document.getElementById("fecha_add").value;
+  if (!id_cliente || !fecha || carrito.length === 0) {
+    alert("Selecciona cliente, fecha y al menos un curso.");
+    return;
+  }
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "{% url 'AddCarrito' %}";
+  form.innerHTML = `<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <input type="hidden" name="id_cliente_add" value="${id_cliente}">
+    <input type="hidden" name="fecha_add" value="${fecha}">`;
+  carrito.forEach((item) => {
+    form.innerHTML += `<input type="hidden" name="nplainArray[]" value="${item.id_producto},${item.cantidad},${item.descuento}">`;
+  });
+  document.body.appendChild(form);
+  form.submit();
+}
+</script>
+{% endblock %}

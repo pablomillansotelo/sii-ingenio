@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Clientes · Ingenio{% endblock %}
+{% block page_heading %}Clientes{% endblock %}
+
+{% block content %}
+{% include "includes/page_header.html" with title="Clientes" subtitle="Expediente comercial del call center." action_modal="#modalAgregar" action_label="Nuevo cliente" %}
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Teléfono</th>
+          <th>CURP</th>
+          <th>Empresa</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in Clientes %}
+        <tr>
+          <td>{{ i.nombre }} {{ i.apellidos }}</td>
+          <td>{{ i.email }}</td>
+          <td>{{ i.telefono|default:"—" }}</td>
+          <td>{{ i.curp|default:"—" }}</td>
+          <td>{{ i.empresa|default:"—" }}</td>
+          <td>{% if i.activo %}<span class="badge text-bg-secondary">Activo</span>{% else %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}</td>
+          <td class="text-nowrap">
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editarCliente({{ i.id_cliente }})">Editar</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEliminar" onclick="eliminarCliente({{ i.id_cliente }})">Eliminar</button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No hay clientes.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="modalAgregar" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="{% url 'AddCliente' %}">
+        {% csrf_token %}
+        <div class="modal-header"><h5 class="modal-title">Nuevo cliente</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">{% include "includes/form_fields.html" with form=form_cliente %}</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalEditar" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="{% url 'EditCliente' %}">
+        {% csrf_token %}
+        <input type="hidden" id="id_personal_editar" name="id_personal_editar">
+        <div class="modal-header"><h5 class="modal-title">Editar cliente</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">{% include "includes/form_fields.html" with form=form_editar_cliente %}</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'DeleteCliente' %}">
+        {% csrf_token %}
+        <input type="hidden" id="id_personal_eliminar" name="id_personal_eliminar">
+        <div class="modal-header"><h5 class="modal-title">Eliminar cliente</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">¿Seguro que quieres eliminar este cliente?</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Eliminar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const clientes = {
+  {% for i in Clientes %}
+  {{ i.id_cliente }}: {
+    nombre: "{{ i.nombre|escapejs }}",
+    apellidos: "{{ i.apellidos|escapejs }}",
+    direccion: "{{ i.direccion|escapejs }}",
+    email: "{{ i.email|escapejs }}",
+    telefono: "{{ i.telefono|default:''|escapejs }}",
+    curp: "{{ i.curp|default:''|escapejs }}",
+    empresa: "{{ i.empresa|default:''|escapejs }}",
+    notas: "{{ i.notas|default:''|escapejs }}",
+    activo: {% if i.activo %}true{% else %}false{% endif %}
+  },
+  {% endfor %}
+};
+function editarCliente(id) {
+  const c = clientes[id];
+  if (!c) return;
+  document.getElementById("id_personal_editar").value = id;
+  const set = (fid, val) => { const el = document.getElementById(fid); if (el) el.value = val; };
+  set("id_cliente_editar", id);
+  set("nombre_editar", c.nombre);
+  set("apellidos_editar", c.apellidos);
+  set("direccion_editar", c.direccion);
+  set("email_editar", c.email);
+  set("telefono_editar", c.telefono);
+  set("curp_editar", c.curp);
+  set("empresa_editar", c.empresa);
+  set("notas_editar", c.notas);
+  const activo = document.getElementById("activo_editar");
+  if (activo) activo.checked = c.activo;
+}
+function eliminarCliente(id) {
+  document.getElementById("id_personal_eliminar").value = id;
+}
+</script>
+{% endblock %}

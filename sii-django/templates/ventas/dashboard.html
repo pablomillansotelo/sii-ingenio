@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Panel · Ventas{% endblock %}
+
+{% block content %}
+{% include "includes/page_header.html" with title="Panel de ventas" subtitle="Resumen comercial del call center." action_url="/ventas/nueva/" action_label="Nueva venta" %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-2">
+    <div class="card shadow-sm h-100"><div class="card-body text-center">
+      <div class="fs-3 fw-semibold text-primary">{{ total_clientes }}</div>
+      <div class="small text-muted">Clientes activos</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card shadow-sm h-100"><div class="card-body text-center">
+      <div class="fs-3 fw-semibold text-primary">{{ total_cursos }}</div>
+      <div class="small text-muted">Cursos activos</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card shadow-sm h-100"><div class="card-body text-center">
+      <div class="fs-3 fw-semibold text-primary">{{ ediciones_abiertas }}</div>
+      <div class="small text-muted">Ediciones abiertas</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card shadow-sm h-100"><div class="card-body text-center">
+      <div class="fs-3 fw-semibold text-primary">{{ ventas_mes_count }}</div>
+      <div class="small text-muted">Ventas del mes</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card shadow-sm h-100"><div class="card-body text-center">
+      <div class="fs-3 fw-semibold text-primary">${{ ventas_mes_monto|floatformat:0 }}</div>
+      <div class="small text-muted">Monto del mes</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card shadow-sm h-100"><div class="card-body text-center">
+      <div class="fs-3 fw-semibold text-primary">{{ inscripciones_activas }}</div>
+      <div class="small text-muted">Inscripciones</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white"><strong>Últimas ventas</strong></div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr><th>Folio</th><th>Cliente</th><th>Fecha</th><th class="text-end">Total</th><th>Pago</th></tr>
+          </thead>
+          <tbody>
+            {% for v in ultimas_ventas %}
+            <tr>
+              <td>{{ v.folio|default:v.id_venta }}</td>
+              <td>{{ v.cliente }}</td>
+              <td>{{ v.fecha|date:"d/m/Y" }}</td>
+              <td class="text-end">${{ v.monto|floatformat:2 }}</td>
+              <td><span class="badge text-bg-secondary">{{ v.get_estado_pago_display }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Sin ventas recientes</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white"><strong>Accesos rápidos</strong></div>
+      <div class="list-group list-group-flush">
+        <a href="{% url 'Pagos' %}" class="list-group-item list-group-item-action">
+          Registrar pago
+          {% if pagos_pendientes %}<span class="badge text-bg-warning">{{ pagos_pendientes }}</span>{% endif %}
+        </a>
+        <a href="{% url 'Ediciones' %}" class="list-group-item list-group-item-action">Gestionar ediciones</a>
+        <a href="{% url 'sii_inscripciones' %}" class="list-group-item list-group-item-action">Ver inscripciones SII</a>
+        <a href="{% url 'Clientes' %}" class="list-group-item list-group-item-action">Clientes</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

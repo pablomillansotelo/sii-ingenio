@@ -1,23 +1,31 @@
-# alumnos/signals.py
-
+from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.contrib.auth.models import User
+
 from .models import Alumno
+
 
 @receiver(post_save, sender=Alumno)
 def crear_usuario_para_alumno(sender, instance, created, **kwargs):
-    if created and instance.user_id is None:
-        # Puedes personalizar el username y password como desees
-        username = f"{instance.nombre.lower().replace(' ', '_')}.{instance.apellido.lower().replace(' ', '_')}"
-        first_name = instance.nombre
-        last_name = instance.apellido
-        email = instance.email
+    if not created or instance.user_id is not None:
+        return
+
+    username = (
+        f"{instance.nombre.lower().replace(' ', '_')}."
+        f"{instance.apellido.lower().replace(' ', '_')}"
+    )
+    user = User.objects.filter(username=username).first()
+    if user is None and instance.email:
+        user = User.objects.filter(email=instance.email).first()
+    if user is None:
         password = User.objects.make_random_password()
+        user = User.objects.create_user(
+            username=username,
+            email=instance.email,
+            password=password,
+            first_name=instance.nombre,
+            last_name=instance.apellido,
+        )
 
-        user = User.objects.create_user(username=username, email=email, password=password,
-                                         first_name=first_name, last_name=last_name)
-
-        # Asignamos el ID del usuario creado al alumno y lo guardamos otra vez
-        instance.user_id = user.id
-        instance.save()
+    instance.user_id = user.id
+    instance.save(update_fields=["user_id"])

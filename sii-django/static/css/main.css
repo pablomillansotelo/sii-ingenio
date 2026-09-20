@@ -1,3 +1,44 @@
-.navbar-toggler-icon {
-  filter: invert(1) brightness(2);
+:root {
+  --bs-primary: #ce0e2d;
+  --bs-primary-rgb: 206, 14, 45;
+  --bs-link-color: #ce0e2d;
+  --bs-link-hover-color: #a40c24;
+}
+
+.btn-primary {
+  --bs-btn-bg: #ce0e2d;
+  --bs-btn-border-color: #ce0e2d;
+  --bs-btn-hover-bg: #a40c24;
+  --bs-btn-hover-border-color: #a40c24;
+  --bs-btn-active-bg: #a40c24;
+  --bs-btn-active-border-color: #a40c24;
+  --bs-btn-disabled-bg: #ce0e2d;
+  --bs-btn-disabled-border-color: #ce0e2d;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: #ce0e2d;
+  --bs-btn-border-color: #ce0e2d;
+  --bs-btn-hover-bg: #ce0e2d;
+  --bs-btn-hover-border-color: #ce0e2d;
+  --bs-btn-active-bg: #a40c24;
+  --bs-btn-active-border-color: #a40c24;
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--bs-secondary-bg);
+}
+
+.navbar-brand {
+  letter-spacing: 0.04em;
+}
+
+.navbar-dark .nav-pills .nav-link {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.navbar-dark .nav-pills .nav-link.active {
+  background-color: #fff;
+  color: #ce0e2d;
 }

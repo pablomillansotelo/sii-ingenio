@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Aula · Ingenio{% endblock %}
+{% block page_heading %}Aula{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Aula" subtitle="Cursos académicos vinculados a la oferta de ventas." %}
+
+<div class="row g-3">
+  {% for curso in cursos %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        {% if curso.oferta %}<div class="small text-muted mb-1">{{ curso.oferta.codigo|default:"Oferta" }}</div>{% endif %}
+        <h2 class="h5">{{ curso.nombre }}</h2>
+        <p class="text-muted mb-3">{{ curso.descripcion|default:"Sin descripción" }}</p>
+        {% if curso.oferta %}
+        <span class="badge text-bg-secondary mb-3">{{ curso.oferta.get_modalidad_display }} · ${{ curso.oferta.precio_unitario }}</span>
+        {% endif %}
+        <div><a href="{% url 'aula_kardex' %}" class="btn btn-outline-primary btn-sm">Ver kardex</a></div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12"><div class="card shadow-sm"><div class="text-center text-muted py-4">Aún no hay cursos. Créalos en Ventas → Cursos; el SII se alinea solo.</div></div></div>
+  {% endfor %}
+</div>
+{% endblock %}

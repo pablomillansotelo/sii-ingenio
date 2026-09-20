@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Cursos · Ingenio{% endblock %}
+{% block page_heading %}Cursos{% endblock %}
+
+{% block content %}
+{% include "includes/page_header.html" with title="Cursos en venta" subtitle="Catálogo comercial del call center." action_modal="#modalAgregar" action_label="Nuevo curso" %}
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Curso</th>
+          <th>Código</th>
+          <th>Curso SII</th>
+          <th>Precio</th>
+          <th>Modalidad</th>
+          <th>Horas</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in Productos %}
+        <tr>
+          <td>{{ i.producto }}</td>
+          <td>{{ i.codigo|default:"—" }}</td>
+          <td>{% if i.id_curso %}<span class="badge text-bg-secondary">{{ i.id_curso.nombre }}</span>{% else %}—{% endif %}</td>
+          <td>${{ i.precio_unitario }}</td>
+          <td>{{ i.get_modalidad_display }}</td>
+          <td>{{ i.duracion_horas|default:"—" }}</td>
+          <td>{% if i.activo %}<span class="badge text-bg-secondary">Activo</span>{% else %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}</td>
+          <td class="text-nowrap">
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editarProducto({{ i.id_producto }})">Editar</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEliminar" onclick="eliminarProducto({{ i.id_producto }})">Eliminar</button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-4">No hay cursos en el catálogo.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="modalAgregar" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="{% url 'AddProducto' %}">
+        {% csrf_token %}
+        <div class="modal-header"><h5 class="modal-title">Nuevo curso</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">{% include "includes/form_fields.html" with form=form_producto %}</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalEditar" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="{% url 'EditProducto' %}">
+        {% csrf_token %}
+        <input type="hidden" id="id_producto_editar" name="id_producto_editar">
+        <div class="modal-header"><h5 class="modal-title">Editar curso</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">{% include "includes/form_fields.html" with form=form_editar_producto %}</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'DeleteProducto' %}">
+        {% csrf_token %}
+        <input type="hidden" id="id_producto_eliminar" name="id_producto_eliminar">
+        <div class="modal-header"><h5 class="modal-title">Eliminar curso</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">¿Seguro que quieres eliminar este curso?</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Eliminar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const productos = {
+  {% for i in Productos %}
+  {{ i.id_producto }}: {
+    producto: "{{ i.producto|escapejs }}",
+    precio: "{{ i.precio_unitario }}",
+    codigo: "{{ i.codigo|default:''|escapejs }}",
+    descripcion: "{{ i.descripcion|default:''|escapejs }}",
+    horas: "{{ i.duracion_horas|default:'' }}",
+    modalidad: "{{ i.modalidad }}",
+    activo: {% if i.activo %}true{% else %}false{% endif %}
+  },
+  {% endfor %}
+};
+function editarProducto(id) {
+  const p = productos[id];
+  if (!p) return;
+  const set = (fid, val) => { const el = document.getElementById(fid); if (el) el.value = val; };
+  set("id_producto_editar", id);
+  set("producto_editar", p.producto);
+  set("precio_unitario_editar", p.precio);
+  set("codigo_editar", p.codigo);
+  set("descripcion_editar", p.descripcion);
+  set("duracion_horas_editar", p.horas);
+  set("modalidad_editar", p.modalidad);
+  const activo = document.getElementById("activo_producto_editar");
+  if (activo) activo.checked = p.activo;
+}
+function eliminarProducto(id) {
+  document.getElementById("id_producto_eliminar").value = id;
+}
+</script>
+{% endblock %}

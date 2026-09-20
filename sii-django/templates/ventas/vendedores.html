@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Vendedores · Ingenio{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Vendedores" subtitle="Equipo comercial." action_modal="#modalAgregar" action_label="Nuevo vendedor" %}
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Comisión</th><th>Ventas</th><th>Estado</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for i in Vendedores %}
+        <tr>
+          <td>{{ i.nombre }}</td>
+          <td>{{ i.email|default:"—" }}</td>
+          <td>{{ i.telefono|default:"—" }}</td>
+          <td>{{ i.comision_pct }}%</td>
+          <td>{{ i.num_ventas }}</td>
+          <td>{% if i.activo %}<span class="badge text-bg-secondary">Activo</span>{% else %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}</td>
+          <td class="text-nowrap">
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editarVendedor({{ i.id_vendedor }})">Editar</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEliminar" onclick="eliminarVendedor({{ i.id_vendedor }})">Eliminar</button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No hay vendedores.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="modalAgregar" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form method="post" action="{% url 'AddVendedor' %}">{% csrf_token %}
+      <div class="modal-header"><h5 class="modal-title">Nuevo vendedor</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">{% include "includes/form_fields.html" with form=form_vendedor %}</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+<div class="modal fade" id="modalEditar" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form method="post" action="{% url 'EditVendedor' %}">{% csrf_token %}
+      <div class="modal-header"><h5 class="modal-title">Editar vendedor</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">{% include "includes/form_fields.html" with form=form_editar_vendedor %}</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form method="post" action="{% url 'DeleteVendedor' %}">{% csrf_token %}
+      <input type="hidden" id="id_vendedor_eliminar" name="id_vendedor_eliminar">
+      <div class="modal-header"><h5 class="modal-title">Eliminar vendedor</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">¿Eliminar este vendedor?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Eliminar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const vendedores = {
+  {% for i in Vendedores %}
+  {{ i.id_vendedor }}: {nombre:"{{ i.nombre|escapejs }}", email:"{{ i.email|escapejs }}", telefono:"{{ i.telefono|default:''|escapejs }}", comision:"{{ i.comision_pct }}", activo:{% if i.activo %}true{% else %}false{% endif %}},
+  {% endfor %}
+};
+function editarVendedor(id) {
+  const v = vendedores[id]; if (!v) return;
+  document.getElementById("id_vendedor_editar").value = id;
+  document.getElementById("nombre_vendedor_editar").value = v.nombre;
+  document.getElementById("email_vendedor_editar").value = v.email;
+  document.getElementById("telefono_vendedor_editar").value = v.telefono;
+  document.getElementById("comision_vendedor_editar").value = v.comision;
+  const activo = document.getElementById("activo_vendedor_editar");
+  if (activo) activo.checked = v.activo;
+}
+function eliminarVendedor(id) { document.getElementById("id_vendedor_eliminar").value = id; }
+</script>
+{% endblock %}

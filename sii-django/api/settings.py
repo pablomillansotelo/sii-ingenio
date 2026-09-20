@@ -1,147 +1,117 @@
 """
-Django settings for api project.
-
-Updated to Django 4.2.11 LTS.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/4.2/topics/settings/
-
-For the full list of settings and their values, see
-https://docs.djangoproject.com/en/4.2/ref/settings/
+Django settings for the consolidated Ingenio platform (SII + Ventas + Aula).
 """
 
 from pathlib import Path
 from decouple import config
 import os
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
+SECRET_KEY = config("SECRET_KEY", default="#%9g2p3)pba4-h0$b5bi5vw$q%lx%#x*odh&xk%$hl6td^kh#2")
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='#%9g2p3)pba4-h0$b5bi5vw$q%lx%#x*odh&xk%$hl6td^kh#2')
+DEBUG = config("DEBUG", default=False, cast=bool)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
-
-ALLOWED_HOSTS = ['127.0.0.1', '.vercel.app', 'blog.juampamillan.com', '.github.dev', 'localhost']
-
-
-# Application definition
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    ".vercel.app",
+    "blog.juampamillan.com",
+    ".github.dev",
+    "localhost",
+]
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'rest_framework',
-    'sii',
-    'alumnos',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework",
+    "sii",
+    "alumnos",
+    "docente",
+    "administrador",
+    "usuario",
+    "ventas.apps.VentasConfig",
+    "aula.apps.AulaConfig",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'api.urls'
+ROOT_URLCONF = "api.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "api.context_processors.ingenio_shell",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'api.wsgi.app'
-
-
-# Database
-# https://docs.djangoproject.com/en/1.11/ref/settings/#databases
+WSGI_APPLICATION = "api.wsgi.app"
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT', default='5432'),
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": config("DB_NAME"),
+        "USER": config("DB_USER"),
+        "PASSWORD": config("DB_PASSWORD"),
+        "HOST": config("DB_HOST"),
+        "PORT": config("DB_PORT", default="5432"),
+        "OPTIONS": {"sslmode": "require"},
     },
-    'auth': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('AUTH_NAME'),
-        'USER': config('AUTH_USER'),
-        'PASSWORD': config('AUTH_PASSWORD'),
-        'HOST': config('AUTH_HOST'),
-        'PORT': config('AUTH_PORT', default='5432'),
+    "auth": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": config("AUTH_NAME"),
+        "USER": config("AUTH_USER"),
+        "PASSWORD": config("AUTH_PASSWORD"),
+        "HOST": config("AUTH_HOST"),
+        "PORT": config("AUTH_PORT", default="5432"),
+        "OPTIONS": {"sslmode": "require"},
     },
 }
 
-
-
-# Password validation
-# https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/1.11/topics/i18n/
-
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
+LANGUAGE_CODE = "es-mx"
+TIME_ZONE = "America/Mexico_City"
 USE_I18N = True
-
-
 USE_TZ = True
 
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.11/howto/static-files/
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Directorio donde collectstatic recopila los archivos
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]  # Directorio donde guardas tus archivos estáticos en desarrollo
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DATABASE_ROUTERS = ["api.dbrouters.auth_router.AuthRouter"]
 
-DATABASE_ROUTERS = ['api.dbrouters.auth_router.AuthRouter']
-
-
-LOGIN_REDIRECT_URL = '/dashboard/'
-LOGOUT_REDIRECT_URL = '/'
-LOGIN_URL = '/'
+LOGIN_REDIRECT_URL = "/inicio/"
+LOGOUT_REDIRECT_URL = "/"
+LOGIN_URL = "/"

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Ventas · Ingenio{% endblock %}
+{% block page_heading %}Ventas{% endblock %}
+
+{% block content %}
+{% include "includes/page_header.html" with title="Ventas" subtitle="Folios, cobro y estado de cada operación." action_url="/ventas/nueva/" action_label="Nueva venta" %}
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Folio</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Monto</th>
+          <th>Estado</th>
+          <th>Pago</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in Ventas %}
+        <tr>
+          <td>{{ i.folio|default:i.id_venta }}</td>
+          <td>{{ i.id_cliente }}</td>
+          <td>{{ i.fecha }}</td>
+          <td>${{ i.monto }}</td>
+          <td><span class="badge text-bg-secondary">{{ i.get_estado_display }}</span></td>
+          <td>{{ i.get_estado_pago_display }}</td>
+          <td class="text-nowrap">
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editarVenta({{ i.id_venta }})">Editar</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEliminar" onclick="eliminarVenta({{ i.id_venta }})">Eliminar</button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No hay ventas registradas.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="modalEditar" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="{% url 'EditVenta' %}">
+        {% csrf_token %}
+        <input type="hidden" id="id_venta_editar" name="id_venta_editar">
+        <div class="modal-header"><h5 class="modal-title">Editar venta</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">{% include "includes/form_fields.html" with form=form_editar_venta %}</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'DeleteVenta' %}">
+        {% csrf_token %}
+        <input type="hidden" id="id_venta_eliminar" name="id_venta_eliminar">
+        <div class="modal-header"><h5 class="modal-title">Eliminar venta</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">Se eliminará la venta y su detalle.</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Eliminar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const ventas = {
+  {% for i in Ventas %}
+  {{ i.id_venta }}: {
+    cliente: "{{ i.id_cliente_id }}",
+    fecha: "{{ i.fecha|date:'Y-m-d' }}",
+    folio: "{{ i.folio|default:''|escapejs }}",
+    estado: "{{ i.estado }}",
+    pago: "{{ i.estado_pago }}",
+    observaciones: "{{ i.observaciones|default:''|escapejs }}"
+  },
+  {% endfor %}
+};
+function editarVenta(id) {
+  const v = ventas[id];
+  if (!v) return;
+  const set = (fid, val) => { const el = document.getElementById(fid); if (el) el.value = val; };
+  set("id_venta_editar", id);
+  set("id_cliente_editar", v.cliente);
+  set("fecha_editar", v.fecha);
+  set("folio_editar", v.folio);
+  set("estado_editar", v.estado);
+  set("estado_pago_editar", v.pago);
+  set("observaciones_editar", v.observaciones);
+}
+function eliminarVenta(id) {
+  document.getElementById("id_venta_eliminar").value = id;
+}
+</script>
+{% endblock %}

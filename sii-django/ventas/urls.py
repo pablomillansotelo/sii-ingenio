@@ -1,0 +1,35 @@
+from django.urls import path
+
+from . import views
+
+urlpatterns = [
+    path("", views.dashboard_view, name="ventas_home"),
+    path("nueva/", views.carrito_view, name="Carrito"),
+    path("carrito/", views.carrito_view),
+    path("folios/", views.ventas_view, name="Ventas"),
+    path("ventas/", views.ventas_view),
+    path("clientes/", views.clientes_view, name="Clientes"),
+    path("cursos/", views.inventario_view, name="Inventario"),
+    path("inventario/", views.inventario_view),
+    path("ediciones/", views.ediciones_view, name="Ediciones"),
+    path("vendedores/", views.vendedores_view, name="Vendedores"),
+    path("pagos/", views.pagos_view, name="Pagos"),
+    path("add_cliente/", views.add_clientes_view, name="AddCliente"),
+    path("edit_cliente/", views.edit_clientes_view, name="EditCliente"),
+    path("delete_cliente/", views.delete_clientes_view, name="DeleteCliente"),
+    path("add_producto/", views.add_producto_view, name="AddProducto"),
+    path("delete_producto/", views.delete_producto_view, name="DeleteProducto"),
+    path("edit_producto/", views.edit_producto_view, name="EditProducto"),
+    path("edit_venta/", views.edit_venta_view, name="EditVenta"),
+    path("delete_venta/", views.delete_venta_view, name="DeleteVenta"),
+    path("add_carrito/", views.add_carrito_view, name="AddCarrito"),
+    path("add_vendedor/", views.add_vendedor_view, name="AddVendedor"),
+    path("edit_vendedor/", views.edit_vendedor_view, name="EditVendedor"),
+    path("delete_vendedor/", views.delete_vendedor_view, name="DeleteVendedor"),
+    path("add_edicion/", views.add_edicion_view, name="AddEdicion"),
+    path("edit_edicion/", views.edit_edicion_view, name="EditEdicion"),
+    path("delete_edicion/", views.delete_edicion_view, name="DeleteEdicion"),
+    path("add_pago/", views.add_pago_view, name="AddPago"),
+    path("edit_pago/", views.edit_pago_view, name="EditPago"),
+    path("delete_pago/", views.delete_pago_view, name="DeletePago"),
+]
