@@ -18,6 +18,7 @@ ALLOWED_HOSTS = [
     "blog.juampamillan.com",
     ".github.dev",
     "localhost",
+    ".modeloingenio.xyz",
 ]
 
 INSTALLED_APPS = [
