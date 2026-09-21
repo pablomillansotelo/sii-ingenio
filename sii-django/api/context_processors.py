@@ -17,7 +17,7 @@ def ingenio_shell(request):
         title = "SII"
     else:
         module = "inicio"
-        title = "Ingenio"
+        title = "Hoy"
 
     catalogo = [
         {"key": "ventas", "label": "Ventas", "url_name": "ventas_home", "icon": "bi-cart3"},
@@ -26,9 +26,6 @@ def ingenio_shell(request):
     ]
 
     nav = {
-        "inicio": [
-            {"label": "Inicio", "url_name": "inicio", "icon": "bi-house"},
-        ],
         "ventas": [
             {"label": "Panel", "url_name": "ventas_home", "icon": "bi-speedometer2"},
             {"label": "Punto de venta", "url_name": "Carrito", "icon": "bi-bag-plus"},
@@ -62,11 +59,15 @@ def ingenio_shell(request):
     user = getattr(request, "user", None)
     permitidos = set()
     display_name = ""
+    pagos_pendientes = 0
     if user is not None and getattr(user, "is_authenticated", False):
-        from sii.identity import modulos_permitidos
+        from sii.identity import modulos_permitidos, puede_ver_modulo
+        from ventas.models import Venta
 
         permitidos = modulos_permitidos(user)
         display_name = (user.get_full_name() or user.get_username()).strip()
+        if puede_ver_modulo(user, "ventas"):
+            pagos_pendientes = Venta.objects.filter(estado_pago="pendiente").count()
 
     modules = []
     for item in catalogo:
@@ -94,13 +95,45 @@ def ingenio_shell(request):
             "href": _url("inicio"),
             "icon": "bi-house",
             "active": module == "inicio",
+            "badge": None,
         }
     ]
     if module == "inicio":
-        sidebar.extend(modules)
+        if "ventas" in permitidos:
+            sidebar.append({
+                "label": "Nueva venta",
+                "href": _url("Carrito"),
+                "icon": "bi-bag-plus",
+                "active": False,
+                "badge": None,
+            })
+            sidebar.append({
+                "label": "Registrar pago",
+                "href": _url("Pagos"),
+                "icon": "bi-credit-card",
+                "active": False,
+                "badge": pagos_pendientes or None,
+            })
+        if "sii" in permitidos:
+            sidebar.append({
+                "label": "Inscripciones",
+                "href": _url("sii_inscripciones"),
+                "icon": "bi-clipboard-check",
+                "active": False,
+                "badge": None,
+            })
+        if "aula" in permitidos:
+            sidebar.append({
+                "label": "Aula",
+                "href": _url("aula_dashboard"),
+                "icon": "bi-journal-bookmark",
+                "active": False,
+                "badge": None,
+            })
     else:
         sidebar.extend(nav_items)
 
+    en_pagos = path.startswith("/ventas/pagos")
     return {
         "ingenio_module": module,
         "ingenio_title": title,
@@ -109,4 +142,6 @@ def ingenio_shell(request):
         "ingenio_sidebar": sidebar,
         "ingenio_display_name": display_name,
         "ingenio_modulos_permitidos": permitidos,
+        "ingenio_pagos_pendientes": pagos_pendientes,
+        "ingenio_mostrar_cobro": bool(pagos_pendientes) and not en_pagos,
     }

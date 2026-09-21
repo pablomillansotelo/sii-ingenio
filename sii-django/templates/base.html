@@ -18,12 +18,12 @@
         <button class="btn btn-link text-white d-lg-none p-0 me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuPlataforma" aria-controls="menuPlataforma" aria-label="Abrir menú">
           <i class="bi bi-list fs-3"></i>
         </button>
-        <button class="btn btn-link text-white d-none d-lg-inline-flex p-0 me-2" type="button" data-shell-toggle aria-expanded="true" title="Ocultar menú">
-          <i class="bi bi-layout-sidebar-inset fs-5"></i>
+        <button class="btn btn-link text-white d-none d-lg-inline-flex p-0 me-2" type="button" data-shell-toggle aria-expanded="true" title="Ocultar menú" aria-label="Ocultar menú">
+          <i class="bi bi-list fs-3"></i>
         </button>
         <a class="navbar-brand fw-semibold d-flex align-items-center gap-2 mb-0" href="{% url 'inicio' %}">
-          <img src="{% static 'img/logo.png' %}" alt="" height="28">
-          <span>Ingenio</span>
+          <img class="topbar-logo" src="{% static 'img/logo-blanco.png' %}" alt="Ingenio" height="28">
+          <span class="d-none d-sm-inline">Ingenio</span>
         </a>
         <ul class="nav nav-pills topbar-modules d-none d-md-flex">
           {% for item in ingenio_modules %}
@@ -72,6 +72,15 @@
         {% include "includes/sidebar_links.html" with items=ingenio_sidebar %}
       </aside>
       <main class="shell-main">
+        {% if ingenio_mostrar_cobro %}
+        <div class="cobro-banner alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2" role="status">
+          <span>
+            Hay <strong>{{ ingenio_pagos_pendientes }}</strong>
+            folio{% if ingenio_pagos_pendientes != 1 %}s{% endif %} por cobrar.
+          </span>
+          <a class="btn btn-sm btn-warning" href="{% url 'Pagos' %}">Registrar pago</a>
+        </div>
+        {% endif %}
         {% if messages %}
           {% for message in messages %}
           <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% else %}secondary{% endif %} alert-dismissible fade show" role="alert">

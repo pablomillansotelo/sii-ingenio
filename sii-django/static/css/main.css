@@ -94,6 +94,12 @@
   letter-spacing: 0.04em;
 }
 
+.topbar-logo {
+  height: 28px;
+  width: auto;
+  filter: brightness(0) invert(1);
+}
+
 .topbar-modules .nav-link {
   color: rgba(255, 255, 255, 0.86);
   padding: 0.35rem 0.8rem;
@@ -169,6 +175,10 @@
   color: #ce0e2d;
 }
 
+.sidebar-badge {
+  margin-left: auto;
+}
+
 .shell-collapsed .sidebar {
   width: var(--shell-sidebar-min);
   align-items: center;
@@ -187,6 +197,10 @@
   width: 2.75rem;
 }
 
+.shell-collapsed .sidebar-badge {
+  display: none;
+}
+
 .shell-main {
   flex: 1;
   min-width: 0;
@@ -200,6 +214,71 @@
 .stat-card:hover {
   border-color: rgba(206, 14, 45, 0.35);
   box-shadow: 0 0.35rem 0.7rem rgba(15, 23, 42, 0.08) !important;
+}
+
+.cobro-banner {
+  border: 0;
+  margin-bottom: 1.25rem;
+}
+
+.table-row-link {
+  cursor: pointer;
+}
+
+.table-search {
+  max-width: 20rem;
+}
+
+.table-toolbar .btn-group .btn.active {
+  background-color: #ce0e2d;
+  border-color: #ce0e2d;
+  color: #fff;
+}
+
+.pos-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pos-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #667085;
+}
+
+.pos-step-num {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: #e4e7ec;
+  color: #344054;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pos-step.is-current,
+.pos-step-num.is-on {
+  color: #ce0e2d;
+}
+
+.pos-step.is-current .pos-step-num,
+.pos-step-num.is-on {
+  background: #ce0e2d;
+  color: #fff;
+}
+
+.pos-step-sep {
+  width: 2.5rem;
+  height: 2px;
+  background: #d0d5dd;
 }
 
 @media (max-width: 991.98px) {

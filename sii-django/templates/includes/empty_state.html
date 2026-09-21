@@ -1,0 +1,8 @@
+<div class="empty-state text-center text-muted py-5 px-3">
+  <p class="mb-3">{{ message }}</p>
+  {% if action_url %}
+  <a class="btn btn-primary" href="{{ action_url }}"{% if action_modal %} data-bs-toggle="modal" data-bs-target="{{ action_modal }}"{% endif %}>{{ action_label }}</a>
+  {% elif action_modal %}
+  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="{{ action_modal }}">{{ action_label }}</button>
+  {% endif %}
+</div>

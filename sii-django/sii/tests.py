@@ -123,11 +123,16 @@ class InicioEscritorioTests(TestCase):
         self.assertContains(response, "Nueva venta")
         self.assertNotContains(response, "Entrar a Ventas")
         self.assertNotContains(response, "Entrar a SII")
+        self.assertNotContains(response, "Accesos rápidos")
         self.assertContains(response, "Pagos pendientes")
         self.assertContains(response, "Control escolar")
         self.assertContains(response, "Fecha")
         self.assertContains(response, "Total")
-        self.assertContains(response, "Accesos rápidos")
+        self.assertContains(response, "por cobrar")
+        self.assertContains(response, "Registrar pago")
+        self.assertContains(response, "table-row-link")
+        self.assertContains(response, "img/logo-blanco.png")
+        self.assertContains(response, "bi-list")
         self.assertContains(response, 'id="sidebarIngenio"')
         self.assertContains(response, "sidebar-link")
         self.assertContains(response, "text-bg-warning")
@@ -137,6 +142,35 @@ class InicioEscritorioTests(TestCase):
         self.assertContains(response, "Punto de venta")
         self.assertContains(response, "Folios")
         self.assertContains(response, 'id="sidebarIngenio"')
+        self.assertNotContains(response, "Accesos rápidos")
+        self.assertContains(response, "stat-card")
+
+    def test_pos_es_tres_pasos(self):
+        response = self.http.get(reverse("Carrito"))
+        self.assertContains(response, "pos-steps")
+        self.assertContains(response, "Cliente")
+        self.assertContains(response, "Cursos")
+        self.assertContains(response, "Confirmar")
+        self.assertContains(response, "pos-step-num")
+
+    def test_sii_home_solo_control_escolar(self):
+        response = self.http.get(reverse("sii_home"))
+        self.assertContains(response, "Alumnos")
+        self.assertContains(response, "Periodos")
+        self.assertNotContains(response, "Cursos en venta")
+        self.assertNotContains(response, "Últimas ventas")
+        self.assertContains(response, "stat-card")
+
+    def test_tablas_tienen_busqueda(self):
+        for name, table_id in (
+            ("Ventas", "tabla-folios"),
+            ("Clientes", "tabla-clientes"),
+            ("Pagos", "tabla-pagos"),
+            ("sii_alumnos", "tabla-alumnos"),
+        ):
+            response = self.http.get(reverse(name))
+            self.assertContains(response, f'data-table-search="{table_id}"')
+            self.assertContains(response, f'id="{table_id}"')
 
 
 class StaticFilesProduccionTests(TestCase):

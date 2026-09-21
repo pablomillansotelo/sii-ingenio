@@ -1,0 +1,49 @@
+<div class="table-toolbar d-flex flex-wrap gap-2 align-items-center mb-3">
+  <div class="input-group table-search">
+    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+    <input type="search" class="form-control" data-table-search="{{ table_id }}" placeholder="{{ placeholder|default:'Buscar…' }}" aria-label="Buscar">
+  </div>
+  {% if filter_kind == "pago" %}
+  <div class="btn-group" role="group" data-table-filter="{{ table_id }}">
+    <button type="button" class="btn btn-outline-secondary btn-sm active" data-value="">Todos</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="pendiente">Pendiente</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="parcial">Parcial</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="pagado">Pagado</button>
+  </div>
+  {% elif filter_kind == "activo" %}
+  <div class="btn-group" role="group" data-table-filter="{{ table_id }}">
+    <button type="button" class="btn btn-outline-secondary btn-sm active" data-value="">Todos</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="activo">Activo</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="inactivo">Inactivo</button>
+  </div>
+  {% elif filter_kind == "alumno" %}
+  <div class="btn-group flex-wrap" role="group" data-table-filter="{{ table_id }}">
+    <button type="button" class="btn btn-outline-secondary btn-sm active" data-value="">Todos</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="activo">Activo</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="inactivo">Inactivo</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="graduado">Graduado</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="cancelado">Cancelado</button>
+  </div>
+  {% elif filter_kind == "inscripcion" %}
+  <div class="btn-group flex-wrap" role="group" data-table-filter="{{ table_id }}">
+    <button type="button" class="btn btn-outline-secondary btn-sm active" data-value="">Todos</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="activo">Activo</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="completado">Completado</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="cancelado">Baja</button>
+  </div>
+  {% elif filter_kind == "edicion" %}
+  <div class="btn-group" role="group" data-table-filter="{{ table_id }}">
+    <button type="button" class="btn btn-outline-secondary btn-sm active" data-value="">Todos</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="programada">Programada</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="en_curso">En curso</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="cerrada">Cerrada</button>
+  </div>
+  {% elif filters %}
+  <div class="btn-group" role="group" data-table-filter="{{ table_id }}">
+    <button type="button" class="btn btn-outline-secondary btn-sm active" data-value="">Todos</button>
+    {% for filtro in filters %}
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-value="{{ filtro.value }}">{{ filtro.label }}</button>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>

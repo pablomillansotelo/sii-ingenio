@@ -6,13 +6,14 @@
 {% else %}
 {% include "includes/page_header.html" with title="Inscripciones" subtitle="Alumno, curso y periodo." %}
 {% endif %}
+{% include "includes/table_toolbar.html" with table_id="tabla-inscripciones" placeholder="Buscar alumno, curso o periodo…" filter_kind="inscripcion" %}
 <div class="card shadow-sm">
   <div class="table-responsive">
-    <table class="table mb-0">
-      <thead><tr><th>Alumno</th><th>Curso</th><th>Periodo</th><th>Intento</th><th>Calificación</th><th>Estado</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
+    <table class="table table-hover align-middle mb-0" id="tabla-inscripciones">
+      <thead class="table-light"><tr><th>Alumno</th><th>Curso</th><th>Periodo</th><th>Intento</th><th>Calificación</th><th>Estado</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
       <tbody>
         {% for item in inscripciones %}
-        <tr>
+        <tr data-filter="{{ item.estado }}">
           <td>{{ item.alumno }}</td>
           <td>{{ item.curso }}</td>
           <td>{{ item.periodo }}</td>
@@ -36,7 +37,7 @@
           {% endif %}
         </tr>
         {% empty %}
-        <tr><td colspan="7" class="text-center text-muted py-4">No hay inscripciones.</td></tr>
+        <tr><td colspan="7">{% if puede_operar %}{% include "includes/empty_state.html" with message="No hay inscripciones." action_modal="#modalAgregar" action_label="Nueva inscripción" %}{% else %}{% include "includes/empty_state.html" with message="No hay inscripciones." %}{% endif %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

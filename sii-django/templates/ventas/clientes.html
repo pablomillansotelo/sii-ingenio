@@ -5,10 +5,11 @@
 {% block content %}
 {% include "includes/page_header.html" with title="Clientes" subtitle="Expediente comercial del call center." action_modal="#modalAgregar" action_label="Nuevo cliente" %}
 
+{% include "includes/table_toolbar.html" with table_id="tabla-clientes" placeholder="Buscar nombre, email o CURP…" filter_kind="activo" %}
 <div class="card shadow-sm">
   <div class="table-responsive">
-    <table class="table mb-0">
-      <thead>
+    <table class="table table-hover align-middle mb-0" id="tabla-clientes">
+      <thead class="table-light">
         <tr>
           <th>Nombre</th>
           <th>Email</th>
@@ -21,7 +22,7 @@
       </thead>
       <tbody>
         {% for i in Clientes %}
-        <tr>
+        <tr data-filter="{% if i.activo %}activo{% else %}inactivo{% endif %}">
           <td>{{ i.nombre }} {{ i.apellidos }}</td>
           <td>{{ i.email }}</td>
           <td>{{ i.telefono|default:"—" }}</td>
@@ -34,7 +35,7 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="7" class="text-center text-muted py-4">No hay clientes.</td></tr>
+        <tr><td colspan="7">{% include "includes/empty_state.html" with message="No hay clientes." action_modal="#modalAgregar" action_label="Nuevo cliente" %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

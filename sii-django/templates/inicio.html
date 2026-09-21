@@ -2,11 +2,7 @@
 {% block title %}Inicio · Ingenio{% endblock %}
 
 {% block content %}
-{% if "ventas" in ingenio_modulos_permitidos %}
-{% include "includes/page_header.html" with title="Hoy" subtitle="Lo que el call center y control escolar necesitan ahora." action_url="/ventas/nueva/" action_label="Nueva venta" %}
-{% else %}
-{% include "includes/page_header.html" with title="Hoy" subtitle="Tu trabajo en Ingenio, en un solo lugar." %}
-{% endif %}
+{% include "includes/page_header.html" with title="Hoy" subtitle="Lo que el call center y control escolar necesitan ahora." %}
 
 {% if not ingenio_modules %}
 <div class="alert alert-warning">Tu cuenta no tiene un módulo asignado. Pide a un administrador que te dé de alta en un grupo.</div>
@@ -15,71 +11,18 @@
 {% include "includes/stat_cards.html" with stats=stats_ventas heading="Ventas" %}
 {% include "includes/stat_cards.html" with stats=stats_sii heading="Control escolar" %}
 
-<div class="row g-3">
-  <div class="col-lg-8">
-    {% if "ventas" in ingenio_modulos_permitidos %}
-    <div class="card shadow-sm">
-      <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <strong>Últimas ventas</strong>
-        <a class="small" href="{% url 'Ventas' %}">Ver folios</a>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Folio</th>
-              <th>Cliente</th>
-              <th>Fecha</th>
-              <th class="text-end">Total</th>
-              <th>Pago</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for venta in ventas_recientes %}
-            <tr>
-              <td>
-                <a class="fw-semibold" href="{% if venta.estado_pago == 'pagado' %}{% url 'Ventas' %}{% else %}{% url 'Pagos' %}{% endif %}">
-                  {{ venta.folio|default:venta.id_venta }}
-                </a>
-              </td>
-              <td>{{ venta.id_cliente }}</td>
-              <td>{{ venta.fecha|date:"d/m/Y"|default:"—" }}</td>
-              <td class="text-end">${{ venta.monto|floatformat:2 }}</td>
-              <td>{% include "includes/pago_badge.html" with estado=venta.estado_pago etiqueta=venta.get_estado_pago_display %}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="5" class="text-center text-muted py-4">Aún no hay ventas.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    {% elif "sii" in ingenio_modulos_permitidos %}
-    <div class="card shadow-sm">
-      <div class="card-header bg-white"><strong>Control escolar</strong></div>
-      <div class="card-body text-muted">Usa el menú SII para alumnos, periodos e inscripciones.</div>
-    </div>
-    {% elif "aula" in ingenio_modulos_permitidos %}
-    <div class="card shadow-sm">
-      <div class="card-header bg-white"><strong>Aula</strong></div>
-      <div class="card-body"><a href="{% url 'aula_dashboard' %}">Ir a mis cursos</a></div>
-    </div>
-    {% endif %}
-  </div>
-  <div class="col-lg-4">
-    <div class="card shadow-sm">
-      <div class="card-header bg-white"><strong>Accesos rápidos</strong></div>
-      <div class="list-group list-group-flush">
-        {% for acceso in accesos %}
-        <a href="{{ acceso.href }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-          <span><i class="bi {{ acceso.icon }} me-2 text-primary"></i>{{ acceso.label }}</span>
-          {% if acceso.badge %}<span class="badge text-bg-warning">{{ acceso.badge }}</span>{% endif %}
-        </a>
-        {% empty %}
-        <div class="list-group-item text-muted">Sin accesos para tu rol.</div>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
+{% if "ventas" in ingenio_modulos_permitidos %}
+{% url "Ventas" as folios_url %}
+{% include "includes/ventas_tabla.html" with ventas=ventas_recientes title="Últimas ventas" ver_url=folios_url %}
+{% elif "sii" in ingenio_modulos_permitidos %}
+<div class="card shadow-sm">
+  <div class="card-header bg-white"><strong>Control escolar</strong></div>
+  <div class="card-body text-muted">Usa el menú SII para alumnos, periodos e inscripciones.</div>
 </div>
+{% elif "aula" in ingenio_modulos_permitidos %}
+<div class="card shadow-sm">
+  <div class="card-header bg-white"><strong>Aula</strong></div>
+  <div class="card-body"><a href="{% url 'aula_dashboard' %}">Ir a mis cursos</a></div>
+</div>
+{% endif %}
 {% endblock %}

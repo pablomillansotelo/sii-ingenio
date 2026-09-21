@@ -25,7 +25,6 @@ class CustomLoginView(LoginView):
 def inicio(request):
     stats_ventas = []
     stats_sii = []
-    accesos = []
     ventas_recientes = []
     if puede_ver_modulo(request.user, "ventas"):
         pagos_pendientes = Venta.objects.filter(estado_pago="pendiente").count()
@@ -40,18 +39,6 @@ def inicio(request):
             .prefetch_related("ventadetalle_set")
             .order_by("-id_venta")[:8]
         )
-        accesos.extend(
-            [
-                {"label": "Nueva venta", "href": reverse("Carrito"), "icon": "bi-bag-plus", "badge": None},
-                {
-                    "label": "Registrar pago",
-                    "href": reverse("Pagos"),
-                    "icon": "bi-credit-card",
-                    "badge": pagos_pendientes or None,
-                },
-                {"label": "Clientes", "href": reverse("Clientes"), "icon": "bi-people", "badge": None},
-            ]
-        )
     if puede_ver_modulo(request.user, "sii"):
         stats_sii = [
             {"label": "Alumnos", "value": alumnos_visibles(request.user).count(), "href": "sii_alumnos"},
@@ -61,23 +48,12 @@ def inicio(request):
                 "href": "sii_inscripciones",
             },
         ]
-        accesos.extend(
-            [
-                {"label": "Inscripciones SII", "href": reverse("sii_inscripciones"), "icon": "bi-clipboard-check", "badge": None},
-                {"label": "Alumnos", "href": reverse("sii_alumnos"), "icon": "bi-people", "badge": None},
-            ]
-        )
-    if puede_ver_modulo(request.user, "aula"):
-        accesos.append(
-            {"label": "Aula", "href": reverse("aula_dashboard"), "icon": "bi-journal-bookmark", "badge": None}
-        )
     return render(
         request,
         "inicio.html",
         {
             "stats_ventas": stats_ventas,
             "stats_sii": stats_sii,
-            "accesos": accesos,
             "ventas_recientes": ventas_recientes,
         },
     )

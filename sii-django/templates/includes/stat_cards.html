@@ -2,7 +2,7 @@
 {% if heading %}<p class="text-uppercase small text-muted fw-semibold mb-2">{{ heading }}</p>{% endif %}
 <div class="row g-3 {% if not last %}mb-4{% endif %}">
   {% for stat in stats %}
-  <div class="col-6 col-md-3">
+  <div class="{{ col_class|default:'col-6 col-md-3' }}">
     <a href="{% url stat.href %}" class="text-decoration-none text-reset">
       <div class="card shadow-sm h-100 stat-card">
         <div class="card-body py-3">

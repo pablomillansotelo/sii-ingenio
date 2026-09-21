@@ -23,7 +23,6 @@ from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
 
-from sii.models import Inscripcion
 from .services import inscribir_desde_venta
 
 
@@ -48,19 +47,29 @@ def dashboard_view(request):
     ventas_mes = Venta.objects.filter(fecha__gte=inicio_mes, estado="confirmada").prefetch_related(
         "ventadetalle_set"
     )
+    monto_mes = sum(venta.monto for venta in ventas_mes)
     return render(
         request,
         "ventas/dashboard.html",
         {
-            "total_clientes": Cliente.objects.filter(activo=True).count(),
-            "total_cursos": Producto.objects.filter(activo=True).count(),
-            "ediciones_abiertas": EdicionCurso.objects.filter(
-                activo=True, estado__in=EdicionCurso.ESTADOS_ABIERTOS
-            ).count(),
-            "ventas_mes_count": ventas_mes.count(),
-            "ventas_mes_monto": sum(venta.monto for venta in ventas_mes),
-            "inscripciones_activas": Inscripcion.objects.filter(estado="activo").count(),
-            "pagos_pendientes": Venta.objects.filter(estado_pago="pendiente").count(),
+            "stats": [
+                {"label": "Clientes activos", "value": Cliente.objects.filter(activo=True).count(), "href": "Clientes"},
+                {"label": "Cursos activos", "value": Producto.objects.filter(activo=True).count(), "href": "Inventario"},
+                {
+                    "label": "Ediciones abiertas",
+                    "value": EdicionCurso.objects.filter(
+                        activo=True, estado__in=EdicionCurso.ESTADOS_ABIERTOS
+                    ).count(),
+                    "href": "Ediciones",
+                },
+                {"label": "Ventas del mes", "value": ventas_mes.count(), "href": "Ventas"},
+                {"label": "Monto del mes", "value": f"${monto_mes:,.0f}", "href": "Ventas"},
+                {
+                    "label": "Pagos pendientes",
+                    "value": Venta.objects.filter(estado_pago="pendiente").count(),
+                    "href": "Pagos",
+                },
+            ],
             "ultimas_ventas": Venta.objects.select_related("id_cliente", "id_vendedor").order_by("-id_venta")[:8],
         },
     )
