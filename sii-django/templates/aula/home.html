@@ -20,7 +20,7 @@
     </div>
   </div>
   {% empty %}
-  <div class="col-12"><div class="card shadow-sm"><div class="text-center text-muted py-4">Aún no hay cursos. Créalos en Ventas → Cursos; el SII se alinea solo.</div></div></div>
+  <div class="col-12"><div class="card shadow-sm"><div class="text-center text-muted py-4">{% if es_propio %}Aún no tienes cursos inscritos.{% else %}Aún no hay cursos asignados.{% endif %}</div></div></div>
   {% endfor %}
 </div>
 {% endblock %}

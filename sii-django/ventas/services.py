@@ -45,6 +45,8 @@ def crear_alumno_desde_cliente(cliente):
 
 
 def periodo_vigente(fecha=None):
+    if isinstance(fecha, str):
+        fecha = date.fromisoformat(fecha[:10])
     fecha = fecha or date.today()
     nombre = f"{fecha.year}"
     periodo = Periodo.objects.filter(nombre=nombre).first()

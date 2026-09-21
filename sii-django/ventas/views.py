@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.db.models import Count
@@ -25,6 +27,19 @@ from sii.models import Inscripcion
 from .services import inscribir_desde_venta
 
 
+def _vendedor_actual(request):
+    return Vendedor.obtener_o_crear_desde_usuario(request.user)
+
+
+def _parse_carrito_item(item):
+    partes = [p.strip() for p in item.split(",")]
+    if len(partes) == 3:
+        return partes[0], None, partes[1], partes[2]
+    if len(partes) >= 4:
+        return partes[0], partes[1] or None, partes[2], partes[3]
+    raise ValueError("Formato de carrito inválido")
+
+
 # Create your views here.
 @login_required
 def dashboard_view(request):
@@ -40,7 +55,7 @@ def dashboard_view(request):
             "total_clientes": Cliente.objects.filter(activo=True).count(),
             "total_cursos": Producto.objects.filter(activo=True).count(),
             "ediciones_abiertas": EdicionCurso.objects.filter(
-                activo=True, estado__in=["programada", "en_curso"]
+                activo=True, estado__in=EdicionCurso.ESTADOS_ABIERTOS
             ).count(),
             "ventas_mes_count": ventas_mes.count(),
             "ventas_mes_monto": sum(venta.monto for venta in ventas_mes),
@@ -53,92 +68,109 @@ def dashboard_view(request):
 
 @login_required
 def carrito_view(request):
-    productos = Producto.objects.all()
     context = {
         "form_venta": AddVentaForm(),
         "form_add_venta_detalle": AddVentaDetalleForm(),
+        "vendedor": _vendedor_actual(request),
+        "ediciones_pos": [
+            {
+                "id": edicion.pk,
+                "curso_id": edicion.id_curso_id,
+                "label": f"{edicion.codigo_edicion} · {edicion.cupo_disponible} lugares",
+                "cupo": edicion.cupo_disponible,
+            }
+            for edicion in EdicionCurso.objects.filter(
+                activo=True, estado__in=EdicionCurso.ESTADOS_ABIERTOS
+            ).order_by("codigo_edicion")
+        ],
     }
-    return render(request, 'ventas/carrito.html', context)
+    return render(request, "ventas/carrito.html", context)
+
 
 @login_required
 def add_carrito_view(request):
-    if request.method == "POST":
-        id_cliente_add = request.POST.get('id_cliente_add')
-        fecha_add = request.POST.get('fecha_add')
-        nplainArray = request.POST.getlist('nplainArray[]')  # Debe ser una lista de strings tipo JSON o similar
+    if request.method != "POST":
+        return redirect("Carrito")
 
-        try:
-            cliente = Cliente.objects.get(pk=id_cliente_add)
-        except Cliente.DoesNotExist:
-            messages.error(request, "Cliente no encontrado")
-            return redirect('Carrito')
+    id_cliente_add = request.POST.get("id_cliente_add")
+    fecha_add = request.POST.get("fecha_add")
+    observaciones = request.POST.get("observaciones_add", "")
+    nplainArray = request.POST.getlist("nplainArray[]")
 
+    try:
+        cliente = Cliente.objects.get(pk=id_cliente_add, activo=True)
+    except Cliente.DoesNotExist:
+        messages.error(request, "Cliente no encontrado")
+        return redirect("Carrito")
+
+    if not nplainArray:
+        messages.error(request, "Agrega al menos un curso al carrito")
+        return redirect("Carrito")
+
+    vendedor = _vendedor_actual(request)
+
+    try:
         with transaction.atomic():
             venta = Venta.objects.create(
                 id_cliente=cliente,
-                fecha=fecha_add,
-                estado="confirmada",
-                estado_pago="pendiente",
+                id_vendedor=vendedor,
+                fecha=date.fromisoformat(fecha_add) if fecha_add else timezone.localdate(),
+                observaciones=observaciones or "",
+                estado=Venta.ESTADO_CONFIRMADA,
+                estado_pago=Venta.PAGO_PENDIENTE,
             )
-            venta.folio = f"V-{venta.id_venta:06d}"
-            venta.save(update_fields=["folio"])
 
-            # Suponiendo que nplainArray es una lista de strings tipo "id_producto,cantidad,descuento"
             for item in nplainArray:
-                partes = item.split(',')
-                if len(partes) < 2:
-                    continue  # Saltar items inválidos
-                    
-                id_producto = partes[0].strip()
-                cantidad_str = partes[1].strip()
-                descuento_str = partes[2].strip() if len(partes) > 2 and partes[2].strip() else None
-
-                # Validar y convertir cantidad
-                try:
-                    cantidad = int(cantidad_str)
-                    if cantidad <= 0:
-                        continue  # Saltar cantidades inválidas
-                except (ValueError, TypeError):
-                    continue  # Saltar si no es un número válido
-
-                # Validar y convertir descuento
-                descuento = None
-                if descuento_str and descuento_str != '':
-                    try:
-                        descuento = float(descuento_str)
-                        if descuento < 0:
-                            descuento = 0  # No permitir descuentos negativos
-                    except (ValueError, TypeError):
-                        descuento = None  # Si no es válido, usar None
-
-                try:
-                    producto = Producto.objects.get(pk=id_producto)
-                    VentaDetalle.objects.create(
-                        id_venta=venta,
-                        id_producto=producto,
-                        cantidad=cantidad,
-                        descuento=descuento,
-                        precio_unitario=producto.precio_unitario,
+                id_producto, id_edicion, cantidad_str, descuento_str = _parse_carrito_item(item)
+                cantidad = int(cantidad_str)
+                if cantidad <= 0:
+                    raise ValueError("La cantidad debe ser mayor a cero")
+                producto = Producto.objects.get(pk=id_producto, activo=True)
+                edicion = None
+                abiertas = producto.ediciones.filter(
+                    activo=True, estado__in=EdicionCurso.ESTADOS_ABIERTOS
+                )
+                if id_edicion:
+                    edicion = EdicionCurso.objects.select_for_update().get(
+                        pk=id_edicion, activo=True, id_curso=producto
                     )
-                except (Producto.DoesNotExist, ValueError):
-                    continue  # Saltar productos no encontrados o datos inválidos
+                    edicion.reservar_cupo(cantidad)
+                elif abiertas.exists():
+                    raise ValueError(f"Selecciona una edición para {producto.producto}")
+
+                descuento = None
+                if descuento_str not in (None, ""):
+                    descuento = float(descuento_str)
+                    if descuento < 0:
+                        descuento = 0
+
+                precio = edicion.precio_aplicable if edicion else producto.precio_unitario
+                VentaDetalle.objects.create(
+                    id_venta=venta,
+                    id_producto=producto,
+                    id_edicion=edicion,
+                    cantidad=cantidad,
+                    descuento=descuento,
+                    precio_unitario=precio,
+                )
 
             inscripciones = inscribir_desde_venta(venta)
+    except (Producto.DoesNotExist, EdicionCurso.DoesNotExist):
+        messages.error(request, "Uno de los cursos o ediciones no está disponible")
+        return redirect("Carrito")
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("Carrito")
 
-        if inscripciones:
-            messages.success(
-                request,
-                f"Venta confirmada. Se generaron {inscripciones} inscripción(es) en el SII.",
-            )
-        else:
-            messages.success(request, "Venta confirmada.")
-    return redirect('Carrito')
+    extra = f" Se generaron {inscripciones} inscripción(es) en el SII." if inscripciones else ""
+    messages.success(request, f"Venta {venta.folio} confirmada.{extra}")
+    return redirect("Ventas")
 
 @login_required
 def ventas_view(request):
-    ventas = Venta.objects.select_related('id_cliente').prefetch_related(
-        'ventadetalle_set__id_producto'
-    ).all()
+    ventas = Venta.objects.select_related("id_cliente", "id_vendedor").prefetch_related(
+        "ventadetalle_set__id_producto", "ventadetalle_set__id_edicion"
+    ).order_by("-id_venta")
     form_editar_venta = EditarVentaForm()
     context = {
         'Ventas': ventas,
@@ -332,11 +364,17 @@ def delete_venta_view(request):
         venta_id = request.POST.get('id_venta_eliminar')
         if venta_id:
             try:
-                venta = Venta.objects.get(pk=venta_id)
-                # Eliminar detalles primero (si hay restricciones de foreign key)
-                VentaDetalle.objects.filter(id_venta=venta).delete()
-                venta.delete()
-                messages.success(request, 'La venta y su contenido se ha eliminado')
+                venta = Venta.objects.select_related().prefetch_related(
+                    "ventadetalle_set__id_edicion"
+                ).get(pk=venta_id)
+                with transaction.atomic():
+                    for det in venta.ventadetalle_set.select_related("id_edicion"):
+                        if det.id_edicion_id:
+                            edicion = EdicionCurso.objects.select_for_update().get(pk=det.id_edicion_id)
+                            edicion.liberar_cupo(det.cantidad)
+                    VentaDetalle.objects.filter(id_venta=venta).delete()
+                    venta.delete()
+                messages.success(request, "La venta y su contenido se ha eliminado")
             except Venta.DoesNotExist:
                 messages.error(request, 'Venta no encontrada')
     return redirect('Ventas')

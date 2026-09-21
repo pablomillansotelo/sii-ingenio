@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 
 
@@ -16,6 +18,15 @@ class Vendedor(models.Model):
 
     def __str__(self):
         return self.nombre
+
+    @classmethod
+    def obtener_o_crear_desde_usuario(cls, user):
+        nombre = (user.get_full_name() or "").strip() or user.get_username()
+        vendedor, _ = cls.objects.get_or_create(
+            user_id=user.pk,
+            defaults={"nombre": nombre, "email": user.email or ""},
+        )
+        return vendedor
 
 
 class Cliente(models.Model):
@@ -79,6 +90,16 @@ class Producto(models.Model):
 
 
 class EdicionCurso(models.Model):
+    ESTADO_PROGRAMADA = "programada"
+    ESTADO_EN_CURSO = "en_curso"
+    ESTADO_CERRADA = "cerrada"
+    ESTADO_CHOICES = [
+        (ESTADO_PROGRAMADA, "Programada"),
+        (ESTADO_EN_CURSO, "En curso"),
+        (ESTADO_CERRADA, "Cerrada"),
+    ]
+    ESTADOS_ABIERTOS = (ESTADO_PROGRAMADA, ESTADO_EN_CURSO)
+
     id_edicion = models.AutoField(primary_key=True)
     id_curso = models.ForeignKey(
         Producto, models.DO_NOTHING, db_column="id_curso", related_name="ediciones"
@@ -91,7 +112,7 @@ class EdicionCurso(models.Model):
     precio_edicion = models.DecimalField(
         max_digits=19, decimal_places=4, blank=True, null=True
     )
-    estado = models.CharField(max_length=20, default="programada")
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_PROGRAMADA)
     activo = models.BooleanField(default=True)
 
     class Meta:
@@ -101,17 +122,47 @@ class EdicionCurso(models.Model):
     def __str__(self):
         return self.codigo_edicion
 
+    @property
+    def cupo_disponible(self):
+        return max(0, int(self.cupo_maximo or 0) - int(self.cupo_ocupado or 0))
+
+    @property
+    def precio_aplicable(self):
+        if self.precio_edicion is not None:
+            return self.precio_edicion
+        return self.id_curso.precio_unitario
+
+    def reservar_cupo(self, plazas=1):
+        plazas = int(plazas)
+        if plazas <= 0:
+            raise ValueError("La cantidad de plazas debe ser mayor a cero")
+        if self.cupo_disponible < plazas:
+            raise ValueError("Cupo insuficiente en la edición")
+        self.cupo_ocupado = int(self.cupo_ocupado or 0) + plazas
+        self.save(update_fields=["cupo_ocupado"])
+
+    def liberar_cupo(self, plazas=1):
+        plazas = int(plazas)
+        self.cupo_ocupado = max(0, int(self.cupo_ocupado or 0) - max(0, plazas))
+        self.save(update_fields=["cupo_ocupado"])
+
 
 class Venta(models.Model):
+    ESTADO_CONFIRMADA = "confirmada"
+    ESTADO_CANCELADA = "cancelada"
+    ESTADO_BORRADOR = "borrador"
     ESTADO_CHOICES = [
-        ("confirmada", "Confirmada"),
-        ("cancelada", "Cancelada"),
-        ("borrador", "Borrador"),
+        (ESTADO_CONFIRMADA, "Confirmada"),
+        (ESTADO_CANCELADA, "Cancelada"),
+        (ESTADO_BORRADOR, "Borrador"),
     ]
+    PAGO_PENDIENTE = "pendiente"
+    PAGO_PARCIAL = "parcial"
+    PAGO_PAGADO = "pagado"
     PAGO_CHOICES = [
-        ("pendiente", "Pendiente"),
-        ("parcial", "Parcial"),
-        ("pagado", "Pagado"),
+        (PAGO_PENDIENTE, "Pendiente"),
+        (PAGO_PARCIAL, "Parcial"),
+        (PAGO_PAGADO, "Pagado"),
     ]
 
     id_venta = models.AutoField(primary_key=True)
@@ -140,9 +191,20 @@ class Venta(models.Model):
     def __str__(self):
         return self.folio or str(self.id_venta)
 
+    def save(self, *args, **kwargs):
+        if not self.folio and self.pk is None:
+            super().save(*args, **kwargs)
+            self.folio = f"V-{self.pk:06d}"
+            return super().save(update_fields=["folio"])
+        return super().save(*args, **kwargs)
+
     @property
     def cliente(self):
         return self.id_cliente
+
+    @property
+    def vendedor_nombre(self):
+        return self.id_vendedor.nombre if self.id_vendedor_id else "—"
 
     @property
     def monto(self):
@@ -184,7 +246,7 @@ class VentaDetalle(models.Model):
     class Meta:
         managed = True
         db_table = "tra_venta_det"
-        unique_together = (("id_venta", "id_producto"),)
+        unique_together = (("id_venta", "id_producto", "id_edicion"),)
 
     def subtotal(self):
         precio = self.precio_unitario

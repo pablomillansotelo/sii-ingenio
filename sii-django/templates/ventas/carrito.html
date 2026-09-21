@@ -1,55 +1,70 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Nueva venta · Ingenio{% endblock %}
-{% block page_heading %}Nueva venta{% endblock %}
 
 {% block content %}
-{% include "includes/page_header.html" with title="Nueva venta" subtitle="Elige cliente, agrega cursos y confirma el folio." %}
+{% include "includes/page_header.html" with title="Punto de venta" subtitle="Elige cliente, edición con cupo y confirma el folio." %}
+
+<div class="alert alert-light border mb-3">
+  <i class="bi bi-person-badge me-1"></i>
+  <strong>Vendedor:</strong> {{ vendedor.nombre }}
+</div>
 
 <div class="row g-3">
-  <div class="col-lg-5">
-    <div class="card shadow-sm mb-3">
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
       <div class="card-header bg-white"><strong>Cliente y fecha</strong></div>
       <div class="card-body">
         <div class="mb-3">
-          <label class="form-label">Cliente</label>
+          <label class="form-label" for="id_cliente_add">{{ form_venta.id_cliente.label }}</label>
           {{ form_venta.id_cliente }}
         </div>
-        <div class="mb-0">
-          <label class="form-label">Fecha</label>
+        <div class="mb-3">
+          <label class="form-label" for="fecha_add">{{ form_venta.fecha.label }}</label>
           {{ form_venta.fecha }}
+        </div>
+        <div class="mb-0">
+          <label class="form-label" for="observaciones_add">{{ form_venta.observaciones.label }}</label>
+          {{ form_venta.observaciones }}
         </div>
       </div>
     </div>
+  </div>
+  <div class="col-lg-8">
     <div class="card shadow-sm">
       <div class="card-header bg-white"><strong>Agregar curso</strong></div>
       <div class="card-body">
         <form id="formAddProducto" onsubmit="event.preventDefault(); agregarProducto();">
-          <div class="mb-3">
-            <label class="form-label">{{ form_add_venta_detalle.id_producto.label }}</label>
-            {{ form_add_venta_detalle.id_producto }}
-          </div>
           <div class="row g-3">
-            <div class="col-6">
-              <label class="form-label">{{ form_add_venta_detalle.cantidad.label }}</label>
+            <div class="col-md-5">
+              <label class="form-label" for="id_producto_add">{{ form_add_venta_detalle.id_producto.label }}</label>
+              {{ form_add_venta_detalle.id_producto }}
+            </div>
+            <div class="col-md-7">
+              <label class="form-label" for="id_edicion_add">{{ form_add_venta_detalle.id_edicion.label }}</label>
+              {{ form_add_venta_detalle.id_edicion }}
+            </div>
+            <div class="col-6 col-md-4">
+              <label class="form-label" for="cantidad_add">{{ form_add_venta_detalle.cantidad.label }}</label>
               {{ form_add_venta_detalle.cantidad }}
             </div>
-            <div class="col-6">
-              <label class="form-label">{{ form_add_venta_detalle.descuento.label }}</label>
+            <div class="col-6 col-md-4">
+              <label class="form-label" for="descuento_add">{{ form_add_venta_detalle.descuento.label }}</label>
               {{ form_add_venta_detalle.descuento }}
             </div>
+            <div class="col-12 col-md-4 d-flex align-items-end">
+              <button type="submit" class="btn btn-outline-primary w-100">Agregar al carrito</button>
+            </div>
           </div>
-          <button type="submit" class="btn btn-outline-primary mt-3">Agregar al carrito</button>
         </form>
       </div>
     </div>
-  </div>
-  <div class="col-lg-7">
-    <div class="card shadow-sm">
+    <div class="card shadow-sm mt-3">
       <div class="card-header bg-white"><strong>Carrito</strong></div>
       <div class="table-responsive">
         <table class="table mb-0" id="tblProducts">
           <thead>
-            <tr><th>Curso</th><th>Cantidad</th><th>Descuento</th><th></th></tr>
+            <tr><th>Curso / edición</th><th>Plazas</th><th>Descuento</th><th></th></tr>
           </thead>
           <tbody>
             <tr><td colspan="4" class="text-center text-muted py-4">El carrito está vacío.</td></tr>
@@ -65,64 +80,12 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ ediciones_pos|json_script:"ediciones-pos" }}
 <script>
-let carrito = [];
-
-function agregarProducto() {
-  const select = document.getElementById("id_producto_add");
-  const id_producto = select.value;
-  const nombre_producto = select.selectedOptions[0].text;
-  const cantidad = document.getElementById("cantidad_add").value;
-  const descuento = document.getElementById("descuento_add").value;
-  if (!id_producto || !cantidad) {
-    alert("Selecciona curso y cantidad");
-    return;
-  }
-  carrito.push({id_producto, nombre_producto, cantidad, descuento});
-  renderCarrito();
-  select.selectedIndex = 0;
-  document.getElementById("cantidad_add").value = "";
-  document.getElementById("descuento_add").value = "";
-}
-
-function renderCarrito() {
-  const tbody = document.querySelector("#tblProducts tbody");
-  if (!carrito.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">El carrito está vacío.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = carrito.map((item, idx) => `
-    <tr>
-      <td>${item.nombre_producto}</td>
-      <td>${item.cantidad}</td>
-      <td>${item.descuento || "—"}</td>
-      <td><button type="button" class="btn btn-outline-secondary btn-sm" onclick="eliminarProducto(${idx})">Quitar</button></td>
-    </tr>`).join("");
-}
-
-function eliminarProducto(idx) {
-  carrito.splice(idx, 1);
-  renderCarrito();
-}
-
-function pagar_carrito() {
-  const id_cliente = document.getElementById("id_cliente_add").value;
-  const fecha = document.getElementById("fecha_add").value;
-  if (!id_cliente || !fecha || carrito.length === 0) {
-    alert("Selecciona cliente, fecha y al menos un curso.");
-    return;
-  }
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = "{% url 'AddCarrito' %}";
-  form.innerHTML = `<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-    <input type="hidden" name="id_cliente_add" value="${id_cliente}">
-    <input type="hidden" name="fecha_add" value="${fecha}">`;
-  carrito.forEach((item) => {
-    form.innerHTML += `<input type="hidden" name="nplainArray[]" value="${item.id_producto},${item.cantidad},${item.descuento}">`;
-  });
-  document.body.appendChild(form);
-  form.submit();
-}
+window.INGENIO_POS = {
+  addUrl: "{% url 'AddCarrito' %}",
+  csrf: "{{ csrf_token }}",
+};
 </script>
+<script src="{% static 'js/carrito.js' %}"></script>
 {% endblock %}

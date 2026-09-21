@@ -1,3 +1,4 @@
+from sii.permissions import EsAdministradorAPI
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -13,6 +14,7 @@ class AlumnoViewSet(viewsets.ModelViewSet):
     """
     queryset = Alumno.objects.all()
     serializer_class = AlumnoSerializer
+    permission_classes = [EsAdministradorAPI]
     
     def create(self, request, *args, **kwargs):
         """
@@ -46,18 +48,21 @@ class CursoViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar cursos"""
     queryset = Curso.objects.all()
     serializer_class = CursoSerializer
+    permission_classes = [EsAdministradorAPI]
 
 
 class PeriodoViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar períodos"""
     queryset = Periodo.objects.all()
     serializer_class = PeriodoSerializer
+    permission_classes = [EsAdministradorAPI]
 
 
 class InscripcionViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar inscripciones"""
     queryset = Inscripcion.objects.select_related('alumno', 'curso', 'periodo').all()
     serializer_class = InscripcionSerializer
+    permission_classes = [EsAdministradorAPI]
     
     def get_queryset(self):
         queryset = super().get_queryset()

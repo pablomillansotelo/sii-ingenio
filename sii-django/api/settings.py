@@ -5,6 +5,7 @@ Django settings for the consolidated Ingenio platform (SII + Ventas + Aula).
 from pathlib import Path
 from decouple import config
 import os
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -14,10 +15,11 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
+    "localhost",
+    "testserver",
     ".vercel.app",
     "blog.juampamillan.com",
     ".github.dev",
-    "localhost",
     ".modeloingenio.xyz",
 ]
 
@@ -40,11 +42,13 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "api.middleware.auto_migrate.AutoMigrateMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "sii.middleware.ModuloAccessMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -90,6 +94,19 @@ DATABASES = {
     },
 }
 
+if "test" in sys.argv or os.environ.get("DJANGO_TEST") == "1":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        },
+        "auth": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        },
+    }
+    MIDDLEWARE = [item for item in MIDDLEWARE if "auto_migrate" not in item]
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -116,3 +133,12 @@ DATABASE_ROUTERS = ["api.dbrouters.auth_router.AuthRouter"]
 LOGIN_REDIRECT_URL = "/inicio/"
 LOGOUT_REDIRECT_URL = "/"
 LOGIN_URL = "/"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "sii.permissions.EsAdministradorAPI",
+    ],
+}

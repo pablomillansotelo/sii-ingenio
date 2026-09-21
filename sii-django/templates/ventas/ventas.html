@@ -12,6 +12,7 @@
         <tr>
           <th>Folio</th>
           <th>Cliente</th>
+          <th>Vendedor</th>
           <th>Fecha</th>
           <th>Monto</th>
           <th>Estado</th>
@@ -24,6 +25,7 @@
         <tr>
           <td>{{ i.folio|default:i.id_venta }}</td>
           <td>{{ i.id_cliente }}</td>
+          <td>{{ i.vendedor_nombre }}</td>
           <td>{{ i.fecha }}</td>
           <td>${{ i.monto }}</td>
           <td><span class="badge text-bg-secondary">{{ i.get_estado_display }}</span></td>
@@ -34,7 +36,7 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="7" class="text-center text-muted py-4">No hay ventas registradas.</td></tr>
+        <tr><td colspan="8" class="text-center text-muted py-4">No hay ventas registradas.</td></tr>
         {% endfor %}
       </tbody>
     </table>

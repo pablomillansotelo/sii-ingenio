@@ -177,10 +177,11 @@ class EditarVentaForm(BootstrapFormMixin, forms.ModelForm):
 class AddVentaForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Venta
-        fields = ("id_cliente", "fecha")
+        fields = ("id_cliente", "fecha", "observaciones")
         labels = {
             "id_cliente": "Cliente",
             "fecha": "Fecha",
+            "observaciones": "Observaciones",
         }
         widgets = {
             "id_cliente": forms.Select(attrs={"class": "form-select", "id": "id_cliente_add"}),
@@ -193,23 +194,46 @@ class AddVentaForm(BootstrapFormMixin, forms.ModelForm):
                     "value": date.today(),
                 },
             ),
+            "observaciones": forms.Textarea(
+                attrs={"class": "form-control", "id": "observaciones_add", "rows": 2}
+            ),
         }
 
 
 class AddVentaDetalleForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = VentaDetalle
-        fields = ("id_producto", "cantidad", "descuento")
+        fields = ("id_producto", "id_edicion", "cantidad", "descuento")
         labels = {
-            "id_producto": "Producto",
-            "cantidad": "Cantidad",
+            "id_producto": "Curso",
+            "id_edicion": "Edición",
+            "cantidad": "Plazas",
             "descuento": "Descuento",
         }
         widgets = {
             "id_producto": forms.Select(attrs={"class": "form-select", "id": "id_producto_add"}),
-            "cantidad": forms.TextInput(attrs={"class": "form-control", "id": "cantidad_add"}),
-            "descuento": forms.TextInput(attrs={"class": "form-control", "id": "descuento_add"}),
+            "id_edicion": forms.Select(attrs={"class": "form-select", "id": "id_edicion_add"}),
+            "cantidad": forms.NumberInput(
+                attrs={"class": "form-control", "id": "cantidad_add", "min": "1", "value": "1"}
+            ),
+            "descuento": forms.NumberInput(
+                attrs={"class": "form-control", "id": "descuento_add", "step": "0.01", "min": "0"}
+            ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["id_producto"].queryset = Producto.objects.filter(activo=True).order_by("producto")
+        self.fields["id_edicion"].queryset = EdicionCurso.objects.filter(
+            activo=True,
+            estado__in=EdicionCurso.ESTADOS_ABIERTOS,
+        ).select_related("id_curso").order_by("codigo_edicion")
+        self.fields["id_edicion"].required = False
+        self.fields["id_edicion"].empty_label = "Sin edición"
+        self.fields["id_edicion"].label_from_instance = (
+            lambda obj: f"{obj.codigo_edicion} · {obj.cupo_disponible} lugares"
+        )
+        self.fields["cantidad"].initial = 1
 
 
 class AddVendedorForm(BootstrapFormMixin, forms.ModelForm):
@@ -265,6 +289,7 @@ class AddEdicionForm(BootstrapFormMixin, forms.ModelForm):
         widgets = {
             "fecha_inicio": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
             "fecha_fin": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "estado": forms.Select(attrs={"class": "form-select"}),
         }
 
 
@@ -290,7 +315,7 @@ class EditarEdicionForm(BootstrapFormMixin, forms.ModelForm):
             "fecha_fin": forms.DateInput(attrs={"type": "date", "id": "fecha_fin_edicion_editar"}),
             "cupo_maximo": forms.NumberInput(attrs={"id": "cupo_edicion_editar"}),
             "precio_edicion": forms.NumberInput(attrs={"id": "precio_edicion_editar"}),
-            "estado": forms.TextInput(attrs={"id": "estado_edicion_editar"}),
+            "estado": forms.Select(attrs={"id": "estado_edicion_editar"}),
             "activo": forms.CheckboxInput(attrs={"id": "activo_edicion_editar"}),
         }
 

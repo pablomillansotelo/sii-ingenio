@@ -1,14 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Kardex · Ingenio{% endblock %}
-{% block page_heading %}Kardex{% endblock %}
 {% block content %}
-{% include "includes/page_header.html" with title="Kardex" subtitle="Calificaciones e inscripciones." %}
+{% include "includes/page_header.html" with title="Kardex" subtitle="Calificaciones e inscripciones de tu expediente." %}
 <div class="card shadow-sm">
   <div class="table-responsive">
-    <table class="table mb-0">
-      <thead>
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
         <tr>
-          <th>Alumno</th>
+          {% if mostrar_alumno %}<th>Alumno</th>{% endif %}
           <th>Curso</th>
           <th>Periodo</th>
           <th>Calificación</th>
@@ -17,13 +16,13 @@
       <tbody>
         {% for materia in kardex %}
         <tr>
-          <td>{{ materia.alumno|default:"—" }}</td>
+          {% if mostrar_alumno %}<td>{{ materia.alumno|default:"—" }}</td>{% endif %}
           <td>{{ materia.nombre }}</td>
           <td>{{ materia.periodo }}</td>
           <td>{{ materia.calificacion|default:"—" }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="4" class="text-center text-muted py-4">No hay materias registradas.</td></tr>
+        <tr><td colspan="{% if mostrar_alumno %}4{% else %}3{% endif %}" class="text-center text-muted py-4">No hay materias en tu expediente.</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -19,7 +19,7 @@ def ingenio_shell(request):
         module = "inicio"
         title = "Ingenio"
 
-    modules = [
+    catalogo = [
         {"key": "ventas", "label": "Ventas", "url_name": "ventas_home", "icon": "bi-cart3"},
         {"key": "sii", "label": "SII", "url_name": "sii_home", "icon": "bi-building"},
         {"key": "aula", "label": "Aula", "url_name": "aula_dashboard", "icon": "bi-journal-bookmark"},
@@ -59,23 +59,34 @@ def ingenio_shell(request):
         except Exception:
             return "#"
 
-    for item in modules:
-        item["href"] = _url(item["url_name"])
-        item["active"] = item["key"] == module
-
-    nav_items = []
-    for item in nav.get(module, []):
-        href = _url(item["url_name"])
-        nav_items.append({
-            **item,
-            "href": href,
-            "active": current_name == item["url_name"],
-        })
-
     user = getattr(request, "user", None)
+    permitidos = set()
     display_name = ""
     if user is not None and getattr(user, "is_authenticated", False):
+        from sii.identity import modulos_permitidos
+
+        permitidos = modulos_permitidos(user)
         display_name = (user.get_full_name() or user.get_username()).strip()
+
+    modules = []
+    for item in catalogo:
+        if item["key"] not in permitidos:
+            continue
+        modules.append({
+            **item,
+            "href": _url(item["url_name"]),
+            "active": item["key"] == module,
+        })
+
+    nav_items = []
+    if module == "inicio" or module in permitidos:
+        for item in nav.get(module, []):
+            href = _url(item["url_name"])
+            nav_items.append({
+                **item,
+                "href": href,
+                "active": current_name == item["url_name"],
+            })
 
     return {
         "ingenio_module": module,
@@ -83,4 +94,5 @@ def ingenio_shell(request):
         "ingenio_modules": modules,
         "ingenio_nav": nav_items,
         "ingenio_display_name": display_name,
+        "ingenio_modulos_permitidos": permitidos,
     }
