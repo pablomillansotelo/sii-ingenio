@@ -67,7 +67,7 @@ function agregarProducto() {
 function renderCarrito() {
   const tbody = document.querySelector("#tblProducts tbody");
   if (!carrito.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">El carrito está vacío.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state text-center text-muted py-4 px-3"><p class="mb-0">El carrito está vacío. Agrega un curso en el paso 2.</p></div></td></tr>';
     return;
   }
   tbody.innerHTML = carrito.map((item, idx) => `
@@ -114,4 +114,36 @@ document.addEventListener("DOMContentLoaded", () => {
     select.addEventListener("change", filtrarEdicionesPorCurso);
     filtrarEdicionesPorCurso();
   }
+  const cliente = document.getElementById("id_cliente_add");
+  if (cliente) {
+    cliente.addEventListener("change", mostrarPeekInscripcion);
+    mostrarPeekInscripcion();
+  }
 });
+
+function inscripcionesPeek() {
+  const node = document.getElementById("inscripciones-peek");
+  if (!node) return {};
+  try {
+    return JSON.parse(node.textContent);
+  } catch (err) {
+    return {};
+  }
+}
+
+function mostrarPeekInscripcion() {
+  const caja = document.getElementById("pos-inscripcion-peek");
+  const select = document.getElementById("id_cliente_add");
+  if (!caja || !select) return;
+  const filas = inscripcionesPeek()[String(select.value)] || [];
+  if (!filas.length) {
+    caja.classList.add("d-none");
+    caja.textContent = "";
+    return;
+  }
+  caja.classList.remove("d-none");
+  caja.innerHTML = "<strong>Ya inscrito:</strong> " + filas.map((fila) => {
+    const extra = fila.edicion ? ` · ${fila.edicion}` : "";
+    return `${fila.curso}${extra} (${fila.periodo})`;
+  }).join("; ");
+}

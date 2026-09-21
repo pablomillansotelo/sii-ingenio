@@ -49,7 +49,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "sii.middleware.ModuloAccessMiddleware",
+    "sii.middleware.FeatureAccessMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -79,16 +79,23 @@ _skip_postgres = (
     or "collectstatic" in sys.argv
     or os.environ.get("DJANGO_TEST") == "1"
     or os.environ.get("COLLECTSTATIC") == "1"
+    or os.environ.get("DJANGO_SQLITE") == "1"
 )
 if _skip_postgres:
+    if os.environ.get("DJANGO_SQLITE") == "1":
+        _default_db = str(BASE_DIR / "demo.sqlite3")
+        _auth_db = str(BASE_DIR / "demo_auth.sqlite3")
+    else:
+        _default_db = ":memory:"
+        _auth_db = ":memory:"
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": ":memory:",
+            "NAME": _default_db,
         },
         "auth": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": ":memory:",
+            "NAME": _auth_db,
         },
     }
     MIDDLEWARE = [item for item in MIDDLEWARE if "auto_migrate" not in item]
@@ -150,6 +157,11 @@ DATABASE_ROUTERS = ["api.dbrouters.auth_router.AuthRouter"]
 LOGIN_REDIRECT_URL = "/inicio/"
 LOGOUT_REDIRECT_URL = "/"
 LOGIN_URL = "/"
+
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
+)
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Ingenio <no-reply@modeloingenio.xyz>")
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [

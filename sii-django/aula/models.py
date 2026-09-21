@@ -64,6 +64,7 @@ class CalificacionActividad(models.Model):
     entregado = models.BooleanField(default=False)
     fecha_entrega = models.DateField(blank=True, null=True)
     entrega = models.TextField(blank=True, default="")
+    archivo = models.FileField(upload_to="entregas/%Y/%m/", blank=True, null=True)
 
     class Meta:
         unique_together = ("actividad", "inscripcion")

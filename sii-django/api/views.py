@@ -3,7 +3,8 @@ from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
-from sii.identity import alumnos_visibles, destino_post_login, inscripciones_visibles, puede_ver_modulo
+from sii.identity import alumnos_visibles, destino_post_login, inscripciones_visibles
+from sii.rbac import has_feature
 from ventas.models import Cliente, Producto, Venta
 
 
@@ -23,27 +24,40 @@ class CustomLoginView(LoginView):
 
 @login_required
 def inicio(request):
-    stats = []
-    if puede_ver_modulo(request.user, "ventas"):
-        stats.extend(
-            [
-                {"label": "Clientes", "value": Cliente.objects.count(), "href": "Clientes"},
-                {"label": "Ventas", "value": Venta.objects.count(), "href": "Ventas"},
-                {"label": "Cursos", "value": Producto.objects.count(), "href": "Inventario"},
-            ]
-        )
-    if puede_ver_modulo(request.user, "sii"):
-        stats.extend(
-            [
-                {"label": "Alumnos", "value": alumnos_visibles(request.user).count(), "href": "sii_alumnos"},
-                {"label": "Inscripciones", "value": inscripciones_visibles(request.user).count(), "href": "sii_inscripciones"},
-            ]
-        )
+    stats_ventas = []
+    stats_sii = []
     ventas_recientes = []
-    if puede_ver_modulo(request.user, "ventas"):
-        ventas_recientes = Venta.objects.select_related("id_cliente").order_by("-id_venta")[:5]
+    if has_feature(request.user, "ventas.panel"):
+        pagos_pendientes = Venta.objects.filter(estado_pago="pendiente").count()
+        stats_ventas = [
+            {"label": "Clientes", "value": Cliente.objects.filter(activo=True).count(), "href": "Clientes"},
+            {"label": "Folios", "value": Venta.objects.count(), "href": "Ventas"},
+            {"label": "Cursos en venta", "value": Producto.objects.filter(activo=True).count(), "href": "Inventario"},
+            {"label": "Pagos pendientes", "value": pagos_pendientes, "href": "Pagos"},
+        ]
+        ventas_recientes = (
+            Venta.objects.select_related("id_cliente")
+            .prefetch_related("ventadetalle_set")
+            .order_by("-id_venta")[:8]
+        )
+    if has_feature(request.user, "sii.panel") and has_feature(request.user, "sii.alumnos"):
+        from sii.rbac import scope_for
+
+        if scope_for(request.user, "sii.alumnos") != "own":
+            stats_sii = [
+                {"label": "Alumnos", "value": alumnos_visibles(request.user).count(), "href": "sii_alumnos"},
+                {
+                    "label": "Inscripciones",
+                    "value": inscripciones_visibles(request.user).count(),
+                    "href": "sii_inscripciones",
+                },
+            ]
     return render(
         request,
         "inicio.html",
-        {"stats": stats, "ventas_recientes": ventas_recientes},
+        {
+            "stats_ventas": stats_ventas,
+            "stats_sii": stats_sii,
+            "ventas_recientes": ventas_recientes,
+        },
     )

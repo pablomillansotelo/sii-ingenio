@@ -4,12 +4,35 @@
 {% include "includes/page_header.html" with title="Pagos" subtitle="Cobros aplicados a cada folio." action_modal="#modalAgregar" action_label="Registrar pago" %}
 
 {% if VentasPendientes %}
-<div class="alert alert-warning">Hay {{ VentasPendientes|length }} venta(s) con pago pendiente o parcial.</div>
-{% endif %}
-
-<div class="card shadow-sm">
+<div class="card shadow-sm mb-3">
+  <div class="card-header bg-white"><strong>Por cobrar</strong></div>
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>Folio</th><th>Cliente</th><th class="text-end">Total</th><th>Pago</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for venta in VentasPendientes %}
+        <tr>
+          <td class="fw-semibold">{{ venta.folio|default:venta.id_venta }}</td>
+          <td>{{ venta.id_cliente }}</td>
+          <td class="text-end">${{ venta.monto|floatformat:2 }}</td>
+          <td>{% include "includes/pago_badge.html" with estado=venta.estado_pago etiqueta=venta.get_estado_pago_display %}</td>
+          <td>
+            <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalAgregar" onclick="cobrarVenta({{ venta.id_venta }}, '{{ venta.monto|floatformat:2 }}')">Cobrar</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% include "includes/table_toolbar.html" with table_id="tabla-pagos" placeholder="Buscar folio, cliente o referencia…" %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" id="tabla-pagos">
       <thead class="table-light">
         <tr><th>Pago</th><th>Folio</th><th>Cliente</th><th>Monto</th><th>Método</th><th>Referencia</th><th>Fecha</th><th></th></tr>
       </thead>
@@ -29,7 +52,7 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="8" class="text-center text-muted py-4">No hay pagos.</td></tr>
+        <tr><td colspan="8">{% include "includes/empty_state.html" with message="No hay pagos." action_modal="#modalAgregar" action_label="Registrar pago" %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -91,5 +114,11 @@ function editarPago(id) {
   document.getElementById("estado_pago_reg_editar").value = p.estado;
 }
 function eliminarPago(id) { document.getElementById("id_pago_eliminar").value = id; }
+function cobrarVenta(id, monto) {
+  const select = document.querySelector('#modalAgregar [name="id_venta"]');
+  const montoEl = document.querySelector('#modalAgregar [name="monto"]');
+  if (select) select.value = String(id);
+  if (montoEl && monto) montoEl.value = String(monto).replace(",", "");
+}
 </script>
 {% endblock %}

@@ -20,13 +20,15 @@ class Vendedor(models.Model):
         return self.nombre
 
     @classmethod
+    def para_usuario(cls, user):
+        if user is None or not getattr(user, "is_authenticated", False):
+            return None
+        return cls.objects.filter(user_id=user.pk, activo=True).first()
+
+    @classmethod
     def obtener_o_crear_desde_usuario(cls, user):
-        nombre = (user.get_full_name() or "").strip() or user.get_username()
-        vendedor, _ = cls.objects.get_or_create(
-            user_id=user.pk,
-            defaults={"nombre": nombre, "email": user.email or ""},
-        )
-        return vendedor
+        """Ya no crea fichas. El POS solo usa vendedores dados de alta."""
+        return cls.para_usuario(user)
 
 
 class Cliente(models.Model):

@@ -3,6 +3,8 @@
 *.pyc
 __pycache__
 db.sqlite3
+demo.sqlite3
+demo_auth.sqlite3
 media
 
 # Environments 

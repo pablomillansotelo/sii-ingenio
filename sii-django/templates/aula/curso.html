@@ -3,38 +3,40 @@
 {% block content %}
 {% include "includes/page_header.html" with title=curso.nombre subtitle="Actividades, entregas y calificación del grupo." %}
 
+{% if inscripcion and not puede_cursar %}
+<div class="alert alert-warning">Tu inscripción está pendiente de pago. Puedes ver el grupo, pero no entregar hasta que el folio esté pagado.</div>
+{% endif %}
+
 {% if gestionar %}
 <div class="mb-3">
   <a class="btn btn-primary" href="{% url 'aula_actividad_nueva' curso.pk %}">Nueva actividad</a>
+  {% if es_admin %}
+  <a class="btn btn-outline-secondary" href="{% url 'sii_docentes' %}">Asignar docente en SII</a>
+  {% endif %}
 </div>
 {% endif %}
 
-{% if form_asignar %}
+{% if grupos %}
 <div class="card shadow-sm mb-3">
   <div class="card-header bg-white"><strong>Docentes del grupo</strong></div>
   <div class="card-body">
-    <ul class="mb-3">
+    <ul class="mb-0">
       {% for grupo in grupos %}
       <li>{{ grupo.docente }}{% if grupo.es_coordinador %} · coordinador{% endif %}</li>
-      {% empty %}
-      <li class="text-muted">Aún no hay docente asignado.</li>
       {% endfor %}
     </ul>
-    <form method="post" action="{% url 'aula_asignar_docente' curso.pk %}" class="row g-2 align-items-end">
-      {% csrf_token %}
-      <div class="col-md-6">
-        <label class="form-label" for="{{ form_asignar.docente.id_for_label }}">{{ form_asignar.docente.label }}</label>
-        {{ form_asignar.docente }}
-      </div>
-      <div class="col-md-3">
-        <div class="form-check mt-4">
-          {{ form_asignar.es_coordinador }}
-          <label class="form-check-label" for="{{ form_asignar.es_coordinador.id_for_label }}">{{ form_asignar.es_coordinador.label }}</label>
-        </div>
-      </div>
-      <div class="col-md-3"><button class="btn btn-outline-primary w-100" type="submit">Asignar</button></div>
-    </form>
   </div>
+</div>
+{% endif %}
+
+{% if horarios %}
+<div class="card shadow-sm mb-3">
+  <div class="card-header bg-white"><strong>Horario de la semana</strong></div>
+  <ul class="list-group list-group-flush">
+    {% for slot in horarios %}
+    <li class="list-group-item">{{ slot.get_dia_display }} {{ slot.hora_inicio|time:"H:i" }}–{{ slot.hora_fin|time:"H:i" }}{% if slot.lugar %} · {{ slot.lugar }}{% endif %}</li>
+    {% endfor %}
+  </ul>
 </div>
 {% endif %}
 
@@ -73,7 +75,7 @@
           </td>
           {% endif %}
           <td class="text-nowrap">
-            {% if inscripcion %}
+            {% if inscripcion and puede_cursar %}
             <a class="btn btn-outline-primary btn-sm" href="{% url 'aula_entregar' fila.actividad.pk %}">Entregar</a>
             {% endif %}
             {% if gestionar %}

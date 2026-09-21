@@ -1,0 +1,9 @@
+{% if estado == "pendiente" %}
+<span class="badge text-bg-warning">{{ etiqueta|default:"Pendiente" }}</span>
+{% elif estado == "parcial" %}
+<span class="badge text-bg-info">{{ etiqueta|default:"Parcial" }}</span>
+{% elif estado == "pagado" %}
+<span class="badge text-bg-success">{{ etiqueta|default:"Pagado" }}</span>
+{% else %}
+<span class="badge text-bg-secondary">{{ etiqueta }}</span>
+{% endif %}

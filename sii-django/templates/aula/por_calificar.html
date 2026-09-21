@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Por calificar · Aula{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Por calificar" subtitle="Entregas pendientes de nota en tus grupos." %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light"><tr><th>Curso</th><th>Actividad</th><th>Alumno</th><th>Entrega</th><th></th></tr></thead>
+      <tbody>
+        {% for fila in pendientes %}
+        <tr>
+          <td>{{ fila.actividad.curso }}</td>
+          <td>{{ fila.actividad.nombre }}</td>
+          <td>{{ fila.inscripcion.alumno }}</td>
+          <td>{{ fila.fecha_entrega|default:"—" }}</td>
+          <td><a class="btn btn-outline-primary btn-sm" href="{% url 'aula_calificar' fila.actividad_id %}">Calificar</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">{% include "includes/empty_state.html" with message="No hay entregas pendientes." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

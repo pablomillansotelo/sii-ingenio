@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ alumno }} · Expediente{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title=alumno subtitle="Expediente académico." %}
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <p class="mb-1"><strong>{{ alumno }}</strong></p>
+        <p class="text-muted mb-2">{{ alumno.email }}</p>
+        <p class="mb-1">Teléfono: {{ alumno.telefono|default:"—" }}</p>
+        <p class="mb-1">CURP: {{ alumno.curp }}</p>
+        <p class="mb-1">Nacimiento: {{ alumno.fecha_nacimiento }}</p>
+        <p class="mb-3"><span class="badge text-bg-secondary">{{ alumno.get_estado_display }}</span></p>
+        {% if cuenta %}
+        <p class="small text-muted mb-2">Usuario: {{ cuenta.username }}</p>
+        {% else %}
+        <p class="small text-muted mb-2">Sin cuenta de acceso.</p>
+        {% endif %}
+        {% if puede_operar %}
+        <form method="post" action="{% url 'sii_alumno_reset_cuenta' alumno.pk %}" class="mb-2">
+          {% csrf_token %}
+          <button class="btn btn-outline-primary btn-sm" type="submit">Nueva contraseña temporal</button>
+        </form>
+        {% endif %}
+        {% if propia %}
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'usuario' %}">Editar perfil</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white"><strong>Inscripciones</strong></div>
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead><tr><th>Curso</th><th>Periodo</th><th>Edición</th><th>Calificación</th><th>Estado</th></tr></thead>
+          <tbody>
+            {% for ins in inscripciones %}
+            <tr>
+              <td>{{ ins.curso }}</td>
+              <td>{{ ins.periodo }}{% if ins.periodo.cerrado %} · cerrado{% endif %}</td>
+              <td>{{ ins.id_edicion.codigo_edicion|default:"—" }}</td>
+              <td>{{ ins.calificacion|default:"—" }}</td>
+              <td>{{ ins.get_estado_display }}{% if not ins.puede_cursar %} · sin aula{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-muted text-center py-3">Sin inscripciones.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white"><strong>Horario</strong></div>
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead><tr><th>Día</th><th>Hora</th><th>Curso</th><th>Lugar</th></tr></thead>
+          <tbody>
+            {% for slot in horarios %}
+            <tr>
+              <td>{{ slot.get_dia_display }}</td>
+              <td>{{ slot.hora_inicio|time:"H:i" }}–{{ slot.hora_fin|time:"H:i" }}</td>
+              <td>{{ slot.curso }}</td>
+              <td>{{ slot.lugar|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-muted text-center py-3">Sin horario cargado.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if ventas %}
+    <div class="card shadow-sm">
+      <div class="card-header bg-white"><strong>Folios (lectura)</strong></div>
+      <ul class="list-group list-group-flush">
+        {% for venta in ventas %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span>{{ venta.folio }}</span>
+          <span class="badge text-bg-secondary">{{ venta.get_estado_pago_display }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

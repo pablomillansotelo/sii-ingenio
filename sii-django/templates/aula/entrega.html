@@ -6,7 +6,7 @@
   <div class="card-body">
     <p class="text-muted">Límite: {{ actividad.fecha_limite }} · Ponderación: {{ actividad.valor }}</p>
     {% if actividad.descripcion %}<p>{{ actividad.descripcion }}</p>{% endif %}
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
       {% include "includes/form_fields.html" with form=form %}
       <button class="btn btn-primary" type="submit">Enviar entrega</button>

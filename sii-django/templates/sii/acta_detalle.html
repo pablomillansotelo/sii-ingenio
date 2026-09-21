@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Acta {{ acta.curso }} · Ingenio{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title=acta.curso subtitle=acta.periodo.nombre %}
+<p>
+  <span class="badge text-bg-secondary">{{ acta.get_estado_display }}</span>
+  {% if acta.periodo.cerrado %}<span class="badge text-bg-warning">Periodo cerrado</span>{% endif %}
+  {% if acta.publicada_en %}<span class="text-muted small ms-2">Publicada {{ acta.publicada_en }}</span>{% endif %}
+</p>
+<form method="post" action="{% url 'sii_acta_publicar' acta.pk %}">
+  {% csrf_token %}
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="table-light"><tr><th>Alumno</th><th>Promedio aula</th><th>Calificación final</th><th>Acreditado</th></tr></thead>
+        <tbody>
+          {% for renglon in renglones %}
+          <tr>
+            <td>{{ renglon.inscripcion.alumno }}</td>
+            <td>{{ renglon.inscripcion.calificacion|default:"—" }}</td>
+            <td>
+              {% if puede_publicar %}
+              <input class="form-control" type="number" step="0.01" min="0" max="100" name="calificacion_{{ renglon.pk }}" value="{{ renglon.calificacion|default_if_none:'' }}">
+              {% else %}
+              {{ renglon.calificacion|default:"—" }}
+              {% endif %}
+            </td>
+            <td>{% if renglon.acreditado %}Sí{% elif renglon.calificacion is not None %}No{% else %}—{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-muted text-center py-3">No hay inscritos activos.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% if puede_publicar %}
+  <button class="btn btn-primary mt-3" type="submit">Publicar acta</button>
+  {% endif %}
+  <a class="btn btn-outline-secondary mt-3" href="{% url 'sii_actas' %}">Volver</a>
+</form>
+{% endblock %}

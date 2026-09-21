@@ -24,8 +24,8 @@ class AulaActividadTests(TestCase):
             fecha_fin=date(2026, 12, 31),
         )
         self.curso = Curso.objects.create(nombre="Marketing", descripcion="Grupo A")
-        self.alumno_user = User.objects.create_user(username="alum", password="secret123", email="alum@example.com")
-        self.docente_user = User.objects.create_user(username="profe", password="secret123", email="profe@example.com")
+        self.alumno_user = User.objects.create_user("alum", "alum@example.com", "secret123")
+        self.docente_user = User.objects.create_user("profe", "profe@example.com", "secret123")
         self.alumno_user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
         self.docente_user.groups.add(Group.objects.get(name=GRUPO_DOCENTE))
         self.alumno = Alumno.objects.create(
@@ -49,9 +49,9 @@ class AulaActividadTests(TestCase):
             periodo=self.periodo,
         )
         self.http_alum = Client()
-        self.http_alum.login(username="alum", password="secret123")
+        self.http_alum.force_login(self.alumno_user)
         self.http_profe = Client()
-        self.http_profe.login(username="profe", password="secret123")
+        self.http_profe.force_login(self.docente_user)
 
     def test_alumno_no_crea_actividad(self):
         response = self.http_alum.post(
@@ -65,7 +65,7 @@ class AulaActividadTests(TestCase):
             },
         )
         self.assertEqual(Actividad.objects.count(), 0)
-        self.assertRedirects(response, reverse("aula_curso", args=[self.curso.pk]))
+        self.assertEqual(response.status_code, 403)
 
     def test_docente_crea_alumno_entrega_y_kardex(self):
         response = self.http_profe.post(
@@ -96,8 +96,63 @@ class AulaActividadTests(TestCase):
         self.assertRedirects(calificar, reverse("aula_calificar", args=[actividad.pk]))
         self.inscripcion.refresh_from_db()
         self.assertEqual(self.inscripcion.calificacion, Decimal("80.00"))
-        kardex = self.http_alum.get(reverse("aula_kardex"))
+        kardex = self.http_alum.get(reverse("sii_kardex"))
         self.assertContains(kardex, "80")
+        redirect = self.http_alum.get(reverse("aula_kardex"))
+        self.assertRedirects(redirect, reverse("sii_kardex"))
+
+    def test_sidebar_aula_ya_no_lista_kardex(self):
+        response = self.http_alum.get(reverse("aula_dashboard"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Kardex")
+
+    def test_pendiente_de_pago_bloquea_entrega(self):
+        self.inscripcion.puede_cursar = False
+        self.inscripcion.save(update_fields=["puede_cursar"])
+        actividad = Actividad.objects.create(
+            curso=self.curso, nombre="Tarea paga", fecha_limite=date.today(), valor=Decimal("10")
+        )
+        response = self.http_alum.post(
+            reverse("aula_entregar", args=[actividad.pk]),
+            {"entrega": "No debería entrar"},
+        )
+        self.assertRedirects(response, reverse("aula_curso", args=[self.curso.pk]))
+        self.assertFalse(CalificacionActividad.objects.filter(actividad=actividad, entregado=True).exists())
+
+    def test_por_calificar_y_guardar_todas(self):
+        actividad = Actividad.objects.create(
+            curso=self.curso, nombre="Ensayo", fecha_limite=date.today(), valor=Decimal("100")
+        )
+        CalificacionActividad.objects.create(
+            actividad=actividad, inscripcion=self.inscripcion, entregado=True, entrega="Listo"
+        )
+        pendientes = self.http_profe.get(reverse("aula_por_calificar"))
+        self.assertEqual(pendientes.status_code, 200)
+        self.assertContains(pendientes, "Ana Lopez")
+        prefix = str(self.inscripcion.pk)
+        guardar = self.http_profe.post(
+            reverse("aula_guardar_calificaciones", args=[actividad.pk]),
+            {f"{prefix}-calificacion": "88", f"{prefix}-comentarios": "Ok"},
+        )
+        self.assertRedirects(guardar, reverse("aula_calificar", args=[actividad.pk]))
+        self.inscripcion.refresh_from_db()
+        self.assertEqual(self.inscripcion.calificacion, Decimal("88.00"))
+
+    def test_asignar_docente_redirige_a_sii(self):
+        response = self.http_profe.get(reverse("aula_asignar_docente", args=[self.curso.pk]))
+        self.assertEqual(response.status_code, 403)
+        admin = User.objects.create_superuser("admin_aula", "admin.aula@example.com", "secret123")
+        http = Client()
+        http.force_login(admin)
+        redir = http.get(reverse("aula_asignar_docente", args=[self.curso.pk]))
+        self.assertRedirects(redir, reverse("sii_docentes"))
+
+    def test_alumno_no_entra_a_calificar(self):
+        actividad = Actividad.objects.create(
+            curso=self.curso, nombre="Quiz", fecha_limite=date.today(), valor=Decimal("10")
+        )
+        response = self.http_alum.get(reverse("aula_calificar", args=[actividad.pk]))
+        self.assertEqual(response.status_code, 403)
 
     def test_actualizar_kardex_ponderado(self):
         a1 = Actividad.objects.create(

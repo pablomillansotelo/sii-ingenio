@@ -6,15 +6,15 @@
 {% else %}
 {% include "includes/page_header.html" with title="Alumnos" subtitle="Expediente académico." %}
 {% endif %}
-{% if not puede_operar %}{% endif %}
+{% include "includes/table_toolbar.html" with table_id="tabla-alumnos" placeholder="Buscar nombre, email o CURP…" filter_kind="alumno" %}
 <div class="card shadow-sm">
   <div class="table-responsive">
-    <table class="table mb-0">
-      <thead><tr><th>Nombre</th><th>Email</th><th>CURP</th><th>Estado</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
+    <table class="table table-hover align-middle mb-0" id="tabla-alumnos">
+      <thead class="table-light"><tr><th>Nombre</th><th>Email</th><th>CURP</th><th>Estado</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
       <tbody>
         {% for alumno in alumnos %}
-        <tr>
-          <td>{{ alumno }}</td>
+        <tr data-filter="{{ alumno.estado }}">
+          <td><a href="{% url 'sii_alumno_ficha' alumno.pk %}">{{ alumno }}</a></td>
           <td>{{ alumno.email }}</td>
           <td>{{ alumno.curp }}</td>
           <td><span class="badge text-bg-secondary">{{ alumno.get_estado_display }}</span></td>
@@ -23,7 +23,7 @@
           {% endif %}
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="text-center text-muted py-4">No hay alumnos.</td></tr>
+        <tr><td colspan="5">{% if puede_operar %}{% include "includes/empty_state.html" with message="No hay alumnos." action_modal="#modalAgregar" action_label="Nuevo alumno" %}{% else %}{% include "includes/empty_state.html" with message="No hay alumnos." %}{% endif %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -51,7 +51,7 @@
 <script>
 const alumnos = {
   {% for a in alumnos %}
-  {{ a.pk }}: {nombre:"{{ a.nombre|escapejs }}", apellido:"{{ a.apellido|escapejs }}", email:"{{ a.email|escapejs }}", curp:"{{ a.curp|escapejs }}", nacimiento:"{{ a.fecha_nacimiento|date:'Y-m-d' }}", estado:"{{ a.estado|escapejs }}"},
+  {{ a.pk }}: {nombre:"{{ a.nombre|escapejs }}", apellido:"{{ a.apellido|escapejs }}", email:"{{ a.email|escapejs }}", telefono:"{{ a.telefono|default:''|escapejs }}", curp:"{{ a.curp|escapejs }}", nacimiento:"{{ a.fecha_nacimiento|date:'Y-m-d' }}", estado:"{{ a.estado|escapejs }}"},
   {% endfor %}
 };
 function editarAlumno(id) {
@@ -61,6 +61,8 @@ function editarAlumno(id) {
   document.getElementById("nombre_alumno_editar").value = a.nombre;
   document.getElementById("apellido_alumno_editar").value = a.apellido;
   document.getElementById("email_alumno_editar").value = a.email;
+  const tel = document.getElementById("telefono_alumno_editar");
+  if (tel) tel.value = a.telefono;
   document.getElementById("curp_alumno_editar").value = a.curp;
   document.getElementById("nacimiento_alumno_editar").value = a.nacimiento;
   document.getElementById("estado_alumno_editar").value = a.estado;

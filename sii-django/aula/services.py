@@ -5,6 +5,11 @@ from aula.models import CalificacionActividad, Kardex
 
 def actualizar_kardex(inscripcion):
     """Promedio ponderado por valor de actividad → inscripción y kardex."""
+    from sii.actas import acta_congela_inscripcion
+
+    if acta_congela_inscripcion(inscripcion):
+        return inscripcion.calificacion
+
     filas = CalificacionActividad.objects.filter(
         inscripcion=inscripcion,
         calificacion__isnull=False,

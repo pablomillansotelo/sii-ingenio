@@ -20,7 +20,15 @@
     </div>
   </div>
   {% empty %}
-  <div class="col-12"><div class="card shadow-sm"><div class="text-center text-muted py-4">{% if es_propio %}Aún no tienes cursos inscritos.{% else %}Aún no hay cursos asignados.{% endif %}</div></div></div>
+  <div class="col-12">
+    <div class="card shadow-sm">
+      {% if es_propio %}
+      {% include "includes/empty_state.html" with message="Aún no tienes cursos inscritos." %}
+      {% else %}
+      {% include "includes/empty_state.html" with message="Aún no hay cursos asignados." %}
+      {% endif %}
+    </div>
+  </div>
   {% endfor %}
 </div>
 {% endblock %}

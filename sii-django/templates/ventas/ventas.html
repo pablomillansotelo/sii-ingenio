@@ -3,12 +3,15 @@
 {% block page_heading %}Ventas{% endblock %}
 
 {% block content %}
-{% include "includes/page_header.html" with title="Ventas" subtitle="Folios, cobro y estado de cada operación." action_url="/ventas/nueva/" action_label="Nueva venta" %}
+{% url "Carrito" as nueva_venta_url %}
+{% url "Pagos" as pagos_url %}
+{% include "includes/page_header.html" with title="Ventas" subtitle="Folios, cobro y estado de cada operación." action_url=nueva_venta_url action_label="Nueva venta" %}
 
+{% include "includes/table_toolbar.html" with table_id="tabla-folios" placeholder="Buscar folio, cliente o vendedor…" filter_kind="pago" %}
 <div class="card shadow-sm">
   <div class="table-responsive">
-    <table class="table mb-0">
-      <thead>
+    <table class="table table-hover align-middle mb-0" id="tabla-folios">
+      <thead class="table-light">
         <tr>
           <th>Folio</th>
           <th>Cliente</th>
@@ -22,21 +25,21 @@
       </thead>
       <tbody>
         {% for i in Ventas %}
-        <tr>
-          <td>{{ i.folio|default:i.id_venta }}</td>
+        <tr{% if i.estado_pago != "pagado" %} class="table-row-link" data-href="{{ pagos_url }}"{% endif %} data-filter="{{ i.estado_pago }}">
+          <td class="fw-semibold">{{ i.folio|default:i.id_venta }}</td>
           <td>{{ i.id_cliente }}</td>
           <td>{{ i.vendedor_nombre }}</td>
           <td>{{ i.fecha }}</td>
           <td>${{ i.monto }}</td>
           <td><span class="badge text-bg-secondary">{{ i.get_estado_display }}</span></td>
-          <td>{{ i.get_estado_pago_display }}</td>
+          <td>{% include "includes/pago_badge.html" with estado=i.estado_pago etiqueta=i.get_estado_pago_display %}</td>
           <td class="text-nowrap">
             <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editarVenta({{ i.id_venta }})">Editar</button>
             <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEliminar" onclick="eliminarVenta({{ i.id_venta }})">Eliminar</button>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="8" class="text-center text-muted py-4">No hay ventas registradas.</td></tr>
+        <tr><td colspan="8">{% include "includes/empty_state.html" with message="No hay ventas registradas." action_url=nueva_venta_url action_label="Nueva venta" %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

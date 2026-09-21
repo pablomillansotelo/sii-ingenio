@@ -6,10 +6,11 @@
 {% else %}
 {% include "includes/page_header.html" with title="Docentes" subtitle="Planta académica." %}
 {% endif %}
+{% include "includes/table_toolbar.html" with table_id="tabla-docentes" placeholder="Buscar docente o especialidad…" %}
 <div class="card shadow-sm mb-3">
   <div class="table-responsive">
-    <table class="table mb-0">
-      <thead><tr><th>Nombre</th><th>Email</th><th>Especialidad</th><th>Estado</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
+    <table class="table table-hover align-middle mb-0" id="tabla-docentes">
+      <thead class="table-light"><tr><th>Nombre</th><th>Email</th><th>Especialidad</th><th>Estado</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
       <tbody>
         {% for docente in docentes %}
         <tr>
@@ -22,7 +23,7 @@
           {% endif %}
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="text-center text-muted py-4">No hay docentes.</td></tr>
+        <tr><td colspan="5">{% if puede_operar %}{% include "includes/empty_state.html" with message="No hay docentes." action_modal="#modalAgregar" action_label="Nuevo docente" %}{% else %}{% include "includes/empty_state.html" with message="No hay docentes." %}{% endif %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
