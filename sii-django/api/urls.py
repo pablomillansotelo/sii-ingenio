@@ -13,6 +13,37 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", CustomLoginView.as_view(template_name="login.html"), name="login"),
     path("logout/", auth_views.LogoutView.as_view(next_page="login"), name="logout"),
+    path(
+        "cuenta/recuperar/",
+        auth_views.PasswordResetView.as_view(
+            template_name="registration/password_reset_form.html",
+            email_template_name="registration/password_reset_email.html",
+            success_url="/cuenta/recuperar/enviado/",
+        ),
+        name="password_reset",
+    ),
+    path(
+        "cuenta/recuperar/enviado/",
+        auth_views.PasswordResetDoneView.as_view(
+            template_name="registration/password_reset_done.html"
+        ),
+        name="password_reset_done",
+    ),
+    path(
+        "cuenta/recuperar/<uidb64>/<token>/",
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name="registration/password_reset_confirm.html",
+            success_url="/cuenta/recuperar/listo/",
+        ),
+        name="password_reset_confirm",
+    ),
+    path(
+        "cuenta/recuperar/listo/",
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name="registration/password_reset_complete.html"
+        ),
+        name="password_reset_complete",
+    ),
     path("inicio/", views.inicio, name="inicio"),
     path("sii/", include("sii.urls")),
     path("dashboard/", RedirectView.as_view(pattern_name="sii_home", permanent=False)),
@@ -28,4 +59,6 @@ urlpatterns = [
     path("usuario/", RedirectView.as_view(url="/cuenta/", permanent=False)),
     path("ventas/", include("ventas.urls")),
     path("aula/", include("aula.urls")),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(
+    settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
+)

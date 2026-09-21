@@ -1,0 +1,41 @@
+{% url "Ventas" as folios_url %}
+{% url "Pagos" as pagos_url %}
+{% url "Carrito" as nueva_venta_url %}
+<div class="card shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <strong>{{ title|default:"Últimas ventas" }}</strong>
+    {% if ver_url != "ocultar" %}
+    <a class="small" href="{{ ver_url|default:folios_url }}">{{ ver_label|default:"Ver folios" }}</a>
+    {% endif %}
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" id="{{ table_id|default:'tabla-ventas-recientes' }}">
+      <thead class="table-light">
+        <tr>
+          <th>Folio</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th class="text-end">Total</th>
+          <th>Pago</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for venta in ventas %}
+        <tr class="table-row-link" data-href="{% if venta.estado_pago == 'pagado' %}{{ folios_url }}{% else %}{{ pagos_url }}{% endif %}" data-filter="{{ venta.estado_pago }}">
+          <td class="fw-semibold">{{ venta.folio|default:venta.id_venta }}</td>
+          <td>{{ venta.id_cliente }}</td>
+          <td>{{ venta.fecha|date:"d/m/Y"|default:"—" }}</td>
+          <td class="text-end">${{ venta.monto|floatformat:2 }}</td>
+          <td>{% include "includes/pago_badge.html" with estado=venta.estado_pago etiqueta=venta.get_estado_pago_display %}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5">
+            {% include "includes/empty_state.html" with message="Aún no hay ventas." action_url=nueva_venta_url action_label="Nueva venta" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

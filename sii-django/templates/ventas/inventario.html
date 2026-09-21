@@ -5,10 +5,11 @@
 {% block content %}
 {% include "includes/page_header.html" with title="Cursos en venta" subtitle="Catálogo comercial del call center." action_modal="#modalAgregar" action_label="Nuevo curso" %}
 
+{% include "includes/table_toolbar.html" with table_id="tabla-inventario" placeholder="Buscar curso o código…" filter_kind="activo" %}
 <div class="card shadow-sm">
   <div class="table-responsive">
-    <table class="table mb-0">
-      <thead>
+    <table class="table table-hover align-middle mb-0" id="tabla-inventario">
+      <thead class="table-light">
         <tr>
           <th>Curso</th>
           <th>Código</th>
@@ -22,7 +23,7 @@
       </thead>
       <tbody>
         {% for i in Productos %}
-        <tr>
+        <tr data-filter="{% if i.activo %}activo{% else %}inactivo{% endif %}">
           <td>{{ i.producto }}</td>
           <td>{{ i.codigo|default:"—" }}</td>
           <td>{% if i.id_curso %}<span class="badge text-bg-secondary">{{ i.id_curso.nombre }}</span>{% else %}—{% endif %}</td>
@@ -36,7 +37,7 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="8" class="text-center text-muted py-4">No hay cursos en el catálogo.</td></tr>
+        <tr><td colspan="8">{% include "includes/empty_state.html" with message="No hay cursos en el catálogo." action_modal="#modalAgregar" action_label="Nuevo curso" %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

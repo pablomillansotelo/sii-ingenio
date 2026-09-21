@@ -6,22 +6,32 @@
 {% else %}
 {% include "includes/page_header.html" with title="Periodos" subtitle="Calendario académico." %}
 {% endif %}
+{% include "includes/table_toolbar.html" with table_id="tabla-periodos" placeholder="Buscar periodo…" %}
 <div class="card shadow-sm">
   <div class="table-responsive">
-    <table class="table mb-0">
-      <thead><tr><th>Periodo</th><th>Inicio</th><th>Fin</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
+    <table class="table table-hover align-middle mb-0" id="tabla-periodos">
+      <thead class="table-light"><tr><th>Periodo</th><th>Inicio</th><th>Fin</th><th>Estado</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
       <tbody>
         {% for periodo in periodos %}
         <tr>
           <td>{{ periodo.nombre }}</td>
           <td>{{ periodo.fecha_inicio }}</td>
           <td>{{ periodo.fecha_fin }}</td>
+          <td>{% if periodo.cerrado %}<span class="badge text-bg-warning">Cerrado</span>{% else %}<span class="badge text-bg-secondary">Abierto</span>{% endif %}</td>
           {% if puede_operar %}
-          <td><button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editarPeriodo({{ periodo.pk }})">Editar</button></td>
+          <td class="text-nowrap">
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editarPeriodo({{ periodo.pk }})">Editar</button>
+            {% if not periodo.cerrado %}
+            <form method="post" action="{% url 'sii_periodo_cerrar' %}" class="d-inline">{% csrf_token %}
+              <input type="hidden" name="id" value="{{ periodo.pk }}">
+              <button class="btn btn-outline-warning btn-sm" type="submit">Cerrar</button>
+            </form>
+            {% endif %}
+          </td>
           {% endif %}
         </tr>
         {% empty %}
-        <tr><td colspan="4" class="text-center text-muted py-4">No hay periodos.</td></tr>
+        <tr><td colspan="5">{% if puede_operar %}{% include "includes/empty_state.html" with message="No hay periodos." action_modal="#modalAgregar" action_label="Nuevo periodo" %}{% else %}{% include "includes/empty_state.html" with message="No hay periodos." %}{% endif %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

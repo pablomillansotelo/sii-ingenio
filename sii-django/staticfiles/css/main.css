@@ -7,6 +7,9 @@
   --bs-link-hover-color: #a40c24;
   --bs-link-color-rgb: 206, 14, 45;
   --bs-focus-ring-color: rgba(206, 14, 45, 0.25);
+  --shell-topbar: 3.5rem;
+  --shell-sidebar: 15.5rem;
+  --shell-sidebar-min: 4.5rem;
 }
 
 .bg-primary {
@@ -64,20 +67,222 @@
   --bs-btn-disabled-border-color: #ce0e2d;
 }
 
-body {
+.app-shell {
   min-height: 100vh;
-  background-color: var(--bs-secondary-bg);
+  background-color: #f3f5f7;
 }
 
-.navbar-brand {
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  min-height: var(--shell-topbar);
+  padding: 0;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+}
+
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: var(--shell-topbar);
+  padding: 0 1rem;
+}
+
+.topbar .navbar-brand {
   letter-spacing: 0.04em;
 }
 
-.navbar-dark .nav-pills .nav-link {
-  color: rgba(255, 255, 255, 0.85);
+.topbar-logo {
+  height: 28px;
+  width: auto;
+  filter: brightness(0) invert(1);
 }
 
-.navbar-dark .nav-pills .nav-link.active {
+.topbar-modules .nav-link {
+  color: rgba(255, 255, 255, 0.86);
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+}
+
+.topbar-modules .nav-link.active {
   background-color: #fff;
   color: #ce0e2d;
+  font-weight: 600;
+}
+
+.shell-body {
+  display: flex;
+  min-height: calc(100vh - var(--shell-topbar));
+}
+
+.sidebar {
+  flex-direction: column;
+  width: var(--shell-sidebar);
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid var(--bs-border-color);
+  padding: 1rem 0.75rem;
+  position: sticky;
+  top: var(--shell-topbar);
+  height: calc(100vh - var(--shell-topbar));
+  overflow-y: auto;
+  transition: width 0.2s ease;
+}
+
+.sidebar-heading {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bs-secondary-color);
+  font-weight: 600;
+  padding: 0 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 0.15rem;
+  border-radius: 0.6rem;
+  color: #344054;
+  text-decoration: none;
+  font-size: 0.925rem;
+}
+
+.sidebar-link i {
+  width: 1.25rem;
+  text-align: center;
+  font-size: 1.05rem;
+  color: #667085;
+}
+
+.sidebar-link:hover {
+  background: #f2f4f7;
+  color: #ce0e2d;
+}
+
+.sidebar-link.is-active {
+  background: rgba(206, 14, 45, 0.1);
+  color: #ce0e2d;
+  font-weight: 600;
+}
+
+.sidebar-link.is-active i {
+  color: #ce0e2d;
+}
+
+.sidebar-badge {
+  margin-left: auto;
+}
+
+.shell-collapsed .sidebar {
+  width: var(--shell-sidebar-min);
+  align-items: center;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.shell-collapsed .sidebar-heading,
+.shell-collapsed .sidebar-label {
+  display: none;
+}
+
+.shell-collapsed .sidebar-link {
+  justify-content: center;
+  padding: 0.65rem 0;
+  width: 2.75rem;
+}
+
+.shell-collapsed .sidebar-badge {
+  display: none;
+}
+
+.shell-main {
+  flex: 1;
+  min-width: 0;
+  padding: 1.5rem 1.75rem 2.5rem;
+}
+
+.stat-card {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stat-card:hover {
+  border-color: rgba(206, 14, 45, 0.35);
+  box-shadow: 0 0.35rem 0.7rem rgba(15, 23, 42, 0.08) !important;
+}
+
+.cobro-banner {
+  border: 0;
+  margin-bottom: 1.25rem;
+}
+
+.table-row-link {
+  cursor: pointer;
+}
+
+.table-search {
+  max-width: 20rem;
+}
+
+.table-toolbar .btn-group .btn.active {
+  background-color: #ce0e2d;
+  border-color: #ce0e2d;
+  color: #fff;
+}
+
+.pos-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pos-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #667085;
+}
+
+.pos-step-num {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: #e4e7ec;
+  color: #344054;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pos-step.is-current,
+.pos-step-num.is-on {
+  color: #ce0e2d;
+}
+
+.pos-step.is-current .pos-step-num,
+.pos-step-num.is-on {
+  background: #ce0e2d;
+  color: #fff;
+}
+
+.pos-step-sep {
+  width: 2.5rem;
+  height: 2px;
+  background: #d0d5dd;
+}
+
+@media (max-width: 991.98px) {
+  .shell-main {
+    padding: 1.25rem 1rem 2rem;
+  }
 }

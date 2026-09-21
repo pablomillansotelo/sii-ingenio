@@ -1,0 +1,6 @@
+# Las contraseñas de los tests de Django no son credenciales de producción.
+version: 2
+secret:
+  ignored-paths:
+    - "**/tests.py"
+    - "**/*tests.py"

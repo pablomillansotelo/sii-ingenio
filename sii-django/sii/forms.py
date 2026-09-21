@@ -2,7 +2,7 @@ from django import forms
 from django.forms.widgets import CheckboxInput, Select, SelectMultiple, FileInput
 
 from docente.models import Docente, DocenteCurso
-from sii.models import Alumno, Curso, Inscripcion, Periodo
+from sii.models import Alumno, Curso, HorarioSlot, Inscripcion, Periodo
 
 
 class BootstrapFormMixin:
@@ -23,11 +23,12 @@ class BootstrapFormMixin:
 class AlumnoForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Alumno
-        fields = ("nombre", "apellido", "email", "curp", "fecha_nacimiento", "estado")
+        fields = ("nombre", "apellido", "email", "telefono", "curp", "fecha_nacimiento", "estado")
         labels = {
             "nombre": "Nombre",
             "apellido": "Apellidos",
             "email": "Email",
+            "telefono": "Teléfono",
             "curp": "CURP",
             "fecha_nacimiento": "Fecha de nacimiento",
             "estado": "Estado",
@@ -44,6 +45,7 @@ class EditarAlumnoForm(AlumnoForm):
             "nombre": forms.TextInput(attrs={"id": "nombre_alumno_editar"}),
             "apellido": forms.TextInput(attrs={"id": "apellido_alumno_editar"}),
             "email": forms.EmailInput(attrs={"id": "email_alumno_editar"}),
+            "telefono": forms.TextInput(attrs={"id": "telefono_alumno_editar"}),
             "curp": forms.TextInput(attrs={"id": "curp_alumno_editar", "maxlength": "18"}),
             "fecha_nacimiento": forms.DateInput(attrs={"type": "date", "id": "nacimiento_alumno_editar"}),
             "estado": forms.Select(attrs={"id": "estado_alumno_editar"}),
@@ -137,4 +139,22 @@ class AsignacionForm(BootstrapFormMixin, forms.ModelForm):
             "docente": "Docente",
             "curso": "Curso",
             "es_coordinador": "Coordinador",
+        }
+
+
+class HorarioSlotForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = HorarioSlot
+        fields = ("curso", "periodo", "dia", "hora_inicio", "hora_fin", "lugar")
+        labels = {
+            "curso": "Curso",
+            "periodo": "Periodo",
+            "dia": "Día",
+            "hora_inicio": "Inicio",
+            "hora_fin": "Fin",
+            "lugar": "Salón / lugar",
+        }
+        widgets = {
+            "hora_inicio": forms.TimeInput(attrs={"type": "time"}),
+            "hora_fin": forms.TimeInput(attrs={"type": "time"}),
         }

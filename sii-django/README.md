@@ -106,4 +106,4 @@ Esta separación se gestiona mediante un **Database Router** ubicado en `api/dbr
 
 ### Documentación Adicional
 
-Para detalles más profundos sobre arquitectura, modelos y guías avanzadas, revisa el directorio `/docs`.
+Para detalles más profundos sobre arquitectura, modelos, roles/RBAC y guías avanzadas, revisa el directorio `/docs`.

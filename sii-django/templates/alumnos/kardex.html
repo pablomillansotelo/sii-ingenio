@@ -9,6 +9,7 @@
         <tr>
           {% if mostrar_alumno %}<th>Alumno</th>{% endif %}
           <th>Curso</th>
+          <th>Grupo</th>
           <th>Periodo</th>
           <th>Calificación</th>
         </tr>
@@ -18,11 +19,12 @@
         <tr>
           {% if mostrar_alumno %}<td>{{ materia.alumno|default:"—" }}</td>{% endif %}
           <td>{{ materia.nombre }}</td>
+          <td>{{ materia.edicion|default:"—" }}</td>
           <td>{{ materia.periodo }}</td>
           <td>{{ materia.calificacion|default:"—" }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="{% if mostrar_alumno %}4{% else %}3{% endif %}" class="text-center text-muted py-4">No hay materias en tu expediente.</td></tr>
+        <tr><td colspan="{% if mostrar_alumno %}5{% else %}4{% endif %}" class="text-center text-muted py-4">No hay materias en tu expediente.</td></tr>
         {% endfor %}
       </tbody>
     </table>

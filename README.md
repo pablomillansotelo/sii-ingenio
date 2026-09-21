@@ -5,25 +5,22 @@
 ## Qué ya está en producción
 
 *   **Ventas:** panel, punto de venta con cupo por edición, clientes, folios, pagos, cursos, vendedores.
-*   **SII:** alumnos, cursos, periodos, inscripciones (alta, baja, reintento), docentes y asignaciones.
-*   **Aula:** actividades, entregas, calificación y kardex.
-*   **Acceso:** login único y módulos filtrados por rol (Administrador, Vendedor, Docente, Alumno).
+*   **SII:** alumnos, cursos, periodos, inscripciones, docentes, kardex, actas, horario y ficha.
+*   **Aula:** actividades, entregas (texto o archivo), calificación masiva y aviso por calificar.
+*   **Acceso:** login único, alta de cuenta al crear alumno/docente/vendedor, perfil y recuperación de contraseña.
 
 ## Qué falta (roadmap)
 
 Prioridad alta:
 
-1. **Cuentas al dar de alta** — crear alumno/docente no crea usuario de login; el vínculo es un `user_id` débil.
-2. **Perfil** — `/cuenta/` solo muestra nombre y correo; no se edita ni se cambia contraseña.
-3. **Actas** — la visión original incluye actas de calificaciones; hoy el kardex sale del promedio de actividades.
-4. **Horario** — la ruta existe pero redirige al aula.
-5. **Documentación** — `docs/` describe el SII viejo; no documenta Ventas ni Aula.
+1. **Pago en línea** — el cobro sigue siendo registro manual del call center.
+2. **Documentación de operación** — Ventas y Aula aún no tienen un manual aparte del SII.
+3. **PDF / CFDI** — el recibo es HTML imprimible.
 
 Después:
 
-*   Pagos en línea (hoy el cobro es registro manual).
-*   Adjuntos en tareas (la entrega es texto).
 *   Apps `docente/` y `administrador/` vacías (la lógica vive en `sii/` y `aula/`).
+*   Storage persistente de archivos de entrega (hoy es disco local).
 *   `/sii-sql` vacío; las migraciones de Django son la fuente de verdad.
 *   Proyectos Vercel legacy `ventas-ingenio` y `aula-ingenio` (el unificado es `sii-ingenio` → `sii.modeloingenio.xyz`).
 

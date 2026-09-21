@@ -248,6 +248,10 @@ class AddVendedorForm(BootstrapFormMixin, forms.ModelForm):
             "activo": "Activo",
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["email"].required = True
+
 
 class EditarVendedorForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:

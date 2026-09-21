@@ -41,8 +41,8 @@ class ActividadForm(BootstrapFormMixin, forms.ModelForm):
 class EntregaForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = CalificacionActividad
-        fields = ("entrega",)
-        labels = {"entrega": "Tu entrega"}
+        fields = ("entrega", "archivo")
+        labels = {"entrega": "Tu entrega", "archivo": "Archivo (opcional)"}
         widgets = {"entrega": forms.Textarea(attrs={"rows": 5, "placeholder": "Escribe o pega tu entrega."})}
 
 

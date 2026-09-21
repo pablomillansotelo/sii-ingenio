@@ -2,13 +2,38 @@
 {% block title %}Mi cuenta · Ingenio{% endblock %}
 {% block page_heading %}Mi cuenta{% endblock %}
 {% block content %}
-{% include "includes/page_header.html" with title="Mi cuenta" subtitle="Sesión activa en Ingenio." %}
-<div class="card shadow-sm" style="max-width: 520px;">
-  <div class="card-body">
-    <p class="mb-1"><strong>{{ user.get_full_name|default:user.username }}</strong></p>
-    <p class="text-muted mb-4">{{ user.email }}</p>
-    <a class="btn btn-outline-primary" href="{% url 'aula_kardex' %}">Ver kardex</a>
-    <a class="btn btn-outline-secondary" href="{% url 'logout' %}">Cerrar sesión</a>
+{% include "includes/page_header.html" with title="Mi cuenta" subtitle="Nombre para mostrar, teléfono y contraseña. CURP y estado académico se editan en SII." %}
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Perfil</h2>
+        <p class="text-muted small">{{ user.email|default:"Sin correo" }} · {{ user.username }}</p>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="perfil">
+          {% include "includes/form_fields.html" with form=perfil_form %}
+          <button class="btn btn-primary" type="submit">Guardar perfil</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Contraseña</h2>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="password">
+          {% include "includes/form_fields.html" with form=password_form %}
+          <button class="btn btn-outline-primary" type="submit">Cambiar contraseña</button>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
+<p class="mt-4 d-flex flex-wrap gap-2">
+  {% if ver_kardex %}<a class="btn btn-outline-primary" href="{% url 'sii_kardex' %}">Ver kardex</a>{% endif %}
+  <a class="btn btn-outline-secondary" href="{% url 'logout' %}">Cerrar sesión</a>
+</p>
 {% endblock %}
