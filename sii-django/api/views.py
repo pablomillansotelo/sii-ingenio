@@ -23,27 +23,61 @@ class CustomLoginView(LoginView):
 
 @login_required
 def inicio(request):
-    stats = []
+    stats_ventas = []
+    stats_sii = []
+    accesos = []
+    ventas_recientes = []
     if puede_ver_modulo(request.user, "ventas"):
-        stats.extend(
+        pagos_pendientes = Venta.objects.filter(estado_pago="pendiente").count()
+        stats_ventas = [
+            {"label": "Clientes", "value": Cliente.objects.filter(activo=True).count(), "href": "Clientes"},
+            {"label": "Folios", "value": Venta.objects.count(), "href": "Ventas"},
+            {"label": "Cursos en venta", "value": Producto.objects.filter(activo=True).count(), "href": "Inventario"},
+            {"label": "Pagos pendientes", "value": pagos_pendientes, "href": "Pagos"},
+        ]
+        ventas_recientes = (
+            Venta.objects.select_related("id_cliente")
+            .prefetch_related("ventadetalle_set")
+            .order_by("-id_venta")[:8]
+        )
+        accesos.extend(
             [
-                {"label": "Clientes", "value": Cliente.objects.count(), "href": "Clientes"},
-                {"label": "Ventas", "value": Venta.objects.count(), "href": "Ventas"},
-                {"label": "Cursos", "value": Producto.objects.count(), "href": "Inventario"},
+                {"label": "Nueva venta", "href": reverse("Carrito"), "icon": "bi-bag-plus", "badge": None},
+                {
+                    "label": "Registrar pago",
+                    "href": reverse("Pagos"),
+                    "icon": "bi-credit-card",
+                    "badge": pagos_pendientes or None,
+                },
+                {"label": "Clientes", "href": reverse("Clientes"), "icon": "bi-people", "badge": None},
             ]
         )
     if puede_ver_modulo(request.user, "sii"):
-        stats.extend(
+        stats_sii = [
+            {"label": "Alumnos", "value": alumnos_visibles(request.user).count(), "href": "sii_alumnos"},
+            {
+                "label": "Inscripciones",
+                "value": inscripciones_visibles(request.user).count(),
+                "href": "sii_inscripciones",
+            },
+        ]
+        accesos.extend(
             [
-                {"label": "Alumnos", "value": alumnos_visibles(request.user).count(), "href": "sii_alumnos"},
-                {"label": "Inscripciones", "value": inscripciones_visibles(request.user).count(), "href": "sii_inscripciones"},
+                {"label": "Inscripciones SII", "href": reverse("sii_inscripciones"), "icon": "bi-clipboard-check", "badge": None},
+                {"label": "Alumnos", "href": reverse("sii_alumnos"), "icon": "bi-people", "badge": None},
             ]
         )
-    ventas_recientes = []
-    if puede_ver_modulo(request.user, "ventas"):
-        ventas_recientes = Venta.objects.select_related("id_cliente").order_by("-id_venta")[:5]
+    if puede_ver_modulo(request.user, "aula"):
+        accesos.append(
+            {"label": "Aula", "href": reverse("aula_dashboard"), "icon": "bi-journal-bookmark", "badge": None}
+        )
     return render(
         request,
         "inicio.html",
-        {"stats": stats, "ventas_recientes": ventas_recientes},
+        {
+            "stats_ventas": stats_ventas,
+            "stats_sii": stats_sii,
+            "accesos": accesos,
+            "ventas_recientes": ventas_recientes,
+        },
     )

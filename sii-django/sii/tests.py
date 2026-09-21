@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 from pathlib import Path
 
 from django.conf import settings
@@ -10,6 +11,7 @@ from django.urls import reverse
 from docente.models import Docente, DocenteCurso
 from sii.models import Alumno, Curso, Inscripcion, Periodo
 from sii.permissions import GRUPO_DOCENTE, crear_grupos
+from ventas.models import Cliente, Producto, Venta, VentaDetalle
 
 
 class SiiOperacionTests(TestCase):
@@ -90,6 +92,44 @@ class SiiOperacionTests(TestCase):
         )
         self.assertRedirects(response, reverse("sii_docentes"))
         self.assertTrue(DocenteCurso.objects.filter(docente=docente, curso=curso).exists())
+
+
+class InicioEscritorioTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.admin = User.objects.create_superuser("admin", "admin@example.com", "secret123")
+        self.http = Client()
+        self.http.login(username="admin", password="secret123")
+        cliente = Cliente.objects.create(
+            nombre="Ana",
+            apellidos="Lopez",
+            direccion="Calle 1",
+            email="ana.home@example.com",
+        )
+        producto = Producto.objects.create(producto="Inglés", precio_unitario=Decimal("1000"), activo=True)
+        venta = Venta.objects.create(id_cliente=cliente, fecha=date.today(), estado_pago="pendiente")
+        VentaDetalle.objects.create(
+            id_venta=venta,
+            id_producto=producto,
+            cantidad=1,
+            precio_unitario=Decimal("1000"),
+        )
+
+    def test_inicio_es_escritorio_no_menu(self):
+        response = self.http.get(reverse("inicio"))
+        self.assertContains(response, "Hoy")
+        self.assertContains(response, "Nueva venta")
+        self.assertNotContains(response, "Entrar a Ventas")
+        self.assertNotContains(response, "Entrar a SII")
+        self.assertContains(response, "Pagos pendientes")
+        self.assertContains(response, "Control escolar")
+        self.assertContains(response, "Fecha")
+        self.assertContains(response, "Total")
+        self.assertContains(response, "Accesos rápidos")
+        self.assertContains(response, "container-xl")
+        self.assertContains(response, "text-bg-warning")
 
 
 class StaticFilesProduccionTests(TestCase):

@@ -35,7 +35,7 @@
             <tr>
               <td>{{ venta.folio|default:venta.id_venta }}</td>
               <td>{{ venta.id_cliente }}</td>
-              <td><span class="badge text-bg-secondary">{{ venta.get_estado_pago_display }}</span></td>
+              <td>{% include "includes/pago_badge.html" with estado=venta.estado_pago etiqueta=venta.get_estado_pago_display %}</td>
             </tr>
             {% empty %}
             <tr><td colspan="3" class="text-center text-muted py-4">Aún no hay ventas.</td></tr>

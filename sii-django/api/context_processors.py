@@ -79,7 +79,8 @@ def ingenio_shell(request):
         })
 
     nav_items = []
-    if module == "inicio" or module in permitidos:
+    # En inicio las pestañas de módulo ya cubren la navegación; el dropdown sobra.
+    if module != "inicio" and module in permitidos:
         for item in nav.get(module, []):
             href = _url(item["url_name"])
             nav_items.append({
