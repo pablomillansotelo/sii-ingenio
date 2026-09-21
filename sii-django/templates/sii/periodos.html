@@ -1,24 +1,60 @@
 {% extends "base.html" %}
 {% block title %}Periodos · Ingenio{% endblock %}
-{% block page_heading %}Periodos{% endblock %}
 {% block content %}
+{% if puede_operar %}
+{% include "includes/page_header.html" with title="Periodos" subtitle="Calendario académico." action_modal="#modalAgregar" action_label="Nuevo periodo" %}
+{% else %}
 {% include "includes/page_header.html" with title="Periodos" subtitle="Calendario académico." %}
+{% endif %}
 <div class="card shadow-sm">
   <div class="table-responsive">
     <table class="table mb-0">
-      <thead><tr><th>Periodo</th><th>Inicio</th><th>Fin</th></tr></thead>
+      <thead><tr><th>Periodo</th><th>Inicio</th><th>Fin</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
       <tbody>
         {% for periodo in periodos %}
         <tr>
           <td>{{ periodo.nombre }}</td>
           <td>{{ periodo.fecha_inicio }}</td>
           <td>{{ periodo.fecha_fin }}</td>
+          {% if puede_operar %}
+          <td><button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editarPeriodo({{ periodo.pk }})">Editar</button></td>
+          {% endif %}
         </tr>
         {% empty %}
-        <tr><td colspan="3" class="text-center text-muted py-4">No hay periodos.</td></tr>
+        <tr><td colspan="4" class="text-center text-muted py-4">No hay periodos.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+{% if puede_operar %}
+<div class="modal fade" id="modalAgregar" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <form method="post" action="{% url 'sii_periodo_crear' %}">{% csrf_token %}
+    <div class="modal-header"><h5 class="modal-title">Nuevo periodo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">{% include "includes/form_fields.html" with form=form_periodo %}</div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div>
+  </form>
+</div></div></div>
+<div class="modal fade" id="modalEditar" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <form method="post" action="{% url 'sii_periodo_editar' %}">{% csrf_token %}
+    <div class="modal-header"><h5 class="modal-title">Editar periodo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">{% include "includes/form_fields.html" with form=form_editar_periodo %}</div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div>
+  </form>
+</div></div></div>
+<script>
+const periodos = {
+  {% for p in periodos %}
+  {{ p.pk }}: {nombre:"{{ p.nombre|escapejs }}", inicio:"{{ p.fecha_inicio|date:'Y-m-d' }}", fin:"{{ p.fecha_fin|date:'Y-m-d' }}"},
+  {% endfor %}
+};
+function editarPeriodo(id) {
+  const p = periodos[id];
+  document.getElementById("id_periodo_editar").value = id;
+  document.getElementById("nombre_periodo_editar").value = p.nombre;
+  document.getElementById("inicio_periodo_editar").value = p.inicio;
+  document.getElementById("fin_periodo_editar").value = p.fin;
+}
+</script>
+{% endif %}
 {% endblock %}

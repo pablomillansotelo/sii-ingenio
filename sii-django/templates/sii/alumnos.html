@@ -1,12 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Alumnos · Ingenio{% endblock %}
-{% block page_heading %}Alumnos{% endblock %}
 {% block content %}
-{% include "includes/page_header.html" with title="Alumnos" subtitle="Expediente académico. Se crea al dar de alta un cliente." %}
+{% if puede_operar %}
+{% include "includes/page_header.html" with title="Alumnos" subtitle="Alta académica sin pasar por Ventas." action_modal="#modalAgregar" action_label="Nuevo alumno" %}
+{% else %}
+{% include "includes/page_header.html" with title="Alumnos" subtitle="Expediente académico." %}
+{% endif %}
+{% if not puede_operar %}{% endif %}
 <div class="card shadow-sm">
   <div class="table-responsive">
     <table class="table mb-0">
-      <thead><tr><th>Nombre</th><th>Email</th><th>CURP</th><th>Estado</th></tr></thead>
+      <thead><tr><th>Nombre</th><th>Email</th><th>CURP</th><th>Estado</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
       <tbody>
         {% for alumno in alumnos %}
         <tr>
@@ -14,12 +18,53 @@
           <td>{{ alumno.email }}</td>
           <td>{{ alumno.curp }}</td>
           <td><span class="badge text-bg-secondary">{{ alumno.get_estado_display }}</span></td>
+          {% if puede_operar %}
+          <td><button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editarAlumno({{ alumno.pk }})">Editar</button></td>
+          {% endif %}
         </tr>
         {% empty %}
-        <tr><td colspan="4" class="text-center text-muted py-4">No hay alumnos.</td></tr>
+        <tr><td colspan="5" class="text-center text-muted py-4">No hay alumnos.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+{% if puede_operar %}
+<div class="modal fade" id="modalAgregar" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+  <form method="post" action="{% url 'sii_alumno_crear' %}">{% csrf_token %}
+    <div class="modal-header"><h5 class="modal-title">Nuevo alumno</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">{% include "includes/form_fields.html" with form=form_alumno %}</div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div>
+  </form>
+</div></div></div>
+<div class="modal fade" id="modalEditar" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+  <form method="post" action="{% url 'sii_alumno_editar' %}">{% csrf_token %}
+    <div class="modal-header"><h5 class="modal-title">Editar alumno</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">{% include "includes/form_fields.html" with form=form_editar_alumno %}</div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div>
+  </form>
+</div></div></div>
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+{% if puede_operar %}
+<script>
+const alumnos = {
+  {% for a in alumnos %}
+  {{ a.pk }}: {nombre:"{{ a.nombre|escapejs }}", apellido:"{{ a.apellido|escapejs }}", email:"{{ a.email|escapejs }}", curp:"{{ a.curp|escapejs }}", nacimiento:"{{ a.fecha_nacimiento|date:'Y-m-d' }}", estado:"{{ a.estado|escapejs }}"},
+  {% endfor %}
+};
+function editarAlumno(id) {
+  const a = alumnos[id];
+  if (!a) return;
+  document.getElementById("id_alumno_editar").value = id;
+  document.getElementById("nombre_alumno_editar").value = a.nombre;
+  document.getElementById("apellido_alumno_editar").value = a.apellido;
+  document.getElementById("email_alumno_editar").value = a.email;
+  document.getElementById("curp_alumno_editar").value = a.curp;
+  document.getElementById("nacimiento_alumno_editar").value = a.nacimiento;
+  document.getElementById("estado_alumno_editar").value = a.estado;
+}
+</script>
+{% endif %}
 {% endblock %}

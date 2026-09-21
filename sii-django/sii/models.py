@@ -74,3 +74,22 @@ class Inscripcion(models.Model):
 
     def __str__(self):
         return f"{self.alumno} inscrito en {self.curso}"
+
+    def dar_baja(self):
+        if self.estado == "cancelado":
+            raise ValueError("La inscripción ya está dada de baja")
+        self.estado = "cancelado"
+        self.save(update_fields=["estado"])
+
+    def reintentar(self, periodo=None):
+        if self.estado != "cancelado":
+            raise ValueError("Solo se reintenta una inscripción dada de baja")
+        self.intento = int(self.intento or 1) + 1
+        self.estado = "activo"
+        self.calificacion = None
+        campos = ["intento", "estado", "calificacion"]
+        if periodo is not None:
+            self.periodo = periodo
+            campos.append("periodo")
+        self.save(update_fields=campos)
+        return self

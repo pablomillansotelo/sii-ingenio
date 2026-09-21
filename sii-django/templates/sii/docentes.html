@@ -1,12 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Docentes · Ingenio{% endblock %}
-{% block page_heading %}Docentes{% endblock %}
 {% block content %}
+{% if puede_operar %}
+{% include "includes/page_header.html" with title="Docentes" subtitle="Planta académica y grupos." action_modal="#modalAgregar" action_label="Nuevo docente" %}
+{% else %}
 {% include "includes/page_header.html" with title="Docentes" subtitle="Planta académica." %}
-<div class="card shadow-sm">
+{% endif %}
+<div class="card shadow-sm mb-3">
   <div class="table-responsive">
     <table class="table mb-0">
-      <thead><tr><th>Nombre</th><th>Email</th><th>Especialidad</th><th>Estado</th></tr></thead>
+      <thead><tr><th>Nombre</th><th>Email</th><th>Especialidad</th><th>Estado</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
       <tbody>
         {% for docente in docentes %}
         <tr>
@@ -14,12 +17,87 @@
           <td>{{ docente.email }}</td>
           <td>{{ docente.especialidad|default:"—" }}</td>
           <td><span class="badge text-bg-secondary">{{ docente.get_estado_display }}</span></td>
+          {% if puede_operar %}
+          <td><button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editarDocente({{ docente.pk }})">Editar</button></td>
+          {% endif %}
         </tr>
         {% empty %}
-        <tr><td colspan="4" class="text-center text-muted py-4">No hay docentes.</td></tr>
+        <tr><td colspan="5" class="text-center text-muted py-4">No hay docentes.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+<div class="card shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <strong>Asignación a cursos</strong>
+    {% if puede_operar %}
+    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalAsignar">Asignar</button>
+    {% endif %}
+  </div>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Docente</th><th>Curso</th><th>Rol</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
+      <tbody>
+        {% for item in asignaciones %}
+        <tr>
+          <td>{{ item.docente }}</td>
+          <td>{{ item.curso }}</td>
+          <td>{% if item.es_coordinador %}Coordinador{% else %}Docente{% endif %}</td>
+          {% if puede_operar %}
+          <td>
+            <form method="post" action="{% url 'sii_asignacion_quitar' %}">{% csrf_token %}
+              <input type="hidden" name="id_asignacion" value="{{ item.pk }}">
+              <button class="btn btn-outline-secondary btn-sm" type="submit">Quitar</button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center text-muted py-4">No hay asignaciones.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% if puede_operar %}
+<div class="modal fade" id="modalAgregar" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+  <form method="post" action="{% url 'sii_docente_crear' %}">{% csrf_token %}
+    <div class="modal-header"><h5 class="modal-title">Nuevo docente</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">{% include "includes/form_fields.html" with form=form_docente %}</div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div>
+  </form>
+</div></div></div>
+<div class="modal fade" id="modalEditar" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content">
+  <form method="post" action="{% url 'sii_docente_editar' %}">{% csrf_token %}
+    <div class="modal-header"><h5 class="modal-title">Editar docente</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">{% include "includes/form_fields.html" with form=form_editar_docente %}</div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div>
+  </form>
+</div></div></div>
+<div class="modal fade" id="modalAsignar" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <form method="post" action="{% url 'sii_asignacion_crear' %}">{% csrf_token %}
+    <div class="modal-header"><h5 class="modal-title">Asignar docente</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">{% include "includes/form_fields.html" with form=form_asignacion %}</div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div>
+  </form>
+</div></div></div>
+<script>
+const docentes = {
+  {% for d in docentes %}
+  {{ d.pk }}: {nombre:"{{ d.nombre|escapejs }}", apellido:"{{ d.apellido|escapejs }}", email:"{{ d.email|escapejs }}", telefono:"{{ d.telefono|default:''|escapejs }}", especialidad:"{{ d.especialidad|default:''|escapejs }}", estado:"{{ d.estado|escapejs }}"},
+  {% endfor %}
+};
+function editarDocente(id) {
+  const d = docentes[id];
+  document.getElementById("id_docente_editar").value = id;
+  document.getElementById("nombre_docente_editar").value = d.nombre;
+  document.getElementById("apellido_docente_editar").value = d.apellido;
+  document.getElementById("email_docente_editar").value = d.email;
+  document.getElementById("telefono_docente_editar").value = d.telefono;
+  document.getElementById("especialidad_docente_editar").value = d.especialidad;
+  document.getElementById("estado_docente_editar").value = d.estado;
+}
+</script>
+{% endif %}
 {% endblock %}

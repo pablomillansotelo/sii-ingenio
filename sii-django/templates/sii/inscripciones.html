@@ -1,26 +1,54 @@
 {% extends "base.html" %}
 {% block title %}Inscripciones · Ingenio{% endblock %}
-{% block page_heading %}Inscripciones{% endblock %}
 {% block content %}
-{% include "includes/page_header.html" with title="Inscripciones" subtitle="Relación alumno, curso y periodo." %}
+{% if puede_operar %}
+{% include "includes/page_header.html" with title="Inscripciones" subtitle="Alta, baja y reintento en el mismo expediente." action_modal="#modalAgregar" action_label="Nueva inscripción" %}
+{% else %}
+{% include "includes/page_header.html" with title="Inscripciones" subtitle="Alumno, curso y periodo." %}
+{% endif %}
 <div class="card shadow-sm">
   <div class="table-responsive">
     <table class="table mb-0">
-      <thead><tr><th>Alumno</th><th>Curso</th><th>Periodo</th><th>Calificación</th><th>Estado</th></tr></thead>
+      <thead><tr><th>Alumno</th><th>Curso</th><th>Periodo</th><th>Intento</th><th>Calificación</th><th>Estado</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
       <tbody>
         {% for item in inscripciones %}
         <tr>
           <td>{{ item.alumno }}</td>
           <td>{{ item.curso }}</td>
           <td>{{ item.periodo }}</td>
+          <td>{{ item.intento }}</td>
           <td>{{ item.calificacion|default:"—" }}</td>
           <td><span class="badge text-bg-secondary">{{ item.get_estado_display }}</span></td>
+          {% if puede_operar %}
+          <td class="text-nowrap">
+            {% if item.estado != "cancelado" %}
+            <form method="post" action="{% url 'sii_inscripcion_baja' %}" class="d-inline">{% csrf_token %}
+              <input type="hidden" name="id_inscripcion" value="{{ item.pk }}">
+              <button class="btn btn-outline-secondary btn-sm" type="submit">Dar de baja</button>
+            </form>
+            {% else %}
+            <form method="post" action="{% url 'sii_inscripcion_reintento' %}" class="d-inline">{% csrf_token %}
+              <input type="hidden" name="id_inscripcion" value="{{ item.pk }}">
+              <button class="btn btn-outline-primary btn-sm" type="submit">Reintentar</button>
+            </form>
+            {% endif %}
+          </td>
+          {% endif %}
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="text-center text-muted py-4">No hay inscripciones.</td></tr>
+        <tr><td colspan="7" class="text-center text-muted py-4">No hay inscripciones.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+{% if puede_operar %}
+<div class="modal fade" id="modalAgregar" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <form method="post" action="{% url 'sii_inscripcion_crear' %}">{% csrf_token %}
+    <div class="modal-header"><h5 class="modal-title">Nueva inscripción</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">{% include "includes/form_fields.html" with form=form_inscripcion %}</div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div>
+  </form>
+</div></div></div>
+{% endif %}
 {% endblock %}

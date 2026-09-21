@@ -1,25 +1,59 @@
 {% extends "base.html" %}
 {% block title %}Cursos académicos · Ingenio{% endblock %}
-{% block page_heading %}Cursos{% endblock %}
 {% block content %}
-{% include "includes/page_header.html" with title="Cursos académicos" subtitle="Cada curso se alinea con su oferta comercial en Ventas." %}
+{% if puede_operar %}
+{% include "includes/page_header.html" with title="Cursos académicos" subtitle="Catálogo escolar, independiente de Ventas." action_modal="#modalAgregar" action_label="Nuevo curso" %}
+{% else %}
+{% include "includes/page_header.html" with title="Cursos académicos" subtitle="Catálogo escolar." %}
+{% endif %}
 <div class="card shadow-sm">
   <div class="table-responsive">
     <table class="table mb-0">
-      <thead><tr><th>Curso</th><th>Descripción</th><th>Oferta</th><th>Precio</th></tr></thead>
+      <thead><tr><th>Curso</th><th>Descripción</th><th>Oferta</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
       <tbody>
         {% for curso in cursos %}
         <tr>
           <td>{{ curso.nombre }}</td>
           <td>{{ curso.descripcion|default:"—" }}</td>
           <td>{% if curso.oferta %}{{ curso.oferta.codigo|default:curso.oferta.producto }}{% else %}—{% endif %}</td>
-          <td>{% if curso.oferta %}${{ curso.oferta.precio_unitario }}{% else %}—{% endif %}</td>
+          {% if puede_operar %}
+          <td><button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editarCurso({{ curso.pk }})">Editar</button></td>
+          {% endif %}
         </tr>
         {% empty %}
-        <tr><td colspan="4" class="text-center text-muted py-4">Aún no hay cursos académicos. El catálogo comercial está en Ventas → Cursos.</td></tr>
+        <tr><td colspan="4" class="text-center text-muted py-4">Aún no hay cursos académicos.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+{% if puede_operar %}
+<div class="modal fade" id="modalAgregar" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <form method="post" action="{% url 'sii_curso_crear' %}">{% csrf_token %}
+    <div class="modal-header"><h5 class="modal-title">Nuevo curso</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">{% include "includes/form_fields.html" with form=form_curso %}</div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div>
+  </form>
+</div></div></div>
+<div class="modal fade" id="modalEditar" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <form method="post" action="{% url 'sii_curso_editar' %}">{% csrf_token %}
+    <div class="modal-header"><h5 class="modal-title">Editar curso</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">{% include "includes/form_fields.html" with form=form_editar_curso %}</div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div>
+  </form>
+</div></div></div>
+<script>
+const cursos = {
+  {% for c in cursos %}
+  {{ c.pk }}: {nombre:"{{ c.nombre|escapejs }}", descripcion:"{{ c.descripcion|default:''|escapejs }}"},
+  {% endfor %}
+};
+function editarCurso(id) {
+  const c = cursos[id];
+  document.getElementById("id_curso_editar").value = id;
+  document.getElementById("nombre_curso_editar").value = c.nombre;
+  document.getElementById("descripcion_curso_editar").value = c.descripcion;
+}
+</script>
+{% endif %}
 {% endblock %}

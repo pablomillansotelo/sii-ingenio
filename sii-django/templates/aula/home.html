@@ -15,7 +15,7 @@
         {% if curso.oferta %}
         <span class="badge text-bg-secondary mb-3">{{ curso.oferta.get_modalidad_display }} · ${{ curso.oferta.precio_unitario }}</span>
         {% endif %}
-        <div><a href="{% url 'aula_kardex' %}" class="btn btn-outline-primary btn-sm">Ver kardex</a></div>
+        <div><a href="{% url 'aula_curso' curso.pk %}" class="btn btn-primary btn-sm">Abrir curso</a></div>
       </div>
     </div>
   </div>

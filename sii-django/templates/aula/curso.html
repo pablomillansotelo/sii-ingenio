@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{{ curso.nombre }} · Aula{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title=curso.nombre subtitle="Actividades, entregas y calificación del grupo." %}
+
+{% if gestionar %}
+<div class="mb-3">
+  <a class="btn btn-primary" href="{% url 'aula_actividad_nueva' curso.pk %}">Nueva actividad</a>
+</div>
+{% endif %}
+
+{% if form_asignar %}
+<div class="card shadow-sm mb-3">
+  <div class="card-header bg-white"><strong>Docentes del grupo</strong></div>
+  <div class="card-body">
+    <ul class="mb-3">
+      {% for grupo in grupos %}
+      <li>{{ grupo.docente }}{% if grupo.es_coordinador %} · coordinador{% endif %}</li>
+      {% empty %}
+      <li class="text-muted">Aún no hay docente asignado.</li>
+      {% endfor %}
+    </ul>
+    <form method="post" action="{% url 'aula_asignar_docente' curso.pk %}" class="row g-2 align-items-end">
+      {% csrf_token %}
+      <div class="col-md-6">
+        <label class="form-label" for="{{ form_asignar.docente.id_for_label }}">{{ form_asignar.docente.label }}</label>
+        {{ form_asignar.docente }}
+      </div>
+      <div class="col-md-3">
+        <div class="form-check mt-4">
+          {{ form_asignar.es_coordinador }}
+          <label class="form-check-label" for="{{ form_asignar.es_coordinador.id_for_label }}">{{ form_asignar.es_coordinador.label }}</label>
+        </div>
+      </div>
+      <div class="col-md-3"><button class="btn btn-outline-primary w-100" type="submit">Asignar</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Actividad</th>
+          <th>Tipo</th>
+          <th>Límite</th>
+          <th>Ponderación</th>
+          <th>Estado</th>
+          {% if inscripcion %}<th>Tu avance</th>{% endif %}
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in actividades_ui %}
+        <tr>
+          <td>
+            <strong>{{ fila.actividad.nombre }}</strong>
+            {% if fila.actividad.descripcion %}<div class="small text-muted">{{ fila.actividad.descripcion }}</div>{% endif %}
+          </td>
+          <td>{{ fila.actividad.get_tipo_display }}</td>
+          <td>{{ fila.actividad.fecha_limite }}</td>
+          <td>{{ fila.actividad.valor }}</td>
+          <td><span class="badge text-bg-secondary">{{ fila.actividad.get_estado_display }}</span></td>
+          {% if inscripcion %}
+          <td>
+            {% if fila.entrega and fila.entrega.entregado %}
+              Entregada{% if fila.entrega.calificacion is not None %} · {{ fila.entrega.calificacion }}{% endif %}
+            {% else %}
+              Sin entregar
+            {% endif %}
+          </td>
+          {% endif %}
+          <td class="text-nowrap">
+            {% if inscripcion %}
+            <a class="btn btn-outline-primary btn-sm" href="{% url 'aula_entregar' fila.actividad.pk %}">Entregar</a>
+            {% endif %}
+            {% if gestionar %}
+            <a class="btn btn-outline-primary btn-sm" href="{% url 'aula_calificar' fila.actividad.pk %}">Calificar</a>
+            <a class="btn btn-outline-secondary btn-sm" href="{% url 'aula_actividad_editar' fila.actividad.pk %}">Editar</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">Aún no hay actividades.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

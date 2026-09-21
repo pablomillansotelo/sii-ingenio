@@ -63,6 +63,7 @@ class CalificacionActividad(models.Model):
     comentarios = models.TextField(blank=True, null=True)
     entregado = models.BooleanField(default=False)
     fecha_entrega = models.DateField(blank=True, null=True)
+    entrega = models.TextField(blank=True, default="")
 
     class Meta:
         unique_together = ("actividad", "inscripcion")
