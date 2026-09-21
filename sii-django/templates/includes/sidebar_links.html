@@ -1,0 +1,6 @@
+{% for item in items %}
+<a class="sidebar-link{% if item.active %} is-active{% endif %}" href="{{ item.href }}" title="{{ item.label }}">
+  <i class="bi {{ item.icon }}" aria-hidden="true"></i>
+  <span class="sidebar-label">{{ item.label }}</span>
+</a>
+{% endfor %}

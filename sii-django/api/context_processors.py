@@ -79,7 +79,6 @@ def ingenio_shell(request):
         })
 
     nav_items = []
-    # En inicio las pestañas de módulo ya cubren la navegación; el dropdown sobra.
     if module != "inicio" and module in permitidos:
         for item in nav.get(module, []):
             href = _url(item["url_name"])
@@ -89,11 +88,25 @@ def ingenio_shell(request):
                 "active": current_name == item["url_name"],
             })
 
+    sidebar = [
+        {
+            "label": "Hoy",
+            "href": _url("inicio"),
+            "icon": "bi-house",
+            "active": module == "inicio",
+        }
+    ]
+    if module == "inicio":
+        sidebar.extend(modules)
+    else:
+        sidebar.extend(nav_items)
+
     return {
         "ingenio_module": module,
         "ingenio_title": title,
         "ingenio_modules": modules,
         "ingenio_nav": nav_items,
+        "ingenio_sidebar": sidebar,
         "ingenio_display_name": display_name,
         "ingenio_modulos_permitidos": permitidos,
     }

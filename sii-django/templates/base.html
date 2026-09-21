@@ -12,43 +12,28 @@
     <link rel="icon" href="{% static 'img/logo.ico' %}">
     {% block extra_css %}{% endblock %}
   </head>
-  <body class="d-flex flex-column min-vh-100">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-      <div class="container-xl">
-        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuPlataforma" aria-controls="menuPlataforma" aria-label="Abrir menú">
-          <span class="navbar-toggler-icon"></span>
+  <body class="app-shell">
+    <header class="topbar navbar navbar-dark bg-primary">
+      <div class="topbar-inner">
+        <button class="btn btn-link text-white d-lg-none p-0 me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuPlataforma" aria-controls="menuPlataforma" aria-label="Abrir menú">
+          <i class="bi bi-list fs-3"></i>
         </button>
-        <a class="navbar-brand fw-semibold d-flex align-items-center gap-2" href="{% url 'inicio' %}">
-          <img src="{% static 'img/logo.png' %}" alt="Ingenio" height="28" class="d-inline-block">
+        <button class="btn btn-link text-white d-none d-lg-inline-flex p-0 me-2" type="button" data-shell-toggle aria-expanded="true" title="Ocultar menú">
+          <i class="bi bi-layout-sidebar-inset fs-5"></i>
+        </button>
+        <a class="navbar-brand fw-semibold d-flex align-items-center gap-2 mb-0" href="{% url 'inicio' %}">
+          <img src="{% static 'img/logo.png' %}" alt="" height="28">
           <span>Ingenio</span>
         </a>
-        <div class="d-none d-lg-flex align-items-center gap-3 flex-grow-1">
-          <ul class="nav nav-pills">
-            {% for item in ingenio_modules %}
-            <li class="nav-item">
-              <a class="nav-link{% if item.active %} active{% endif %}" href="{{ item.href }}">
-                <i class="bi {{ item.icon }} me-1"></i>{{ item.label }}
-              </a>
-            </li>
-            {% endfor %}
-          </ul>
-          {% if ingenio_nav %}
-          <div class="dropdown">
-            <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-              {{ ingenio_title }}
-            </button>
-            <ul class="dropdown-menu">
-              {% for item in ingenio_nav %}
-              <li>
-                <a class="dropdown-item{% if item.active %} active{% endif %}" href="{{ item.href }}">
-                  <i class="bi {{ item.icon }} me-2"></i>{{ item.label }}
-                </a>
-              </li>
-              {% endfor %}
-            </ul>
-          </div>
-          {% endif %}
-        </div>
+        <ul class="nav nav-pills topbar-modules d-none d-md-flex">
+          {% for item in ingenio_modules %}
+          <li class="nav-item">
+            <a class="nav-link{% if item.active %} active{% endif %}" href="{{ item.href }}">
+              <i class="bi {{ item.icon }} me-1"></i>{{ item.label }}
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
         <div class="dropdown ms-auto">
           <button class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">
             <i class="bi bi-person-circle"></i>
@@ -64,45 +49,43 @@
           </ul>
         </div>
       </div>
-    </nav>
+    </header>
 
-    <div class="offcanvas offcanvas-start text-bg-dark" tabindex="-1" id="menuPlataforma">
-      <div class="offcanvas-header bg-primary">
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="menuPlataforma">
+      <div class="offcanvas-header border-bottom">
         <h5 class="offcanvas-title">Ingenio</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
       </div>
-      <div class="offcanvas-body">
-        <p class="text-uppercase small text-secondary mb-2">Módulos</p>
-        {% for item in ingenio_modules %}
-        <a class="d-flex align-items-center gap-2 py-2 text-decoration-none {% if item.active %}text-white fw-semibold{% else %}text-secondary{% endif %}" href="{{ item.href }}">
-          <i class="bi {{ item.icon }}"></i>{{ item.label }}
-        </a>
-        {% endfor %}
-        <hr class="border-secondary">
-        {% if ingenio_nav %}
-        <p class="text-uppercase small text-secondary mb-2">{{ ingenio_title }}</p>
-        {% for item in ingenio_nav %}
-        <a class="d-flex align-items-center gap-2 py-2 text-decoration-none {% if item.active %}text-white fw-semibold{% else %}text-secondary{% endif %}" href="{{ item.href }}">
-          <i class="bi {{ item.icon }}"></i>{{ item.label }}
-        </a>
-        {% endfor %}
+      <div class="offcanvas-body p-2">
+        <p class="sidebar-heading px-3 mb-1">Módulos</p>
+        {% include "includes/sidebar_links.html" with items=ingenio_modules %}
+        {% if ingenio_sidebar %}
+        <p class="sidebar-heading px-3 mt-3 mb-1">{{ ingenio_title }}</p>
+        {% include "includes/sidebar_links.html" with items=ingenio_sidebar %}
         {% endif %}
       </div>
     </div>
 
-    <main class="container-xl py-4 flex-grow-1">
-      {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% else %}secondary{% endif %} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-      {% endif %}
-      {% block content %}{% endblock %}
-    </main>
+    <div class="shell-body">
+      <aside class="sidebar d-none d-lg-flex" id="sidebarIngenio">
+        <p class="sidebar-heading">{{ ingenio_title }}</p>
+        {% include "includes/sidebar_links.html" with items=ingenio_sidebar %}
+      </aside>
+      <main class="shell-main">
+        {% if messages %}
+          {% for message in messages %}
+          <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% else %}secondary{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {% endfor %}
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/shell.js' %}"></script>
     {% block extra_js %}{% endblock %}
   </body>
 </html>

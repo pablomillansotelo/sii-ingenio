@@ -128,8 +128,15 @@ class InicioEscritorioTests(TestCase):
         self.assertContains(response, "Fecha")
         self.assertContains(response, "Total")
         self.assertContains(response, "Accesos rápidos")
-        self.assertContains(response, "container-xl")
+        self.assertContains(response, 'id="sidebarIngenio"')
+        self.assertContains(response, "sidebar-link")
         self.assertContains(response, "text-bg-warning")
+
+    def test_ventas_usa_sidebar_no_dropdown_de_seccion(self):
+        response = self.http.get(reverse("ventas_home"))
+        self.assertContains(response, "Punto de venta")
+        self.assertContains(response, "Folios")
+        self.assertContains(response, 'id="sidebarIngenio"')
 
 
 class StaticFilesProduccionTests(TestCase):
@@ -140,6 +147,7 @@ class StaticFilesProduccionTests(TestCase):
     REQUIRED = (
         "css/main.css",
         "js/carrito.js",
+        "js/shell.js",
         "img/logo.png",
         "img/logo.ico",
         "img/logo-blanco.png",
