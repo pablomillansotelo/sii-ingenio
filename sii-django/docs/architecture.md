@@ -65,6 +65,10 @@ El proyecto está dividido en aplicaciones Django para modularizar la funcionali
 | **docente** | Portal del profesor. Gestión de grupos y captura de calificaciones. |
 | **administrador** | Panel administrativo avanzado (fuera del admin de Django). |
 | **usuario** | Gestión de perfiles y lógica común de usuarios (login/logout). |
+| **ventas** | Dominio comercial (POS, folios, pagos, oferta). |
+| **aula** | Operación didáctica (actividades, entregas, calificación). |
+
+Roles, dueño de cada feature, matriz RBAC y roadmap: [roles-dominios-rbac.md](roles-dominios-rbac.md).
 
 ## Flujo de Petición (Request Lifecycle)
 
