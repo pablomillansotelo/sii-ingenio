@@ -8,21 +8,30 @@
 <div class="alert alert-warning">Tu cuenta no tiene un módulo asignado. Pide a un administrador que te dé de alta en un grupo.</div>
 {% endif %}
 
+{% if stats_ventas %}
 {% include "includes/stat_cards.html" with stats=stats_ventas heading="Ventas" %}
+{% endif %}
+{% if stats_sii %}
 {% include "includes/stat_cards.html" with stats=stats_sii heading="Control escolar" %}
+{% endif %}
 
-{% if "ventas" in ingenio_modulos_permitidos %}
+{% if stats_ventas %}
 {% url "Ventas" as folios_url %}
 {% include "includes/ventas_tabla.html" with ventas=ventas_recientes title="Últimas ventas" ver_url=folios_url %}
-{% elif "sii" in ingenio_modulos_permitidos %}
+{% elif stats_sii %}
 <div class="card shadow-sm">
   <div class="card-header bg-white"><strong>Control escolar</strong></div>
   <div class="card-body text-muted">Usa el menú SII para alumnos, periodos e inscripciones.</div>
 </div>
-{% elif "aula" in ingenio_modulos_permitidos %}
+{% elif "aula.cursos" in ingenio_features %}
 <div class="card shadow-sm">
   <div class="card-header bg-white"><strong>Aula</strong></div>
   <div class="card-body"><a href="{% url 'aula_dashboard' %}">Ir a mis cursos</a></div>
+</div>
+{% elif "ventas.mis_compras" in ingenio_features %}
+<div class="card shadow-sm">
+  <div class="card-header bg-white"><strong>Mis compras</strong></div>
+  <div class="card-body"><a href="{% url 'mis_compras' %}">Ver mis folios y pagos</a></div>
 </div>
 {% endif %}
 {% endblock %}

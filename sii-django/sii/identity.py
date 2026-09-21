@@ -1,5 +1,6 @@
-"""Identidad y acceso por módulo (Ventas / SII / Aula)."""
+"""Identidad, roles inferidos y querysets por alcance."""
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 from docente.models import Docente
 from sii.models import Alumno
@@ -13,12 +14,6 @@ from sii.permissions import (
 from ventas.models import Vendedor
 
 MODULOS = ("ventas", "sii", "aula")
-
-_MODULO_GRUPOS = {
-    "ventas": frozenset({GRUPO_VENDEDOR, GRUPO_ADMINISTRADOR}),
-    "sii": frozenset({GRUPO_ADMINISTRADOR, GRUPO_DOCENTE}),
-    "aula": frozenset({GRUPO_ALUMNO, GRUPO_DOCENTE, GRUPO_ADMINISTRADOR}),
-}
 
 
 def alumno_para_usuario(user):
@@ -70,36 +65,32 @@ def _roles_desde_grupos(user):
     }
 
 
-def _roles_inferidos(user):
-    """Usa grupos explícitos; si no hay, infiere por vendedor/docente/alumno."""
-    if not user.is_authenticated:
+def roles_inferidos(user):
+    """Unión de grupos explícitos y fichas de dominio (vendedor + docente, etc.)."""
+    if user is None or not getattr(user, "is_authenticated", False):
         return set()
+    cached = getattr(user, "_ingenio_roles", None)
+    if cached is not None:
+        return cached
     if user.is_superuser:
-        return {GRUPO_ADMINISTRADOR}
-    explicitos = _roles_desde_grupos(user)
-    if explicitos:
-        return explicitos
-    roles = set()
+        roles = {GRUPO_ADMINISTRADOR}
+        user._ingenio_roles = roles
+        return roles
+    roles = set(_roles_desde_grupos(user))
     if Vendedor.objects.filter(user_id=user.pk, activo=True).exists():
         roles.add(GRUPO_VENDEDOR)
     if docente_para_usuario(user) is not None:
         roles.add(GRUPO_DOCENTE)
     if alumno_para_usuario(user) is not None:
         roles.add(GRUPO_ALUMNO)
+    user._ingenio_roles = roles
     return roles
 
 
 def modulos_permitidos(user):
-    if user is None or not user.is_authenticated:
-        return set()
-    roles = _roles_inferidos(user)
-    if user.is_superuser or GRUPO_ADMINISTRADOR in roles:
-        return set(MODULOS)
-    permitidos = set()
-    for modulo, grupos in _MODULO_GRUPOS.items():
-        if roles & grupos:
-            permitidos.add(modulo)
-    return permitidos
+    from sii.rbac import dominios_permitidos
+
+    return dominios_permitidos(user)
 
 
 def puede_ver_modulo(user, modulo):
@@ -128,9 +119,13 @@ def asignar_grupos_desde_dominio():
     rol_por_usuario = {}
 
     def marcar(user, rol):
-        if user is None or user.pk in rol_por_usuario:
+        if user is None:
             return
-        rol_por_usuario[user.pk] = (user, rol)
+        entrada = rol_por_usuario.get(user.pk)
+        if entrada is None:
+            rol_por_usuario[user.pk] = (user, {rol})
+        else:
+            entrada[1].add(rol)
 
     for user in User.objects.using("auth").filter(is_superuser=True):
         marcar(user, GRUPO_ADMINISTRADOR)
@@ -168,10 +163,11 @@ def asignar_grupos_desde_dominio():
         marcar(user, GRUPO_ALUMNO)
 
     nuestros = list(grupos.values())
-    for user, rol in rol_por_usuario.values():
+    for user, roles in rol_por_usuario.values():
         user.groups.remove(*nuestros)
-        user.groups.add(grupos[rol])
-        asignados[rol] += 1
+        user.groups.add(*(grupos[rol] for rol in roles))
+        for rol in roles:
+            asignados[rol] += 1
 
     return asignados
 
@@ -225,4 +221,23 @@ def inscripciones_visibles(user):
     alumno = alumno_para_usuario(user)
     if alumno is not None:
         return qs.filter(alumno=alumno)
+    return qs.none()
+
+
+def ventas_visibles(user):
+    from sii.rbac import has_feature, scope_for
+    from ventas.models import Venta
+
+    qs = Venta.objects.select_related("id_cliente", "id_vendedor")
+    if has_feature(user, "ventas.folios") and scope_for(user, "ventas.folios") == "all":
+        return qs
+    if has_feature(user, "ventas.mis_compras"):
+        alumno = alumno_para_usuario(user)
+        if alumno is None:
+            return qs.none()
+        filtro = Q(id_cliente__id_alumno_sii=alumno)
+        email = (alumno.email or "").strip()
+        if email:
+            filtro |= Q(id_cliente__email__iexact=email)
+        return qs.filter(filtro)
     return qs.none()

@@ -2,7 +2,7 @@
 
 Documento de análisis para planear **qué ve cada persona**, **qué feature pertenece a qué dominio** y **cómo implementar el control de acceso**. No es una guía de uso: es la base para el siguiente corte de producto.
 
-Estado de referencia: el código actual (grupos Django, middleware por prefijo `/ventas` `/sii` `/aula`, y alcance de queryset en SII/Aula).
+Estado de referencia: catálogo `sii/rbac.py`, `FeatureAccessMiddleware` por `url_name`, alcance de queryset en SII/Aula/Ventas.
 
 ---
 
@@ -308,9 +308,9 @@ El alumno **sí entra a SII**, pero no al padrón: Kardex (y ficha / inscripcion
 
 | Problema | Efecto |
 | :--- | :--- |
-| Middleware por **prefijo de URL** | Alumno no puede ver recibos; no puede ver kardex en SII. Vendedor no puede ni asomar estado de inscripción. |
+| Middleware por **prefijo de URL** | **Cerrado en Fase 0.** El candado es por feature (`FeatureAccessMiddleware`). El alumno entra a `mis_compras`; el POS sigue en 403. |
 | Menú de Ventas es el mismo para todo el que entra | Si se abre `/ventas` al alumno, hoy vería POS y clientes. |
-| `asignar_grupos_desde_dominio` deja **un solo grupo** por usuario | Una persona vendedor+docente pierde un oficio. **Decidido:** la asignación debe ser unión (varios grupos), no un ganador. |
+| `asignar_grupos_desde_dominio` deja **un solo grupo** por usuario | **Cerrado en Fase 0.** La asignación es unión; `has_feature` suma oficios. |
 | Vendedor se **auto-crea** ficha (`obtener_o_crear_desde_usuario`) al usar el POS | Cualquier usuario con acceso accidental a Ventas se vuelve vendedor de dominio. |
 | Signal de alumno crea `User` con password aleatorio **sin notificarse** | Hay cuenta, no hay acceso real. |
 | Django `Permission` por modelo casi no se usa | No hay catálogo de features versionable. |
@@ -339,12 +339,12 @@ User (auth)
 4. **Alcance** — función por feature, no un flag global. `sii.kardex` + alumno ⇒ `own`; + docente ⇒ `assigned`; + admin ⇒ `all`.
 5. **Superusuario** — `has_feature(*) == True` y `scope == all`.
 
-### 7.2 Dónde vive el catálogo (recomendación)
+### 7.2 Dónde vive el catálogo
 
-**Catálogo en código** (`sii/rbac.py` o `sii/features.py`), no en Django Admin al inicio.
+**Catálogo en código** (`sii/rbac.py`). Fase 0 lo implementa: `FEATURES`, `has_feature`, `scope_for`, `@requiere_feature` y el mapa URL → feature.
 
 ```python
-# Esquema propuesto (no implementado en este documento)
+# Esquema (el código canónico está en sii/rbac.py)
 FEATURES = {
     "ventas.pos": {"roles": {VENDEDOR, ADMIN}, "scope": "all"},
     "ventas.mis_compras": {"roles": {ALUMNO, ADMIN}, "scope": "own"},  # admin: all; incluye pendiente
@@ -362,7 +362,7 @@ Por qué no un paquete tipo Guardian en el primer corte: el alcance `own`/`assig
 
 ### 7.3 Cómo se aplica en request
 
-Reemplazar (o vaciar) `ModuloAccessMiddleware` como candado de prefijo.
+`FeatureAccessMiddleware` sustituye el candado por prefijo. Resuelve la feature en `process_view` (cuando ya existe `url_name`). Sin feature → **403**.
 
 | Capa | Mecanismo | Responsabilidad |
 | :--- | :--- | :--- |
@@ -423,15 +423,18 @@ Orden técnico: primero el candado y el menú; **luego la costura de modelo** (g
 
 Sin fechas: cada fase es un corte mergeable.
 
-### Fase 0 — Catálogo y candado (fundación)
+### Fase 0 — Catálogo y candado (fundación) — **hecha**
 
-- Extraer `FEATURES` + `has_feature` / `scope_for` + `@requiere_feature`.
-- **Unión de grupos:** un usuario puede ser vendedor y docente a la vez; `has_feature` suma las features de todos sus grupos. Dejar de pisar roles en `asignar_grupos_desde_dominio`.
-- Cambiar el middleware de prefijo por el decorador (o un middleware que resuelva *feature de la URL*, no módulo).
-- Filtrar barra y sidebar con el catálogo.
-- Tests por rol: vendedor no entra a calificar; alumno no entra a POS; superusuario sí.
+- Catálogo `FEATURES` + `has_feature` / `scope_for` + `@requiere_feature` en `sii/rbac.py`.
+- **Unión de grupos:** `asignar_grupos_desde_dominio` ya no elige un ganador; `has_feature` suma oficios.
+- `FeatureAccessMiddleware` bloquea por `url_name` (403 si falta la feature).
+- Barra, sidebar, Hoy y banner de cobro filtran por feature (`ventas.pagos` para el cobro).
+- Placeholder `mis_compras` + queryset `ventas_visibles` (`own` para alumno).
+- Tests `RbacFase0Tests`.
 
-**Criterio de hecho:** un alumno autenticado recibe 403 en `/ventas/nueva/` y 200 en una vista `own` (aunque esa vista aún sea un placeholder).
+**Criterio de hecho:** un alumno autenticado recibe 403 en `/ventas/nueva/` y 200 en `/ventas/mis-compras/`.
+
+Fuera de este corte (sigue el roadmap): costura edición↔inscripción, gate de pago, mover kardex, peek UI, actas UI, PDF, CFDI.
 
 ### Fase 0.5 — Costura de grupo (modelo)
 
@@ -504,20 +507,27 @@ Para no reabrirlas en cada ticket:
 8. **El docente publica actas, pero solo de calificación final** y solo de sus grupos. Control escolar publica/cierra el resto y ve todas.
 9. **Un usuario puede tener varios oficios** (p. ej. vendedor + docente). Las features se unen; el menú muestra ambos dominios.
 10. **Mis compras muestra pendiente, parcial y pagado.** El alumno tiene que ver que debe.
+11. **Peek “ya inscrito” (hasta 0.5):** se muestra con la `Inscripcion` actual (alumno + curso catálogo + periodo). No hay edición/grupo en el expediente todavía; no inventar un segundo padrón. En 0.5 el mismo badge pasa a la edición ligada.
+12. **Acta oficial:** el docente *publica* el acta de calificación final de sus grupos. Eso basta para dejar constancia. El *cierre de periodo* en SII congela notas (nadie más edita, ni el docente). No hay un oficio extra de “firmante”.
+13. **Mis compras no lleva CTA de call center** en este corte: solo estado de pago, folio y (luego) recibo. Cualquier “hablar con ventas” es Fase 6 / self-service.
 
 ## 10. Lo que queda abierto (modelo, no de oficio)
 
-- ¿La inscripción “ya inscrito” se muestra por *curso catálogo* o por *edición/grupo*? Hasta la fase 0.5 de costura, el peek usa lo que haya (`Inscripcion` actual).
-- ¿Control escolar debe *cerrar* el acta del docente para que sea oficial, o con publicarla el docente basta? Recomendación: el docente publica la final; el periodo se cierra en SII para congelar (nadie más edita).
-- ¿El alumno ve en mis compras un CTA “hablar con el call center” o solo el estado? Fuera de este corte.
+Las decisiones de oficio ya están en §9. Lo que sigue es **dato**, no rol:
+
+- Costura `Inscripcion` ↔ `EdicionCurso` (Fase 0.5): sin esto el peek y el aula hablan de catálogo, no del grupo vendido.
+- Gate de pago: ¿inscripción `activo` o palanca `puede_cursar`?
+- Unique `(alumno, curso)` vs historial por periodo.
+- Política de `cantidad>1` en el POS (N inscripciones vs un pagador B2B).
 
 ---
 
 ## Referencias de código
 
 - Grupos y `usuario_es_grupo`: `sii/permissions.py`
-- Módulos actuales y querysets: `sii/identity.py`
-- Candado por prefijo: `sii/middleware.py`
+- Catálogo de features y candado por URL: `sii/rbac.py`
+- Identidad, unión de grupos y querysets: `sii/identity.py`
+- Middleware por feature: `sii/middleware.py` (`FeatureAccessMiddleware`)
 - Menú: `api/context_processors.py`
 - Kardex (hoy en Aula): `aula/views.py` → `aula_kardex`, plantilla `templates/alumnos/kardex.html`
 - Promedio hacia expediente: `aula/services.py` → `actualizar_kardex`

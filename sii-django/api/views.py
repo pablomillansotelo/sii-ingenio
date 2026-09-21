@@ -3,7 +3,8 @@ from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
-from sii.identity import alumnos_visibles, destino_post_login, inscripciones_visibles, puede_ver_modulo
+from sii.identity import alumnos_visibles, destino_post_login, inscripciones_visibles
+from sii.rbac import has_feature
 from ventas.models import Cliente, Producto, Venta
 
 
@@ -26,7 +27,7 @@ def inicio(request):
     stats_ventas = []
     stats_sii = []
     ventas_recientes = []
-    if puede_ver_modulo(request.user, "ventas"):
+    if has_feature(request.user, "ventas.panel"):
         pagos_pendientes = Venta.objects.filter(estado_pago="pendiente").count()
         stats_ventas = [
             {"label": "Clientes", "value": Cliente.objects.filter(activo=True).count(), "href": "Clientes"},
@@ -39,15 +40,18 @@ def inicio(request):
             .prefetch_related("ventadetalle_set")
             .order_by("-id_venta")[:8]
         )
-    if puede_ver_modulo(request.user, "sii"):
-        stats_sii = [
-            {"label": "Alumnos", "value": alumnos_visibles(request.user).count(), "href": "sii_alumnos"},
-            {
-                "label": "Inscripciones",
-                "value": inscripciones_visibles(request.user).count(),
-                "href": "sii_inscripciones",
-            },
-        ]
+    if has_feature(request.user, "sii.panel") and has_feature(request.user, "sii.alumnos"):
+        from sii.rbac import scope_for
+
+        if scope_for(request.user, "sii.alumnos") != "own":
+            stats_sii = [
+                {"label": "Alumnos", "value": alumnos_visibles(request.user).count(), "href": "sii_alumnos"},
+                {
+                    "label": "Inscripciones",
+                    "value": inscripciones_visibles(request.user).count(),
+                    "href": "sii_inscripciones",
+                },
+            ]
     return render(
         request,
         "inicio.html",

@@ -65,7 +65,7 @@ class AulaActividadTests(TestCase):
             },
         )
         self.assertEqual(Actividad.objects.count(), 0)
-        self.assertRedirects(response, reverse("aula_curso", args=[self.curso.pk]))
+        self.assertEqual(response.status_code, 403)
 
     def test_docente_crea_alumno_entrega_y_kardex(self):
         response = self.http_profe.post(
@@ -98,6 +98,13 @@ class AulaActividadTests(TestCase):
         self.assertEqual(self.inscripcion.calificacion, Decimal("80.00"))
         kardex = self.http_alum.get(reverse("aula_kardex"))
         self.assertContains(kardex, "80")
+
+    def test_alumno_no_entra_a_calificar(self):
+        actividad = Actividad.objects.create(
+            curso=self.curso, nombre="Quiz", fecha_limite=date.today(), valor=Decimal("10")
+        )
+        response = self.http_alum.get(reverse("aula_calificar", args=[actividad.pk]))
+        self.assertEqual(response.status_code, 403)
 
     def test_actualizar_kardex_ponderado(self):
         a1 = Actividad.objects.create(

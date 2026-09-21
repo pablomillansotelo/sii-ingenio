@@ -205,3 +205,113 @@ class StaticFilesProduccionTests(TestCase):
         self.assertContains(response, "img/logo-blanco.png")
         self.assertContains(response, "img/logo.ico")
 
+
+class RbacFase0Tests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        from sii.identity import asignar_grupos_desde_dominio
+        from sii.permissions import GRUPO_ALUMNO, GRUPO_VENDEDOR
+        from ventas.models import Vendedor
+
+        crear_grupos()
+        self.admin = User.objects.create_superuser("admin", "admin@example.com", "secret123")
+        self.alum_user = User.objects.create_user("alum", "alum.rbac@example.com", "secret123")
+        self.vend_user = User.objects.create_user("vend", "vend.rbac@example.com", "secret123")
+        self.alum_user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.vend_user.groups.add(Group.objects.get(name=GRUPO_VENDEDOR))
+        self.alumno = Alumno.objects.create(
+            user_id=self.alum_user.pk,
+            nombre="Ana",
+            apellido="Rbac",
+            email="alum.rbac@example.com",
+            curp="RBAN000101MDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.cliente = Cliente.objects.create(
+            nombre="Ana",
+            apellidos="Rbac",
+            direccion="Calle 1",
+            email="alum.rbac@example.com",
+            id_alumno_sii=self.alumno,
+        )
+        self.venta_propia = Venta.objects.create(
+            id_cliente=self.cliente, fecha=date.today(), estado_pago="pendiente"
+        )
+        ajeno = Cliente.objects.create(
+            nombre="Otro",
+            apellidos="Cliente",
+            direccion="Calle 2",
+            email="otro.rbac@example.com",
+        )
+        self.venta_ajena = Venta.objects.create(
+            id_cliente=ajeno, fecha=date.today(), estado_pago="pagado"
+        )
+        Vendedor.objects.create(
+            user_id=self.vend_user.pk,
+            nombre="Vend Rbac",
+            email="vend.rbac@example.com",
+        )
+        asignar_grupos_desde_dominio()
+        self.http_alum = Client()
+        self.http_alum.login(username="alum", password="secret123")
+        self.http_vend = Client()
+        self.http_vend.login(username="vend", password="secret123")
+        self.http_admin = Client()
+        self.http_admin.login(username="admin", password="secret123")
+
+    def test_middleware_es_por_feature(self):
+        self.assertIn("sii.middleware.FeatureAccessMiddleware", settings.MIDDLEWARE)
+
+    def test_alumno_403_en_pos(self):
+        response = self.http_alum.get(reverse("Carrito"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_alumno_200_en_mis_compras(self):
+        response = self.http_alum.get(reverse("mis_compras"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Mis compras")
+        self.assertContains(response, self.venta_propia.folio or str(self.venta_propia.pk))
+        self.assertNotContains(response, self.venta_ajena.folio or str(self.venta_ajena.pk))
+
+    def test_alumno_menu_sin_pos_ni_cobro(self):
+        response = self.http_alum.get(reverse("inicio"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Nueva venta")
+        self.assertNotContains(response, "Punto de venta")
+        self.assertNotContains(response, "Registrar pago")
+        self.assertNotContains(response, "por cobrar")
+        self.assertContains(response, "Mis compras")
+
+    def test_vendedor_403_en_calificar(self):
+        response = self.http_vend.get(reverse("aula_calificar", args=[1]))
+        self.assertEqual(response.status_code, 403)
+
+    def test_superusuario_entra_al_pos(self):
+        response = self.http_admin.get(reverse("Carrito"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_union_vendedor_y_docente(self):
+        from sii.identity import asignar_grupos_desde_dominio, roles_inferidos
+        from sii.permissions import GRUPO_DOCENTE, GRUPO_VENDEDOR
+        from sii.rbac import has_feature
+
+        Docente.objects.create(
+            user_id=self.vend_user.pk,
+            nombre="Vend",
+            apellido="Profe",
+            email="vend.rbac@example.com",
+        )
+        asignar_grupos_desde_dominio()
+        self.vend_user.refresh_from_db()
+        for attr in ("_ingenio_roles", "_ingenio_features"):
+            if hasattr(self.vend_user, attr):
+                delattr(self.vend_user, attr)
+        nombres = set(self.vend_user.groups.values_list("name", flat=True))
+        self.assertIn(GRUPO_VENDEDOR, nombres)
+        self.assertIn(GRUPO_DOCENTE, nombres)
+        self.vend_user = User.objects.get(pk=self.vend_user.pk)
+        self.assertEqual(roles_inferidos(self.vend_user), {GRUPO_VENDEDOR, GRUPO_DOCENTE})
+        self.assertTrue(has_feature(self.vend_user, "ventas.pos"))
+        self.assertTrue(has_feature(self.vend_user, "aula.calificar"))
+

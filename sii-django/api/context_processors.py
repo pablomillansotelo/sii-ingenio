@@ -1,5 +1,14 @@
 from django.urls import reverse
 
+from sii.rbac import (
+    HOY_SHORTCUTS,
+    NAV,
+    features_de,
+    has_feature,
+    landing_modulo,
+    visible_en_menu,
+)
+
 
 def ingenio_shell(request):
     path = request.path or "/"
@@ -20,35 +29,10 @@ def ingenio_shell(request):
         title = "Hoy"
 
     catalogo = [
-        {"key": "ventas", "label": "Ventas", "url_name": "ventas_home", "icon": "bi-cart3"},
-        {"key": "sii", "label": "SII", "url_name": "sii_home", "icon": "bi-building"},
-        {"key": "aula", "label": "Aula", "url_name": "aula_dashboard", "icon": "bi-journal-bookmark"},
+        {"key": "ventas", "label": "Ventas", "icon": "bi-cart3"},
+        {"key": "sii", "label": "SII", "icon": "bi-building"},
+        {"key": "aula", "label": "Aula", "icon": "bi-journal-bookmark"},
     ]
-
-    nav = {
-        "ventas": [
-            {"label": "Panel", "url_name": "ventas_home", "icon": "bi-speedometer2"},
-            {"label": "Punto de venta", "url_name": "Carrito", "icon": "bi-bag-plus"},
-            {"label": "Folios", "url_name": "Ventas", "icon": "bi-receipt"},
-            {"label": "Pagos", "url_name": "Pagos", "icon": "bi-credit-card"},
-            {"label": "Clientes", "url_name": "Clientes", "icon": "bi-people"},
-            {"label": "Cursos", "url_name": "Inventario", "icon": "bi-collection"},
-            {"label": "Ediciones", "url_name": "Ediciones", "icon": "bi-calendar-event"},
-            {"label": "Vendedores", "url_name": "Vendedores", "icon": "bi-person-badge"},
-        ],
-        "sii": [
-            {"label": "Panel", "url_name": "sii_home", "icon": "bi-speedometer2"},
-            {"label": "Alumnos", "url_name": "sii_alumnos", "icon": "bi-people"},
-            {"label": "Cursos", "url_name": "sii_cursos", "icon": "bi-journal-text"},
-            {"label": "Periodos", "url_name": "sii_periodos", "icon": "bi-calendar3"},
-            {"label": "Inscripciones", "url_name": "sii_inscripciones", "icon": "bi-clipboard-check"},
-            {"label": "Docentes", "url_name": "sii_docentes", "icon": "bi-person-video3"},
-        ],
-        "aula": [
-            {"label": "Mis cursos", "url_name": "aula_dashboard", "icon": "bi-grid"},
-            {"label": "Kardex", "url_name": "aula_kardex", "icon": "bi-table"},
-        ],
-    }
 
     def _url(name):
         try:
@@ -60,28 +44,34 @@ def ingenio_shell(request):
     permitidos = set()
     display_name = ""
     pagos_pendientes = 0
+    features = frozenset()
     if user is not None and getattr(user, "is_authenticated", False):
-        from sii.identity import modulos_permitidos, puede_ver_modulo
+        from sii.identity import modulos_permitidos
         from ventas.models import Venta
 
         permitidos = modulos_permitidos(user)
+        features = features_de(user)
         display_name = (user.get_full_name() or user.get_username()).strip()
-        if puede_ver_modulo(user, "ventas"):
+        if has_feature(user, "ventas.pagos"):
             pagos_pendientes = Venta.objects.filter(estado_pago="pendiente").count()
 
     modules = []
     for item in catalogo:
-        if item["key"] not in permitidos:
+        landing = landing_modulo(user, item["key"]) if user else None
+        if not landing:
             continue
         modules.append({
             **item,
-            "href": _url(item["url_name"]),
+            "url_name": landing,
+            "href": _url(landing),
             "active": item["key"] == module,
         })
 
     nav_items = []
     if module != "inicio" and module in permitidos:
-        for item in nav.get(module, []):
+        for item in NAV.get(module, []):
+            if not visible_en_menu(user, item):
+                continue
             href = _url(item["url_name"])
             nav_items.append({
                 **item,
@@ -99,36 +89,16 @@ def ingenio_shell(request):
         }
     ]
     if module == "inicio":
-        if "ventas" in permitidos:
+        for item in HOY_SHORTCUTS:
+            if not visible_en_menu(user, item):
+                continue
+            badge = pagos_pendientes or None if item.get("badge") == "pagos" else None
             sidebar.append({
-                "label": "Nueva venta",
-                "href": _url("Carrito"),
-                "icon": "bi-bag-plus",
+                "label": item["label"],
+                "href": _url(item["url_name"]),
+                "icon": item["icon"],
                 "active": False,
-                "badge": None,
-            })
-            sidebar.append({
-                "label": "Registrar pago",
-                "href": _url("Pagos"),
-                "icon": "bi-credit-card",
-                "active": False,
-                "badge": pagos_pendientes or None,
-            })
-        if "sii" in permitidos:
-            sidebar.append({
-                "label": "Inscripciones",
-                "href": _url("sii_inscripciones"),
-                "icon": "bi-clipboard-check",
-                "active": False,
-                "badge": None,
-            })
-        if "aula" in permitidos:
-            sidebar.append({
-                "label": "Aula",
-                "href": _url("aula_dashboard"),
-                "icon": "bi-journal-bookmark",
-                "active": False,
-                "badge": None,
+                "badge": badge,
             })
     else:
         sidebar.extend(nav_items)
@@ -142,6 +112,7 @@ def ingenio_shell(request):
         "ingenio_sidebar": sidebar,
         "ingenio_display_name": display_name,
         "ingenio_modulos_permitidos": permitidos,
+        "ingenio_features": features,
         "ingenio_pagos_pendientes": pagos_pendientes,
-        "ingenio_mostrar_cobro": bool(pagos_pendientes) and not en_pagos,
+        "ingenio_mostrar_cobro": bool(pagos_pendientes) and not en_pagos and has_feature(user, "ventas.pagos"),
     }

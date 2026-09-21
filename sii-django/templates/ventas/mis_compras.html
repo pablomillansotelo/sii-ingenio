@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Mis compras · Ingenio{% endblock %}
+
+{% block content %}
+{% include "includes/page_header.html" with title="Mis compras" subtitle="Folios pendientes, parciales y pagados." %}
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" id="tabla-mis-compras">
+      <thead class="table-light">
+        <tr>
+          <th>Folio</th>
+          <th>Fecha</th>
+          <th class="text-end">Total</th>
+          <th>Pago</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for venta in ventas %}
+        <tr data-filter="{{ venta.estado_pago }}">
+          <td class="fw-semibold">{{ venta.folio|default:venta.id_venta }}</td>
+          <td>{{ venta.fecha|date:"d/m/Y"|default:"—" }}</td>
+          <td class="text-end">${{ venta.monto|floatformat:2 }}</td>
+          <td>{% include "includes/pago_badge.html" with estado=venta.estado_pago etiqueta=venta.get_estado_pago_display %}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4">
+            {% include "includes/empty_state.html" with message="Aún no hay compras ligadas a tu cuenta." %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -23,6 +23,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
 
+from sii.rbac import has_feature, requiere_feature
 from .services import inscribir_desde_venta
 
 
@@ -42,6 +43,8 @@ def _parse_carrito_item(item):
 # Create your views here.
 @login_required
 def dashboard_view(request):
+    if not has_feature(request.user, "ventas.panel"):
+        return redirect("mis_compras")
     hoy = timezone.localdate()
     inicio_mes = hoy.replace(day=1)
     ventas_mes = Venta.objects.filter(fecha__gte=inicio_mes, estado="confirmada").prefetch_related(
@@ -71,6 +74,22 @@ def dashboard_view(request):
                 },
             ],
             "ultimas_ventas": Venta.objects.select_related("id_cliente", "id_vendedor").order_by("-id_venta")[:8],
+        },
+    )
+
+
+@login_required
+@requiere_feature("ventas.mis_compras")
+def mis_compras_view(request):
+    from sii.identity import ventas_visibles
+
+    return render(
+        request,
+        "ventas/mis_compras.html",
+        {
+            "ventas": ventas_visibles(request.user)
+            .prefetch_related("ventadetalle_set")
+            .order_by("-id_venta"),
         },
     )
 
