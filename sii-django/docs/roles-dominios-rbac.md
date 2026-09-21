@@ -59,12 +59,12 @@ Revisados en código y descartados como login aparte:
 
 | Candidato | Por qué no es persona nueva |
 | :--- | :--- |
-| **Coordinador de curso** | Flag `DocenteCurso.es_coordinador`. Es una capacidad del docente, no un grupo. Si más adelante el coordinador publica actas o cierra grupo, se modela como feature extra del mismo rol. |
+| **Coordinador de curso** | Flag `DocenteCurso.es_coordinador`. Es una capacidad del docente, no un grupo. Las actas de calificación final las publica el **docente del grupo**, no hace falta un rol extra. |
 | **Caja / cobranza** | Hoy el vendedor cobra (`/ventas/pagos/`). Separarlo solo tiene sentido si el call center no debe ver montos o catálogo. No hay evidencia de ese oficio todavía. |
 | **Cliente portal** | Sería un segundo login para la misma persona que ya es Alumno. Unificar: el alumno ve “Mis compras”. |
 | **App `administrador/` y `docente/` vacías** | Apps Django sin vistas. No son roles; son deuda de estructura. |
 
-Conclusión: **4 roles de negocio + superusuario**. No inventar un quinto hasta que un caso de uso lo exija (el más probable a futuro sería Caja).
+Conclusión: **4 roles de negocio + superusuario**. Un mismo `User` **sí puede llevar más de un grupo** (vendedor + docente). El menú y `has_feature` son la unión. No inventar un quinto oficio hasta que un caso lo pida (el más probable a futuro sería Caja).
 
 ---
 
@@ -178,7 +178,7 @@ Cada caso se lee como: **actor → objetivo → dominio dueño → pantallas →
 2. Ver folios del día y pendientes de cobro → Folios + banner de cobro.
 3. Registrar un pago (transferencia / referencia) → Pagos.
 4. Consultar o editar el padrón comercial y el catálogo de oferta → Clientes, Cursos, Ediciones.
-5. No opera bajas, kardex ni actividades. Si necesita saber “¿ya está inscrito?”, eso es un **dato de lectura** (badge o link), no una pantalla SII completa.
+5. **Lectura de inscripción en la ficha de cliente / POS** (decidido): badge o bloque “ya inscrito en X (periodo)”, sin entrar al padrón SII. Sirve para no vender de nuevo el mismo curso a ciegas.
 
 Alcance de datos: **todos los registros comerciales** (el call center es compartido). Más adelante se puede acotar “solo mis folios”; no es el caso actual.
 
@@ -197,13 +197,14 @@ Alcance de datos: **todos los registros comerciales** (el call center es compart
 1. Ver *sus* grupos y alumnos inscritos → Aula Mis cursos; SII Alumnos/Inscripciones **solo lecturas de su asignación**.
 2. Publicar actividades, recibir entregas, calificar → Aula.
 3. Consultar kardex de *sus* alumnos (oficial) → SII Kardex con alcance `assigned`.
-4. No vende, no cobra, no da de alta periodos, no asigna a otros docentes (salvo que sea coordinador *y* se decida esa feature después).
+4. **Publicar actas de calificación final** de *sus* grupos (`sii.actas.final.write`, alcance `assigned`). No publica actas de otro tipo (asistencia institucional, conducta, etc.): eso queda en control escolar.
+5. No vende ni cobra *como docente*. Si la misma persona también es vendedor, esas features vienen del **otro grupo**, no se mezclan en una sola pantalla SII.
 
 ### 4.4 Alumno
 
 1. Ver *sus* cursos y entregar actividades → Aula.
 2. Ver *su* kardex oficial → **SII**, no Aula.
-3. Ver *sus* compras: folios, estado de pago, recibos/comprobantes → **Ventas**, feature `mis_compras`, alcance `own`.
+3. Ver *sus* compras: folios **pendientes y pagados**, estado de pago, recibos → **Ventas**, feature `mis_compras`, alcance `own`. El pendiente es explícito: el alumno debe saber que debe.
 4. Editar *su* perfil (nombre visible, teléfono; no CURP/estado académico) → Cuenta. Hoy no es editable.
 5. No ve otros alumnos, no ve POS, no ve catálogo interno, no da de baja inscripciones.
 
@@ -238,7 +239,8 @@ Escritura implica lectura. “R” lectura, “W” alta/edición/baja de esa fe
 | Cursos en venta | W all | W all | — | — | all |
 | Ediciones | W all | W all | — | — | all |
 | Vendedores | R all / W admin | W all | — | — | all |
-| **Mis compras / recibos** | — (usa Folios) | R all | — | **R own** | all |
+| **Mis compras / recibos** | — (usa Folios) | R all | — | **R own (pendiente y pagado)** | all |
+| **Estatus inscripción (en ficha cliente)** | **R** (badge SII, no menú) | R all | — | — | all |
 
 El alumno **sí entra al módulo Ventas**, pero el menú no muestra POS ni Clientes: solo “Mis compras”. El middleware actual, que bloquea `/ventas` entero a quien no es vendedor/admin, es incompatible con este renglón.
 
@@ -253,7 +255,7 @@ El alumno **sí entra al módulo Ventas**, pero el menú no muestra POS ni Clien
 | Inscripciones | — | W all | R assigned | R own | all |
 | Docentes / asignación | — | W all | R own (su ficha) | — | all |
 | **Kardex** | — | R all | R assigned | **R own** | all |
-| Actas (faltante) | — | W all | W assigned (si se decide) | — | all |
+| **Actas de calificación final** | — | W all (cierre / todas) | **W assigned (solo final)** | R own (su constancia) | all |
 
 El alumno **sí entra a SII**, pero no al padrón: Kardex (y ficha / inscripciones propias). Eso también rompe el middleware “SII = admin+docente”.
 
@@ -308,7 +310,7 @@ El alumno **sí entra a SII**, pero no al padrón: Kardex (y ficha / inscripcion
 | :--- | :--- |
 | Middleware por **prefijo de URL** | Alumno no puede ver recibos; no puede ver kardex en SII. Vendedor no puede ni asomar estado de inscripción. |
 | Menú de Ventas es el mismo para todo el que entra | Si se abre `/ventas` al alumno, hoy vería POS y clientes. |
-| `asignar_grupos_desde_dominio` deja **un solo grupo** por usuario | Una persona que es docente y administrador pierde el otro oficio. El modelo objetivo debe permitir **unión de features** (grupos múltiples) o un rol primario + flags. |
+| `asignar_grupos_desde_dominio` deja **un solo grupo** por usuario | Una persona vendedor+docente pierde un oficio. **Decidido:** la asignación debe ser unión (varios grupos), no un ganador. |
 | Vendedor se **auto-crea** ficha (`obtener_o_crear_desde_usuario`) al usar el POS | Cualquier usuario con acceso accidental a Ventas se vuelve vendedor de dominio. |
 | Signal de alumno crea `User` con password aleatorio **sin notificarse** | Hay cuenta, no hay acceso real. |
 | Django `Permission` por modelo casi no se usa | No hay catálogo de features versionable. |
@@ -345,8 +347,10 @@ User (auth)
 # Esquema propuesto (no implementado en este documento)
 FEATURES = {
     "ventas.pos": {"roles": {VENDEDOR, ADMIN}, "scope": "all"},
-    "ventas.mis_compras": {"roles": {ALUMNO, ADMIN}, "scope": "own"},  # admin: all
+    "ventas.mis_compras": {"roles": {ALUMNO, ADMIN}, "scope": "own"},  # admin: all; incluye pendiente
+    "ventas.cliente.inscripcion_peek": {"roles": {VENDEDOR, ADMIN}, "scope": "all"},
     "sii.kardex": {"roles": {ADMIN, DOCENTE, ALUMNO}},
+    "sii.actas.final.write": {"roles": {ADMIN, DOCENTE}},  # docente: assigned, solo calificación final
     "sii.alumnos.write": {"roles": {ADMIN}},
     "aula.calificar": {"roles": {ADMIN, DOCENTE}, "scope": "assigned"},
 }
@@ -396,7 +400,7 @@ Si `Cliente.id_alumno_sii` está vacío, el fallback es email; el roadmap incluy
 
 **Alumno — SII:** Kardex (y ficha). **Aula:** Mis cursos. **Ventas:** Mis compras. Hoy muestra esos tres atajos, no el POS.
 
-Barra superior: un módulo aparece si el usuario tiene **al menos una** feature de ese dominio. Por eso el alumno ve el chip Ventas (mis compras) y el chip SII (kardex) sin ver control escolar.
+Barra superior: un módulo aparece si el usuario tiene **al menos una** feature de ese dominio. Un vendedor-docente ve Ventas **y** SII/Aula. El alumno ve el chip Ventas (mis compras) y el chip SII (kardex) sin ver control escolar.
 
 ### 7.6 Relación con las apps Django
 
@@ -422,7 +426,7 @@ Sin fechas: cada fase es un corte mergeable.
 ### Fase 0 — Catálogo y candado (fundación)
 
 - Extraer `FEATURES` + `has_feature` / `scope_for` + `@requiere_feature`.
-- Permitir **varios grupos** por usuario; dejar de pisar roles en `asignar_grupos_desde_dominio`.
+- **Unión de grupos:** un usuario puede ser vendedor y docente a la vez; `has_feature` suma las features de todos sus grupos. Dejar de pisar roles en `asignar_grupos_desde_dominio`.
 - Cambiar el middleware de prefijo por el decorador (o un middleware que resuelva *feature de la URL*, no módulo).
 - Filtrar barra y sidebar con el catálogo.
 - Tests por rol: vendedor no entra a calificar; alumno no entra a POS; superusuario sí.
@@ -452,6 +456,7 @@ Sin esto, kardex y aula hablan de un curso catálogo, no del grupo que se vendi�
 ### Fase 2 — Alumno en Ventas (mis compras)
 
 - Vista `mis_compras` / `recibo` con `ventas_visibles` alcance `own`.
+- Mostrar folios **pendiente, parcial y pagado** (el alumno debe ver que debe). Badge de pago existente.
 - Endurecer `Cliente.id_alumno_sii` (backfill por email; no solo en `created`).
 - Menú Ventas del alumno: solo esa entrada. Sin POS, clientes, ediciones.
 - Recibo imprimible (HTML/PDF simple del folio + pagos). El PDF pulido puede esperar.
@@ -466,9 +471,10 @@ Sin esto, kardex y aula hablan de un curso catálogo, no del grupo que se vendi�
 
 ### Fase 4 — Expediente SII que aún falta
 
-- Actas / cierre de grupo (calificación oficial congelada por periodo).
+- **Actas de calificación final:** el docente las publica en *sus* grupos (`assigned`); control escolar ve todas y puede cerrar el periodo. No hay actas de otro tipo en este corte.
 - Horario: modelo mínimo (curso + periodo + slots) en SII; el aula puede *mostrar* el de la semana, no ser dueño.
 - Ficha de alumno para el propio alumno (lectura) desde SII.
+- Badge “ya inscrito” en ficha de cliente / POS (lectura SII para vendedor).
 
 ### Fase 5 — Aula completa
 
@@ -484,7 +490,7 @@ Sin esto, kardex y aula hablan de un curso catálogo, no del grupo que se vendi�
 
 ---
 
-## 9. Decisiones que este documento ya toma
+## 9. Decisiones cerradas
 
 Para no reabrirlas en cada ticket:
 
@@ -494,15 +500,16 @@ Para no reabrirlas en cada ticket:
 4. **El administrador de negocio ve todo el negocio** (no solo SII). El recorte fino es el vendedor/docente/alumno.
 5. **RBAC = features en código + alcance en querysets + menú filtrado.** Sin IAM externo en este corte.
 6. **`Cliente` no inicia sesión.** El alumno es la persona; el cliente es la ficha comercial.
+7. **El vendedor ve (solo lectura) si el cliente ya está inscrito.** Badge o bloque en ficha/POS; no entra al padrón SII.
+8. **El docente publica actas, pero solo de calificación final** y solo de sus grupos. Control escolar publica/cierra el resto y ve todas.
+9. **Un usuario puede tener varios oficios** (p. ej. vendedor + docente). Las features se unen; el menú muestra ambos dominios.
+10. **Mis compras muestra pendiente, parcial y pagado.** El alumno tiene que ver que debe.
 
-## 10. Decisiones que sí hay que confirmar al implementar
+## 10. Lo que queda abierto (modelo, no de oficio)
 
-- ¿El vendedor puede *ver* (solo lectura) si el cliente ya tiene inscripción, o ni siquiera eso?
-- ¿El docente publica actas o solo control escolar?
-- ¿Un usuario puede ser vendedor y docente a la vez? (el código de grupos múltiples debe permitirlo; la escuela puede no usarlo).
-- ¿Mis compras muestra ventas `pendiente` (para que el alumno sepa que debe pagar) o solo `pagado`?
-
-La recomendación de este análisis: vendedor con **lectura** de “inscrito / no inscrito” en la ficha de cliente; actas solo administrador en la fase 4; grupos múltiples permitidos; mis compras muestra **todas** las ventas propias, con el badge de pago que ya existe.
+- ¿La inscripción “ya inscrito” se muestra por *curso catálogo* o por *edición/grupo*? Hasta la fase 0.5 de costura, el peek usa lo que haya (`Inscripcion` actual).
+- ¿Control escolar debe *cerrar* el acta del docente para que sea oficial, o con publicarla el docente basta? Recomendación: el docente publica la final; el periodo se cierra en SII para congelar (nadie más edita).
+- ¿El alumno ve en mis compras un CTA “hablar con el call center” o solo el estado? Fuera de este corte.
 
 ---
 

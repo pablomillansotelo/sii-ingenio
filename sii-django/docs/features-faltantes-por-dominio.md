@@ -39,8 +39,8 @@ Estos no son “un módulo más”. Son features que **solo existen porque parti
 | **Cliente ↔ Alumno en actualizaciones** | Ventas escribe comercial; SII el expediente | Signal solo al *crear* cliente. Nombre/email/CURP se desincronizan. | **P0** | Mis compras no encuentra al alumno; kardex y recibo son “otra persona”. |
 | **Baja SII → cupo / venta** | SII dispara; Ventas reacciona | `dar_baja` solo pone `cancelado`. No libera cupo ni cancela folio. | **P1** | Ediciones “llenas” con gente de baja. Dinero y expediente no cuadran. |
 | **Calificación de aula → kardex oficial** | Aula calcula; **SII exhibe** | `actualizar_kardex` escribe `Inscripcion.calificacion` y un modelo `aula.Kardex` | **P0** (colgado) | El expediente oficial vive en la app del aula. Hay que mover consulta (y el modelo) a SII. |
-| **Vendedor: ¿ya está inscrito?** | Ventas, lectura de SII | No hay badge ni ficha. El asesor abre otro sistema o nada. | **P1** | Doble venta del mismo curso; el unique de inscripción traga el segundo folio. |
-| **Alumno: debo / ya pagué** | Ventas (mis compras) + aviso en Hoy | Banner de cobro solo para quien ya entra a Ventas (call center). El alumno no ve nada. | **P0** | El caso “alumno en ventas solo recibos” no tiene pantalla. |
+| **Vendedor: ¿ya está inscrito?** | Ventas, lectura de SII | No hay badge ni ficha. El asesor abre otro sistema o nada. | **P1** | **Decidido: sí, solo lectura.** Doble venta del mismo curso; el unique de inscripción traga el segundo folio. |
+| **Alumno: debo / ya pagué** | Ventas (mis compras) + aviso en Hoy | Banner de cobro solo para quien ya entra a Ventas (call center). El alumno no ve nada. | **P0** | **Decidido: mis compras muestra pendiente (y pagado).** |
 
 Sin la costura **edición ↔ inscripción**, el resto del aula y del kardex se construye sobre un grupo fantasma.
 
@@ -58,11 +58,11 @@ Panel, POS, folios, pagos, clientes, catálogo, ediciones, vendedores, descuento
 
 | Feature | Estado | Pri | Caso de uso | Notas de diseño |
 | :--- | :--- | :--- | :--- | :--- |
-| **Mis compras** | falta | **P0** | Alumno ve *sus* folios y pagos | Vista `own` por `id_alumno_sii` / email. Sin POS. |
+| **Mis compras** | falta | **P0** | Alumno ve *sus* folios pendientes, parciales y pagados | Vista `own` por `id_alumno_sii` / email. Sin POS. El pendiente es visible a propósito. |
 | **Recibo / comprobante** | falta | **P0** | Alumno o asesor imprime o guarda el folio | HTML imprimible basta; PDF después. No es factura fiscal. |
 | **Detalle de folio** | incompleto | **P0** | Ver líneas, edición, pagos aplicados, no solo editar en modal | Hoy la fila no tiene expediente de la venta. El click del pendiente va a Pagos, el pagado no va a ningún detalle. |
 | **Cancelar venta (flujo)** | incompleto | **P1** | Folio equivocado: libera cupo, no inscribe, deja rastro | Hay `estado=cancelada` y `DeleteVenta` (borra). Hace falta cancelar *con motivo*, no borrar historia. |
-| **Ficha de cliente con estatus SII** | falta | **P1** | El asesor ve “alumno # / inscrito en X / pago” | Lectura, no pantalla de control escolar. |
+| **Ficha de cliente con estatus SII** | falta | **P1** | El asesor ve “alumno # / inscrito en X / pago” | **Decidido: lectura sí.** No es pantalla de control escolar. |
 | **Plan de pagos / cuotas** | falta | **P1** | `parcial` existe; no hay calendario (enganche + fechas) | Sin esto el call center anota cuotas en observaciones. |
 | **Corte de caja del día** | falta | **P1** | Cerrar el turno: cobrado, pendiente, por método | El panel tiene monto del mes, no el corte operativo. |
 | **Comisiones liquidables** | incompleto | **P2** | `comision_pct` en vendedor; no hay reporte ni periodo de pago | Dato huérfano. |
@@ -103,7 +103,7 @@ Altas de alumno/curso/periodo/docente, inscripciones con baja y reintento, asign
 | **Gate de pago → inscripción activa** | falta | **P0** | No dejar `activo` (o no abrir aula) si el folio está pendiente | Política explícita. Puede ser estado `inactivo` hasta pagado, o flag `puede_cursar`. |
 | **Créditos / clave de materia** | falta | **P1** | Kardex institucional | La UI ya reserva columna `creditos` vacía. Falta en `Curso`. |
 | **Calificación mínima / acreditado** | falta | **P1** | Acta: acreditó / no acreditó | Hoy hay un decimal o nada. |
-| **Actas de cierre** | falta | **P1** | Congelar calificaciones del grupo-periodo | Dueño SII. El docente puede *proponer*; control escolar *cierra*. |
+| **Actas de calificación final** | falta | **P1** | Congelar la nota oficial del grupo-periodo | Dueño SII. **El docente publica el acta final de sus grupos.** Control escolar ve todas y cierra el periodo. No hay actas de asistencia/conducta en este corte. |
 | **Horario oficial** | falta | **P1** | Días y horas por grupo-periodo | SII es dueño. Aula solo lo muestra. El redirect `/alumnos/horario/` hoy va al dashboard del aula. |
 | **Motivo y fecha de baja** | incompleto | **P1** | Auditoría académica | `dar_baja` no guarda por qué ni quién. |
 | **Documentos del expediente** | falta | **P2** | CURP PDF, INE, certificado previo | Storage en SII, no en Aula. |
@@ -206,10 +206,10 @@ Tras este inventario, **se inserta un corte de modelo antes de pintar más panta
 1. **Fase 0** — RBAC (igual).
 2. **Fase 0.5 — Costura de grupo** — `Inscripcion` ligada a edición/grupo; historial por periodo; gate de pago; sync cliente-alumno. Si no, mis compras y el aula mienten.
 3. **Fase 1** — Kardex a SII + ficha + lista de grupo (ya con el vínculo correcto).
-4. **Fase 2** — Mis compras + recibo + detalle de folio.
-5. **Fase 3** — Identidad usable (invitación, reset). Sin esto nadie prueba 1–2 como alumno de verdad.
+4. **Fase 2** — Mis compras (pendiente + pagado) + recibo + detalle de folio + peek de inscripción en ficha cliente.
+5. **Fase 3** — Identidad usable (invitación, reset). Sin esto nadie prueba 1–2 como alumno de verdad. Varios grupos por usuario (vendedor+docente).
 6. **Fase 4** — Aula usable: materiales, roster, fecha límite, archivos.
-7. **Fase 5** — Actas, horario, créditos, cuotas, corte de caja, cancelación con motivo.
+7. **Fase 5** — Actas de calificación final (docente en sus grupos), horario, créditos, cuotas, corte de caja, cancelación con motivo.
 8. **Fase 6** — Pago en línea, CFDI, el resto P3.
 
 Las fases 4 y 5 del RBAC original se parten: **aula operativa** no debe esperar a las actas, y **actas** no deben bloquear materiales.
