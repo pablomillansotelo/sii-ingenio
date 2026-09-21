@@ -42,6 +42,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "api.middleware.auto_migrate.AutoMigrateMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -73,28 +74,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "api.wsgi.app"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME"),
-        "USER": config("DB_USER"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST"),
-        "PORT": config("DB_PORT", default="5432"),
-        "OPTIONS": {"sslmode": "require"},
-    },
-    "auth": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("AUTH_NAME"),
-        "USER": config("AUTH_USER"),
-        "PASSWORD": config("AUTH_PASSWORD"),
-        "HOST": config("AUTH_HOST"),
-        "PORT": config("AUTH_PORT", default="5432"),
-        "OPTIONS": {"sslmode": "require"},
-    },
-}
-
-if "test" in sys.argv or os.environ.get("DJANGO_TEST") == "1":
+_skip_postgres = (
+    "test" in sys.argv
+    or "collectstatic" in sys.argv
+    or os.environ.get("DJANGO_TEST") == "1"
+    or os.environ.get("COLLECTSTATIC") == "1"
+)
+if _skip_postgres:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -106,6 +92,27 @@ if "test" in sys.argv or os.environ.get("DJANGO_TEST") == "1":
         },
     }
     MIDDLEWARE = [item for item in MIDDLEWARE if "auto_migrate" not in item]
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("DB_NAME"),
+            "USER": config("DB_USER"),
+            "PASSWORD": config("DB_PASSWORD"),
+            "HOST": config("DB_HOST"),
+            "PORT": config("DB_PORT", default="5432"),
+            "OPTIONS": {"sslmode": "require"},
+        },
+        "auth": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("AUTH_NAME"),
+            "USER": config("AUTH_USER"),
+            "PASSWORD": config("AUTH_PASSWORD"),
+            "HOST": config("AUTH_HOST"),
+            "PORT": config("AUTH_PORT", default="5432"),
+            "OPTIONS": {"sslmode": "require"},
+        },
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -122,9 +129,19 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+# Si el deploy olvida collectstatic, WhiteNoise igual encuentra static/ y las apps.
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = DEBUG
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.vercel.app",
+    "https://*.modeloingenio.xyz",
+    "https://sii.modeloingenio.xyz",
+    "https://blog.juampamillan.com",
+]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

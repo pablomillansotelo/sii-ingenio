@@ -72,6 +72,12 @@ Sigue estos pasos para levantar el entorno de desarrollo local.
 
     Accede a `http://127.0.0.1:8000/`.
 
+    Antes de subir a Vercel, recolecta estáticos para que el logo y el JS del POS existan en producción:
+
+    ```bash
+    python manage.py collectstatic --noinput
+    ```
+
 ## 📂 Estructura del Proyecto
 
 El proyecto sigue una estructura modular de Django:
@@ -85,7 +91,8 @@ El proyecto sigue una estructura modular de Django:
 *   **`administrador/`**: Panel y lógica para administradores del sistema.
 *   **`usuario/`**: Gestión de perfiles de usuario y autenticación común.
 *   **`templates/`**: Plantillas HTML globales.
-*   **`static/`**: Archivos estáticos (CSS, JS, imágenes) de desarrollo.
+*   **`static/`**: Archivos estáticos de desarrollo (CSS, JS, logo).
+*   **`staticfiles/`**: Salida de `collectstatic` que Vercel publica en `/static/`. Hay que regenerarla al agregar CSS, JS o imágenes (`python manage.py collectstatic --noinput` o `./build_files.sh`).
 
 ## ⚙️ Características Técnicas Destacadas
 

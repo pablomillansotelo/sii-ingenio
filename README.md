@@ -1,30 +1,39 @@
 # SII Ingenio
 
-**SII Ingenio** es un Sistema Integral de Información (Student Information System) diseñado para la gestión académica y administrativa de instituciones educativas. Este sistema permite la administración de alumnos, docentes, cursos, inscripciones y calificaciones de manera centralizada.
+**SII Ingenio** es la plataforma unificada de **Ingenio**: ventas del call center, control escolar (SII) y aula. Corre en un solo Django con un shell común, roles por módulo y PostgreSQL (negocio + autenticación).
 
-## 🏢 Visión de Negocio
+## Qué ya está en producción
 
-El objetivo principal de SII Ingenio es optimizar los procesos escolares mediante la digitalización de la información académica. El sistema está diseñado para manejar:
+*   **Ventas:** panel, punto de venta con cupo por edición, clientes, folios, pagos, cursos, vendedores.
+*   **SII:** alumnos, cursos, periodos, inscripciones (alta, baja, reintento), docentes y asignaciones.
+*   **Aula:** actividades, entregas, calificación y kardex.
+*   **Acceso:** login único y módulos filtrados por rol (Administrador, Vendedor, Docente, Alumno).
 
-*   **Gestión de Alumnos:** Información personal, estatus (activo, graduado, etc.) y seguimiento académico.
-*   **Gestión Académica:** Catálogos de cursos, periodos escolares y asignación de docentes.
-*   **Procesos Administrativos:** Inscripciones, generación de actas y kardex de calificaciones.
-*   **Seguridad:** Gestión de usuarios y roles diferenciados (Administrador, Docente, Alumno).
+## Qué falta (roadmap)
 
-## 🛠 Vista Técnica General
+Prioridad alta:
 
-El proyecto está estructurado como un monorepositorio que contiene los componentes necesarios para el despliegue de la aplicación.
+1. **Cuentas al dar de alta** — crear alumno/docente no crea usuario de login; el vínculo es un `user_id` débil.
+2. **Perfil** — `/cuenta/` solo muestra nombre y correo; no se edita ni se cambia contraseña.
+3. **Actas** — la visión original incluye actas de calificaciones; hoy el kardex sale del promedio de actividades.
+4. **Horario** — la ruta existe pero redirige al aula.
+5. **Documentación** — `docs/` describe el SII viejo; no documenta Ventas ni Aula.
 
-### Estructura del Repositorio
+Después:
 
-*   **`/sii-django`**: Contiene el código fuente de la aplicación web construida con **Django**. Aquí reside toda la lógica de negocio, los modelos de datos, las vistas y la configuración del servidor.
-*   **`/sii-sql`**: Contiene scripts SQL para la inicialización y mantenimiento de la base de datos (e.g., `init.sql`), útil para levantar el entorno o realizar migraciones manuales complejas.
+*   Pagos en línea (hoy el cobro es registro manual).
+*   Adjuntos en tareas (la entrega es texto).
+*   Apps `docente/` y `administrador/` vacías (la lógica vive en `sii/` y `aula/`).
+*   `/sii-sql` vacío; las migraciones de Django son la fuente de verdad.
+*   Proyectos Vercel legacy `ventas-ingenio` y `aula-ingenio` (el unificado es `sii-ingenio` → `sii.modeloingenio.xyz`).
 
-### Tecnologías Clave
+## Estructura
 
-*   **Backend Framework:** Python / Django 4.1.3
-*   **Base de Datos:** PostgreSQL. El sistema utiliza una arquitectura de base de datos múltiple para separar la autenticación (`auth`) de los datos del negocio (`default`).
-*   **Servidor Web:** Gunicorn con Whitenoise para archivos estáticos.
-*   **Infraestructura:** Preparado para despliegue containerizado (Docker friendly) y gestión de configuración mediante variables de entorno via `python-decouple`.
+*   **`/sii-django`**: aplicación Django (configuración en `api/`), plantillas y estáticos.
+*   **`/sii-sql`**: reservado para scripts SQL manuales.
 
-Para más detalles sobre cómo levantar el proyecto y la documentación técnica específica, por favor consulte el `README.md` dentro del directorio `sii-django`.
+### Tecnologías
+
+*   Django 4.2 · PostgreSQL (Neon) · WhiteNoise · Vercel (`sii-django/vercel.json`)
+
+Los estáticos de producción salen de `sii-django/staticfiles/` (`collectstatic` o `./build_files.sh`). Detalle en `sii-django/README.md` y `sii-django/docs/setup.md`.
