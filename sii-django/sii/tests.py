@@ -1,6 +1,9 @@
 from datetime import date
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth.models import Group, User
+from django.contrib.staticfiles import finders
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -87,3 +90,36 @@ class SiiOperacionTests(TestCase):
         )
         self.assertRedirects(response, reverse("sii_docentes"))
         self.assertTrue(DocenteCurso.objects.filter(docente=docente, curso=curso).exists())
+
+
+class StaticFilesProduccionTests(TestCase):
+    """Vercel sirve /static/* desde STATIC_ROOT; si falta un archivo se ve el HTML crudo."""
+
+    databases = {"default", "auth"}
+
+    REQUIRED = (
+        "css/main.css",
+        "js/carrito.js",
+        "img/logo.png",
+        "img/logo.ico",
+        "img/logo-blanco.png",
+    )
+
+    def test_whitenoise_esta_activo(self):
+        self.assertEqual(settings.MIDDLEWARE[1], "whitenoise.middleware.WhiteNoiseMiddleware")
+
+    def test_fuentes_de_desarrollo_existen(self):
+        for rel in self.REQUIRED:
+            self.assertTrue(finders.find(rel), f"No está en static/: {rel}")
+
+    def test_staticfiles_publicado_incluye_marca(self):
+        root = Path(settings.STATIC_ROOT)
+        for rel in self.REQUIRED:
+            self.assertTrue((root / rel).is_file(), f"Falta {rel} en staticfiles/. Corre collectstatic.")
+
+    def test_login_referencia_assets(self):
+        response = self.client.get(reverse("login"))
+        self.assertContains(response, "css/main.css")
+        self.assertContains(response, "img/logo-blanco.png")
+        self.assertContains(response, "img/logo.ico")
+

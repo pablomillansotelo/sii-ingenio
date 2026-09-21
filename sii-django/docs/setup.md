@@ -111,4 +111,10 @@ El servidor estará disponible en `http://127.0.0.1:8000`.
 
 *   **Error `connection refused` a Postgres:** Verifica que `DB_HOST` y `DB_PORT` sean correctos y que el servicio de PostgreSQL esté corriendo.
 *   **Error `relation "auth_user" does not exist`:** Asegúrate de haber corrido las migraciones para la base de datos `auth` explícitamente (`--database=auth`).
-*   **Archivos estáticos no cargan:** Asegúrate de que `DEBUG=True` en tu `.env`. En producción, necesitarás correr `python manage.py collectstatic`.
+*   **Archivos estáticos no cargan:** En local con `DEBUG=True` Django los sirve desde `static/`. En Vercel/producción hay que publicar `staticfiles/` (logo, CSS y JS). Corre:
+
+    ```bash
+    python manage.py collectstatic --noinput
+    ```
+
+    o `./build_files.sh`. El deploy de Vercel también ejecuta `build_files.sh`. Si subes sin recolectar, faltan `/static/img/logo.png` y `/static/js/carrito.js` y el navbar muestra el texto alternativo del logo dos veces.
