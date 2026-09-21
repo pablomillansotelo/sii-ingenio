@@ -67,7 +67,7 @@ function agregarProducto() {
 function renderCarrito() {
   const tbody = document.querySelector("#tblProducts tbody");
   if (!carrito.length) {
-    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state text-center text-muted py-5 px-3"><p class="mb-0">El carrito está vacío. Agrega un curso en el paso 2.</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state text-center text-muted py-4 px-3"><p class="mb-0">El carrito está vacío. Agrega un curso en el paso 2.</p></div></td></tr>';
     return;
   }
   tbody.innerHTML = carrito.map((item, idx) => `
