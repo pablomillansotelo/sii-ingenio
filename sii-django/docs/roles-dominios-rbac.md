@@ -415,7 +415,7 @@ Las apps actuales no coinciden con los oficios. No hace falta fusionarlas para e
 
 ## 8. Roadmap
 
-Orden técnico: primero el candado y el menú (si no, cualquier pantalla nueva se filtra mal); luego recolocar kardex y mis compras (desbloquean los casos de alumno); después el resto del expediente.
+Orden técnico: primero el candado y el menú; **luego la costura de modelo** (grupo/edición en la inscripción); después recolocar kardex y mis compras. El inventario detallado de huecos está en [features-faltantes-por-dominio.md](features-faltantes-por-dominio.md).
 
 Sin fechas: cada fase es un corte mergeable.
 
@@ -428,6 +428,17 @@ Sin fechas: cada fase es un corte mergeable.
 - Tests por rol: vendedor no entra a calificar; alumno no entra a POS; superusuario sí.
 
 **Criterio de hecho:** un alumno autenticado recibe 403 en `/ventas/nueva/` y 200 en una vista `own` (aunque esa vista aún sea un placeholder).
+
+### Fase 0.5 — Costura de grupo (modelo)
+
+Sin esto, kardex y aula hablan de un curso catálogo, no del grupo que se vendió.
+
+- Ligar `Inscripcion` a edición/grupo (y permitir historial por periodo; hoy `unique_together` alumno+curso borra historia en el reintento).
+- Gate de pago: no dejar cursar (o no activar aula) con folio pendiente.
+- Sync cliente ↔ alumno también al editar, no solo al crear.
+- Segunda venta del mismo curso: avisar o reintentar; `cantidad>1` no puede fingir N inscripciones.
+
+**Criterio de hecho:** una venta reserva cupo **y** la inscripción apunta a esa edición; una baja puede liberar cupo.
 
 ### Fase 1 — Recolocar lo que ya existe
 

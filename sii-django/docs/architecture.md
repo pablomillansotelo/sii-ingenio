@@ -68,7 +68,7 @@ El proyecto está dividido en aplicaciones Django para modularizar la funcionali
 | **ventas** | Dominio comercial (POS, folios, pagos, oferta). |
 | **aula** | Operación didáctica (actividades, entregas, calificación). |
 
-Roles, dueño de cada feature, matriz RBAC y roadmap: [roles-dominios-rbac.md](roles-dominios-rbac.md).
+Roles, dueño de cada feature, matriz RBAC y roadmap: [roles-dominios-rbac.md](roles-dominios-rbac.md). Inventario de pantallas y operaciones que aún no existen, por dominio: [features-faltantes-por-dominio.md](features-faltantes-por-dominio.md).
 
 ## Flujo de Petición (Request Lifecycle)
 
