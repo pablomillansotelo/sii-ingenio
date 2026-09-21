@@ -274,6 +274,19 @@ class RbacFase0Tests(TestCase):
         self.assertContains(response, self.venta_propia.folio or str(self.venta_propia.pk))
         self.assertNotContains(response, self.venta_ajena.folio or str(self.venta_ajena.pk))
 
+    def test_alumno_recibo_propio_y_ajeno(self):
+        propio = self.http_alum.get(reverse("recibo", args=[self.venta_propia.pk]))
+        self.assertEqual(propio.status_code, 200)
+        self.assertContains(propio, self.venta_propia.folio or str(self.venta_propia.pk))
+        ajeno = self.http_alum.get(reverse("recibo", args=[self.venta_ajena.pk]))
+        self.assertEqual(ajeno.status_code, 404)
+
+    def test_alumno_kardex_en_sii(self):
+        response = self.http_alum.get(reverse("sii_kardex"))
+        self.assertEqual(response.status_code, 200)
+        aula = self.http_alum.get(reverse("aula_dashboard"))
+        self.assertNotContains(aula, "Kardex")
+
     def test_alumno_menu_sin_pos_ni_cobro(self):
         response = self.http_alum.get(reverse("inicio"))
         self.assertEqual(response.status_code, 200)
@@ -282,6 +295,7 @@ class RbacFase0Tests(TestCase):
         self.assertNotContains(response, "Registrar pago")
         self.assertNotContains(response, "por cobrar")
         self.assertContains(response, "Mis compras")
+        self.assertContains(response, "Kardex")
 
     def test_vendedor_403_en_calificar(self):
         response = self.http_vend.get(reverse("aula_calificar", args=[1]))

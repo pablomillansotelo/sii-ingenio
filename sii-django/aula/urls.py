@@ -1,10 +1,11 @@
 from django.urls import path
+from django.views.generic import RedirectView
 
 from . import views
 
 urlpatterns = [
     path("", views.home, name="aula_dashboard"),
-    path("kardex/", views.kardex, name="aula_kardex"),
+    path("kardex/", RedirectView.as_view(pattern_name="sii_kardex", permanent=False), name="aula_kardex"),
     path("cursos/<int:curso_id>/", views.curso_detail, name="aula_curso"),
     path("cursos/<int:curso_id>/actividades/nueva/", views.actividad_nueva, name="aula_actividad_nueva"),
     path("cursos/<int:curso_id>/asignar/", views.asignar_docente, name="aula_asignar_docente"),

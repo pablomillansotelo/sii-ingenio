@@ -116,6 +116,7 @@ URL_FEATURES = {
     "EditVendedor": "ventas.vendedores.write",
     "DeleteVendedor": "ventas.vendedores.write",
     "mis_compras": "ventas.mis_compras",
+    "recibo": ("ventas.mis_compras", "ventas.folios"),
     "sii_home": "sii.panel",
     "sii_alumnos": "sii.alumnos",
     "sii_alumno_crear": "sii.alumnos.write",
@@ -135,6 +136,7 @@ URL_FEATURES = {
     "sii_docente_editar": "sii.docentes.write",
     "sii_asignacion_crear": "sii.docentes.write",
     "sii_asignacion_quitar": "sii.docentes.write",
+    "sii_kardex": "sii.kardex",
     "aula_dashboard": "aula.cursos",
     "aula_curso": "aula.cursos",
     "aula_kardex": "sii.kardex",
@@ -160,6 +162,7 @@ NAV = {
     ],
     "sii": [
         {"label": "Panel", "url_name": "sii_home", "icon": "bi-speedometer2", "feature": "sii.panel"},
+        {"label": "Kardex", "url_name": "sii_kardex", "icon": "bi-table", "feature": "sii.kardex"},
         {"label": "Alumnos", "url_name": "sii_alumnos", "icon": "bi-people", "feature": "sii.alumnos", "hide_if_own": True},
         {"label": "Cursos", "url_name": "sii_cursos", "icon": "bi-journal-text", "feature": "sii.cursos", "hide_if_own": True},
         {
@@ -174,13 +177,12 @@ NAV = {
     ],
     "aula": [
         {"label": "Mis cursos", "url_name": "aula_dashboard", "icon": "bi-grid", "feature": "aula.cursos"},
-        {"label": "Kardex", "url_name": "aula_kardex", "icon": "bi-table", "feature": "sii.kardex"},
     ],
 }
 
 MODULE_LANDINGS = {
     "ventas": (("ventas_home", "ventas.panel"), ("mis_compras", "ventas.mis_compras")),
-    "sii": (("sii_home", "sii.panel"),),
+    "sii": (("sii_home", "sii.panel"), ("sii_kardex", "sii.kardex")),
     "aula": (("aula_dashboard", "aula.cursos"),),
 }
 
@@ -206,6 +208,12 @@ HOY_SHORTCUTS = [
         "icon": "bi-clipboard-check",
         "feature": "sii.inscripciones",
         "hide_if_own": True,
+    },
+    {
+        "label": "Kardex",
+        "url_name": "sii_kardex",
+        "icon": "bi-table",
+        "feature": "sii.kardex",
     },
     {"label": "Aula", "url_name": "aula_dashboard", "icon": "bi-journal-bookmark", "feature": "aula.cursos"},
 ]

@@ -3,6 +3,10 @@
 {% block content %}
 {% include "includes/page_header.html" with title=curso.nombre subtitle="Actividades, entregas y calificación del grupo." %}
 
+{% if inscripcion and not puede_cursar %}
+<div class="alert alert-warning">Tu inscripción está pendiente de pago. Puedes ver el grupo, pero no entregar hasta que el folio esté pagado.</div>
+{% endif %}
+
 {% if gestionar %}
 <div class="mb-3">
   <a class="btn btn-primary" href="{% url 'aula_actividad_nueva' curso.pk %}">Nueva actividad</a>
@@ -73,7 +77,7 @@
           </td>
           {% endif %}
           <td class="text-nowrap">
-            {% if inscripcion %}
+            {% if inscripcion and puede_cursar %}
             <a class="btn btn-outline-primary btn-sm" href="{% url 'aula_entregar' fila.actividad.pk %}">Entregar</a>
             {% endif %}
             {% if gestionar %}

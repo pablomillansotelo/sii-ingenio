@@ -14,7 +14,7 @@ class Command(BaseCommand):
             cursos += 1
         inscripciones = 0
         for venta in Venta.objects.filter(estado="confirmada").select_related("id_cliente"):
-            inscripciones += inscribir_desde_venta(venta)
+            inscripciones += inscribir_desde_venta(venta).creadas
         self.stdout.write(
             self.style.SUCCESS(
                 f"Productos alineados: {cursos}. Inscripciones nuevas: {inscripciones}."

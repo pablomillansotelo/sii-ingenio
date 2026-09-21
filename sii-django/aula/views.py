@@ -14,7 +14,6 @@ from sii.identity import (
     cursos_visibles,
     docente_para_usuario,
     es_administrador,
-    inscripciones_visibles,
 )
 from sii.models import Curso, Inscripcion
 
@@ -35,20 +34,6 @@ def _curso_visible(request, curso_id):
     return curso
 
 
-def _kardex_rows(inscripciones):
-    return [
-        {
-            "clave": inscripcion.curso_id,
-            "nombre": inscripcion.curso.nombre,
-            "creditos": "",
-            "calificacion": inscripcion.calificacion,
-            "periodo": inscripcion.periodo.nombre if inscripcion.periodo_id else "",
-            "alumno": inscripcion.alumno,
-        }
-        for inscripcion in inscripciones
-    ]
-
-
 @login_required
 def home(request):
     return render(
@@ -67,30 +52,17 @@ def _puede_gestionar_algo(user):
 
 
 @login_required
-def kardex(request):
-    inscripciones = inscripciones_visibles(request.user)
-    mostrar_alumno = es_administrador(request.user) or docente_para_usuario(request.user) is not None
-    return render(
-        request,
-        "alumnos/kardex.html",
-        {"kardex": _kardex_rows(inscripciones), "mostrar_alumno": mostrar_alumno},
-    )
-
-
-@login_required
 def curso_detail(request, curso_id):
     curso = _curso_visible(request, curso_id)
     gestionar = _puede_gestionar(request.user, curso)
     alumno = alumno_para_usuario(request.user)
-    inscripcion = None
+    inscripcion = Inscripcion.de_alumno_en_curso(alumno, curso) if alumno else None
     entregas = {}
-    if alumno is not None:
-        inscripcion = Inscripcion.objects.filter(alumno=alumno, curso=curso).first()
-        if inscripcion:
-            entregas = {
-                fila.actividad_id: fila
-                for fila in CalificacionActividad.objects.filter(inscripcion=inscripcion)
-            }
+    if inscripcion:
+        entregas = {
+            fila.actividad_id: fila
+            for fila in CalificacionActividad.objects.filter(inscripcion=inscripcion)
+        }
     actividades_ui = [
         {"actividad": actividad, "entrega": entregas.get(actividad.pk)}
         for actividad in curso.actividades.all()
@@ -104,6 +76,7 @@ def curso_detail(request, curso_id):
             "actividades_ui": actividades_ui,
             "gestionar": gestionar,
             "inscripcion": inscripcion,
+            "puede_cursar": bool(inscripcion and inscripcion.puede_cursar and inscripcion.estado == "activo"),
             "grupos": grupos,
             "form_asignar": AsignarDocenteForm() if es_administrador(request.user) else None,
         },
@@ -155,11 +128,14 @@ def actividad_entregar(request, pk):
     actividad = get_object_or_404(Actividad, pk=pk)
     alumno = alumno_para_usuario(request.user)
     inscripcion = (
-        Inscripcion.objects.filter(alumno=alumno, curso=actividad.curso).first() if alumno else None
+        Inscripcion.de_alumno_en_curso(alumno, actividad.curso) if alumno else None
     )
     if inscripcion is None:
         messages.error(request, "No estás inscrito en este curso.")
         return redirect("aula_dashboard")
+    if not inscripcion.puede_cursar or inscripcion.estado != "activo":
+        messages.error(request, "Tu inscripción está pendiente de pago. No puedes entregar todavía.")
+        return redirect("aula_curso", curso_id=actividad.curso_id)
     registro, _ = CalificacionActividad.objects.get_or_create(
         actividad=actividad, inscripcion=inscripcion
     )
@@ -184,7 +160,7 @@ def actividad_calificar(request, pk):
     if not _puede_gestionar(request.user, actividad.curso):
         messages.error(request, "Solo el docente puede calificar.")
         return redirect("aula_curso", curso_id=actividad.curso_id)
-    inscritos = Inscripcion.objects.filter(curso=actividad.curso).select_related("alumno")
+    inscritos = Inscripcion.objects.filter(curso=actividad.curso, estado="activo").select_related("alumno")
     filas = []
     for inscripcion in inscritos:
         registro, _ = CalificacionActividad.objects.get_or_create(

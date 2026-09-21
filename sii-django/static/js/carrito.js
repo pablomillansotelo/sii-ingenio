@@ -114,4 +114,36 @@ document.addEventListener("DOMContentLoaded", () => {
     select.addEventListener("change", filtrarEdicionesPorCurso);
     filtrarEdicionesPorCurso();
   }
+  const cliente = document.getElementById("id_cliente_add");
+  if (cliente) {
+    cliente.addEventListener("change", mostrarPeekInscripcion);
+    mostrarPeekInscripcion();
+  }
 });
+
+function inscripcionesPeek() {
+  const node = document.getElementById("inscripciones-peek");
+  if (!node) return {};
+  try {
+    return JSON.parse(node.textContent);
+  } catch (err) {
+    return {};
+  }
+}
+
+function mostrarPeekInscripcion() {
+  const caja = document.getElementById("pos-inscripcion-peek");
+  const select = document.getElementById("id_cliente_add");
+  if (!caja || !select) return;
+  const filas = inscripcionesPeek()[String(select.value)] || [];
+  if (!filas.length) {
+    caja.classList.add("d-none");
+    caja.textContent = "";
+    return;
+  }
+  caja.classList.remove("d-none");
+  caja.innerHTML = "<strong>Ya inscrito:</strong> " + filas.map((fila) => {
+    const extra = fila.edicion ? ` · ${fila.edicion}` : "";
+    return `${fila.curso}${extra} (${fila.periodo})`;
+  }).join("; ");
+}

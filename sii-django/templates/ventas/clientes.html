@@ -15,6 +15,7 @@
           <th>Email</th>
           <th>Teléfono</th>
           <th>CURP</th>
+          <th>Inscripción</th>
           <th>Empresa</th>
           <th>Estado</th>
           <th></th>
@@ -27,6 +28,13 @@
           <td>{{ i.email }}</td>
           <td>{{ i.telefono|default:"—" }}</td>
           <td>{{ i.curp|default:"—" }}</td>
+          <td>
+            {% for fila in i.peek %}
+            <span class="badge text-bg-light border me-1 mb-1">{{ fila.curso }}{% if fila.edicion %} · {{ fila.edicion }}{% endif %} ({{ fila.periodo }})</span>
+            {% empty %}
+            <span class="text-muted">—</span>
+            {% endfor %}
+          </td>
           <td>{{ i.empresa|default:"—" }}</td>
           <td>{% if i.activo %}<span class="badge text-bg-secondary">Activo</span>{% else %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}</td>
           <td class="text-nowrap">
@@ -35,7 +43,7 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="7">{% include "includes/empty_state.html" with message="No hay clientes." action_modal="#modalAgregar" action_label="Nuevo cliente" %}</td></tr>
+        <tr><td colspan="8">{% include "includes/empty_state.html" with message="No hay clientes." action_modal="#modalAgregar" action_label="Nuevo cliente" %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

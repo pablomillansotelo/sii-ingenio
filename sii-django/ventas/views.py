@@ -22,9 +22,15 @@ from .forms import (
 from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 
 from sii.rbac import has_feature, requiere_feature
-from .services import inscribir_desde_venta
+from .services import (
+    baja_inscripciones_de_venta,
+    inscribir_desde_venta,
+    peek_inscripciones_cliente,
+    sincronizar_puede_cursar,
+)
 
 
 def _vendedor_actual(request):
@@ -88,10 +94,29 @@ def mis_compras_view(request):
         "ventas/mis_compras.html",
         {
             "ventas": ventas_visibles(request.user)
-            .prefetch_related("ventadetalle_set")
+            .prefetch_related("ventadetalle_set__id_producto", "pagos")
             .order_by("-id_venta"),
         },
     )
+
+
+@login_required
+def recibo_view(request, venta_id):
+    from sii.identity import ventas_visibles
+    from sii.rbac import has_any_feature
+
+    if not has_any_feature(request.user, ("ventas.mis_compras", "ventas.folios")):
+        raise Http404()
+    venta = (
+        ventas_visibles(request.user)
+        .select_related("id_cliente", "id_vendedor")
+        .prefetch_related("ventadetalle_set__id_producto", "ventadetalle_set__id_edicion", "pagos")
+        .filter(pk=venta_id)
+        .first()
+    )
+    if venta is None:
+        raise Http404()
+    return render(request, "ventas/recibo.html", {"venta": venta})
 
 
 @login_required
@@ -111,6 +136,10 @@ def carrito_view(request):
                 activo=True, estado__in=EdicionCurso.ESTADOS_ABIERTOS
             ).order_by("codigo_edicion")
         ],
+        "inscripciones_peek": {
+            str(cliente.pk): peek_inscripciones_cliente(cliente)
+            for cliente in Cliente.objects.filter(activo=True)
+        },
     }
     return render(request, "ventas/carrito.html", context)
 
@@ -190,7 +219,15 @@ def add_carrito_view(request):
         messages.error(request, str(exc))
         return redirect("Carrito")
 
-    extra = f" Se generaron {inscripciones} inscripción(es) en el SII." if inscripciones else ""
+    extra = ""
+    if inscripciones.creadas:
+        extra += f" Se generaron {inscripciones.creadas} inscripción(es) en el SII."
+    if inscripciones.reactivadas:
+        extra += f" Se reactivó {inscripciones.reactivadas} inscripción(es)."
+    if inscripciones.ya_inscritas:
+        extra += " El cliente ya estaba inscrito en un curso de este folio."
+    if any(int(item.split(",")[2]) > 1 for item in nplainArray if item.count(",") >= 3):
+        extra += " Un folio inscribe a un alumno; las plazas extra solo reservan cupo."
     messages.success(request, f"Venta {venta.folio} confirmada.{extra}")
     return redirect("Ventas")
 
@@ -236,7 +273,9 @@ def edit_venta_view(request):
 
 @login_required
 def clientes_view(request):
-    clientes = Cliente.objects.all()
+    clientes = list(Cliente.objects.all())
+    for cliente in clientes:
+        cliente.peek = peek_inscripciones_cliente(cliente)
     form_cliente = AddClienteForm()
     form_editar_cliente = EditarClienteForm()
     context = {
@@ -396,6 +435,7 @@ def delete_venta_view(request):
                     "ventadetalle_set__id_edicion"
                 ).get(pk=venta_id)
                 with transaction.atomic():
+                    baja_inscripciones_de_venta(venta, liberar=False)
                     for det in venta.ventadetalle_set.select_related("id_edicion"):
                         if det.id_edicion_id:
                             edicion = EdicionCurso.objects.select_for_update().get(pk=det.id_edicion_id)
@@ -546,6 +586,7 @@ def add_pago_view(request):
         if form.is_valid():
             pago = form.save()
             pago.id_venta.actualizar_estado_pago()
+            sincronizar_puede_cursar(pago.id_venta)
             messages.success(request, f"Pago #{pago.id_pago} registrado")
         else:
             messages.error(request, "Revisa los datos del pago")
@@ -561,6 +602,7 @@ def edit_pago_view(request):
             if form.is_valid():
                 pago = form.save()
                 pago.id_venta.actualizar_estado_pago()
+                sincronizar_puede_cursar(pago.id_venta)
                 messages.success(request, "Pago actualizado")
             else:
                 messages.error(request, "Revisa los datos del pago")
@@ -577,6 +619,7 @@ def delete_pago_view(request):
             venta = pago.id_venta
             pago.delete()
             venta.actualizar_estado_pago()
+            sincronizar_puede_cursar(venta)
             messages.success(request, "Pago eliminado")
         except (Pago.DoesNotExist, ValueError, TypeError):
             messages.error(request, "Pago no encontrado")

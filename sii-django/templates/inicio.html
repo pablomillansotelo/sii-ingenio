@@ -23,15 +23,20 @@
   <div class="card-header bg-white"><strong>Control escolar</strong></div>
   <div class="card-body text-muted">Usa el menú SII para alumnos, periodos e inscripciones.</div>
 </div>
-{% elif "aula.cursos" in ingenio_features %}
+{% elif "aula.cursos" in ingenio_features or "sii.kardex" in ingenio_features or "ventas.mis_compras" in ingenio_features %}
 <div class="card shadow-sm">
-  <div class="card-header bg-white"><strong>Aula</strong></div>
-  <div class="card-body"><a href="{% url 'aula_dashboard' %}">Ir a mis cursos</a></div>
-</div>
-{% elif "ventas.mis_compras" in ingenio_features %}
-<div class="card shadow-sm">
-  <div class="card-header bg-white"><strong>Mis compras</strong></div>
-  <div class="card-body"><a href="{% url 'mis_compras' %}">Ver mis folios y pagos</a></div>
+  <div class="card-header bg-white"><strong>Tu escritorio</strong></div>
+  <div class="card-body d-flex flex-wrap gap-2">
+    {% if "aula.cursos" in ingenio_features %}
+    <a class="btn btn-primary" href="{% url 'aula_dashboard' %}">Mis cursos</a>
+    {% endif %}
+    {% if "sii.kardex" in ingenio_features %}
+    <a class="btn btn-outline-primary" href="{% url 'sii_kardex' %}">Kardex</a>
+    {% endif %}
+    {% if "ventas.mis_compras" in ingenio_features %}
+    <a class="btn btn-outline-primary" href="{% url 'mis_compras' %}">Mis compras</a>
+    {% endif %}
+  </div>
 </div>
 {% endif %}
 {% endblock %}

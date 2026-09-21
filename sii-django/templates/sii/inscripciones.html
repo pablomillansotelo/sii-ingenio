@@ -10,12 +10,13 @@
 <div class="card shadow-sm">
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0" id="tabla-inscripciones">
-      <thead class="table-light"><tr><th>Alumno</th><th>Curso</th><th>Periodo</th><th>Intento</th><th>Calificación</th><th>Estado</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
+      <thead class="table-light"><tr><th>Alumno</th><th>Curso</th><th>Grupo</th><th>Periodo</th><th>Intento</th><th>Calificación</th><th>Estado</th>{% if puede_operar %}<th></th>{% endif %}</tr></thead>
       <tbody>
         {% for item in inscripciones %}
         <tr data-filter="{{ item.estado }}">
           <td>{{ item.alumno }}</td>
           <td>{{ item.curso }}</td>
+          <td>{{ item.id_edicion.codigo_edicion|default:"—" }}</td>
           <td>{{ item.periodo }}</td>
           <td>{{ item.intento }}</td>
           <td>{{ item.calificacion|default:"—" }}</td>
@@ -37,7 +38,7 @@
           {% endif %}
         </tr>
         {% empty %}
-        <tr><td colspan="7">{% if puede_operar %}{% include "includes/empty_state.html" with message="No hay inscripciones." action_modal="#modalAgregar" action_label="Nueva inscripción" %}{% else %}{% include "includes/empty_state.html" with message="No hay inscripciones." %}{% endif %}</td></tr>
+        <tr><td colspan="8">{% if puede_operar %}{% include "includes/empty_state.html" with message="No hay inscripciones." action_modal="#modalAgregar" action_label="Nueva inscripción" %}{% else %}{% include "includes/empty_state.html" with message="No hay inscripciones." %}{% endif %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

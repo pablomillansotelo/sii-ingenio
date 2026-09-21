@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Recibo {{ venta.folio }} · Ingenio{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+  .topbar, .sidebar, .offcanvas, .cobro-banner, .no-print { display: none !important; }
+  .shell-body { display: block; }
+  .shell-main { margin: 0; padding: 0; }
+  body { background: #fff; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "includes/page_header.html" with title=venta.folio subtitle="Comprobante interno. No es factura fiscal." %}
+<div class="no-print mb-3">
+  <button type="button" class="btn btn-outline-primary" onclick="window.print()">Imprimir</button>
+  {% if "ventas.mis_compras" in ingenio_features %}
+  <a class="btn btn-outline-secondary" href="{% url 'mis_compras' %}">Volver a mis compras</a>
+  {% else %}
+  <a class="btn btn-outline-secondary" href="{% url 'Ventas' %}">Volver a folios</a>
+  {% endif %}
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="small text-muted">Cliente</div>
+        <div class="fw-semibold">{{ venta.id_cliente }}</div>
+        <div class="text-muted">{{ venta.id_cliente.email }}</div>
+      </div>
+      <div class="col-md-3">
+        <div class="small text-muted">Fecha</div>
+        <div>{{ venta.fecha|date:"d/m/Y"|default:"—" }}</div>
+      </div>
+      <div class="col-md-3">
+        <div class="small text-muted">Pago</div>
+        {% include "includes/pago_badge.html" with estado=venta.estado_pago etiqueta=venta.get_estado_pago_display %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-header bg-white"><strong>Cursos</strong></div>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead class="table-light"><tr><th>Curso</th><th>Edición</th><th>Plazas</th><th class="text-end">Importe</th></tr></thead>
+      <tbody>
+        {% for det in venta.ventadetalle_set.all %}
+        <tr>
+          <td>{{ det.id_producto }}</td>
+          <td>{{ det.id_edicion.codigo_edicion|default:"—" }}</td>
+          <td>{{ det.cantidad }}</td>
+          <td class="text-end">${{ det.subtotal|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-muted">Sin líneas.</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="3" class="text-end">Total</th>
+          <th class="text-end">${{ venta.monto|floatformat:2 }}</th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header bg-white"><strong>Pagos aplicados</strong></div>
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead class="table-light"><tr><th>Fecha</th><th>Método</th><th>Referencia</th><th class="text-end">Monto</th></tr></thead>
+      <tbody>
+        {% for pago in venta.pagos.all %}
+        <tr>
+          <td>{{ pago.fecha_pago|date:"d/m/Y H:i" }}</td>
+          <td>{{ pago.metodo }}</td>
+          <td>{{ pago.referencia|default:"—" }}</td>
+          <td class="text-end">${{ pago.monto|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-muted">Aún no hay pagos. El folio sigue {{ venta.get_estado_pago_display|lower }}.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

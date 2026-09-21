@@ -434,37 +434,31 @@ Sin fechas: cada fase es un corte mergeable.
 
 **Criterio de hecho:** un alumno autenticado recibe 403 en `/ventas/nueva/` y 200 en `/ventas/mis-compras/`.
 
-Fuera de este corte (sigue el roadmap): costura edición↔inscripción, gate de pago, mover kardex, peek UI, actas UI, PDF, CFDI.
+### Fase 0.5 — Costura de grupo (modelo) — **hecha**
 
-### Fase 0.5 — Costura de grupo (modelo)
+- `Inscripcion.id_edicion` apunta a `EdicionCurso`. Unique `(alumno, curso, periodo)` para historial.
+- Gate `puede_cursar`: la venta pendiente no deja entregar en el aula; el pago pagado abre.
+- Sync cliente ↔ alumno también al editar (y backfill por email).
+- Un folio = un alumno; `cantidad>1` reserva cupo, no clona inscripciones. Segunda venta del mismo periodo reutiliza o reactiva.
+- Baja libera cupo de la edición.
 
-Sin esto, kardex y aula hablan de un curso catálogo, no del grupo que se vendió.
+**Criterio de hecho:** una venta reserva cupo **y** la inscripción apunta a esa edición; una baja libera cupo.
 
-- Ligar `Inscripcion` a edición/grupo (y permitir historial por periodo; hoy `unique_together` alumno+curso borra historia en el reintento).
-- Gate de pago: no dejar cursar (o no activar aula) con folio pendiente.
-- Sync cliente ↔ alumno también al editar, no solo al crear.
-- Segunda venta del mismo curso: avisar o reintentar; `cantidad>1` no puede fingir N inscripciones.
+### Fase 1 — Recolocar lo que ya existe — **hecha**
 
-**Criterio de hecho:** una venta reserva cupo **y** la inscripción apunta a esa edición; una baja puede liberar cupo.
-
-### Fase 1 — Recolocar lo que ya existe
-
-- Mover **Kardex** a SII (`/sii/kardex/`), menú SII, quitarlo de Aula. Redirect de `/aula/kardex/` y `/alumnos/kardex/`.
+- Kardex vive en `/sii/kardex/`. Sidebar de Aula ya no lo lista. Redirect de `/aula/kardex/` y `/alumnos/kardex/`.
 - Mi cuenta apunta al kardex SII.
-- Docente/alumno siguen viendo los mismos renglones (mismos querysets), en el dominio correcto.
-- Hoy del alumno: atajo Kardex + Mis cursos (aún sin recibos).
+- Hoy del alumno: atajos Kardex + Mis cursos + Mis compras.
 
 **Criterio de hecho:** ningún sidebar de Aula muestra “Kardex”.
 
-### Fase 2 — Alumno en Ventas (mis compras)
+### Fase 2 — Alumno en Ventas (mis compras) — **hecha**
 
-- Vista `mis_compras` / `recibo` con `ventas_visibles` alcance `own`.
-- Mostrar folios **pendiente, parcial y pagado** (el alumno debe ver que debe). Badge de pago existente.
-- Endurecer `Cliente.id_alumno_sii` (backfill por email; no solo en `created`).
-- Menú Ventas del alumno: solo esa entrada. Sin POS, clientes, ediciones.
-- Recibo imprimible (HTML/PDF simple del folio + pagos). El PDF pulido puede esperar.
+- `mis_compras` lista pendiente/parcial/pagado y abre el **recibo** imprimible (`/ventas/recibos/<id>/`).
+- Queryset `own`: 404 si el folio no es suyo.
+- Peek “ya inscrito” en ficha de cliente y POS (lectura de la inscripción, ahora con edición si existe).
 
-**Criterio de hecho:** el alumno ve *sus* folios y un 404/vacío si no hay venta ligada; no lista ventas ajenas (test de queryset).
+**Criterio de hecho:** el alumno ve *sus* folios y un 404 si no hay venta ligada; no lista ventas ajenas.
 
 ### Fase 3 — Identidad usable
 
@@ -507,18 +501,18 @@ Para no reabrirlas en cada ticket:
 8. **El docente publica actas, pero solo de calificación final** y solo de sus grupos. Control escolar publica/cierra el resto y ve todas.
 9. **Un usuario puede tener varios oficios** (p. ej. vendedor + docente). Las features se unen; el menú muestra ambos dominios.
 10. **Mis compras muestra pendiente, parcial y pagado.** El alumno tiene que ver que debe.
-11. **Peek “ya inscrito” (hasta 0.5):** se muestra con la `Inscripcion` actual (alumno + curso catálogo + periodo). No hay edición/grupo en el expediente todavía; no inventar un segundo padrón. En 0.5 el mismo badge pasa a la edición ligada.
+11. **Peek “ya inscrito”:** usa la `Inscripcion` (curso + periodo + edición si ya está ligada). Badge en ficha de cliente y POS.
 12. **Acta oficial:** el docente *publica* el acta de calificación final de sus grupos. Eso basta para dejar constancia. El *cierre de periodo* en SII congela notas (nadie más edita, ni el docente). No hay un oficio extra de “firmante”.
-13. **Mis compras no lleva CTA de call center** en este corte: solo estado de pago, folio y (luego) recibo. Cualquier “hablar con ventas” es Fase 6 / self-service.
+13. **Mis compras no lleva CTA de call center** en este corte: solo estado de pago, folio y recibo.
+14. **Gate de pago:** `Inscripcion.puede_cursar`. La inscripción existe con folio pendiente; el aula no deja entregar hasta `pagado`. Alta SII (sin venta) queda en `True`.
+15. **Historial académico:** unique `(alumno, curso, periodo)`. Un reintento en el *mismo* periodo reactiva el renglón; otro periodo es renglón nuevo.
+16. **`cantidad>1`:** un folio, un alumno. Las plazas extra reservan cupo, no clonan inscripciones ni padrones B2B.
 
-## 10. Lo que queda abierto (modelo, no de oficio)
+## 10. Lo que queda abierto (más adelante)
 
-Las decisiones de oficio ya están en §9. Lo que sigue es **dato**, no rol:
-
-- Costura `Inscripcion` ↔ `EdicionCurso` (Fase 0.5): sin esto el peek y el aula hablan de catálogo, no del grupo vendido.
-- Gate de pago: ¿inscripción `activo` o palanca `puede_cursar`?
-- Unique `(alumno, curso)` vs historial por periodo.
-- Política de `cantidad>1` en el POS (N inscripciones vs un pagador B2B).
+- Política B2B (N alumnos bajo un pagador) si un caso real lo pide.
+- PDF pulido del recibo y CFDI.
+- Actas de calificación final (UI Fase 4).
 
 ---
 
@@ -529,6 +523,6 @@ Las decisiones de oficio ya están en §9. Lo que sigue es **dato**, no rol:
 - Identidad, unión de grupos y querysets: `sii/identity.py`
 - Middleware por feature: `sii/middleware.py` (`FeatureAccessMiddleware`)
 - Menú: `api/context_processors.py`
-- Kardex (hoy en Aula): `aula/views.py` → `aula_kardex`, plantilla `templates/alumnos/kardex.html`
+- Kardex (hoy consulta en SII): `sii/views.py` → `kardex`; redirect `/aula/kardex/`
 - Promedio hacia expediente: `aula/services.py` → `actualizar_kardex`
 - Cliente → Alumno y Venta → Inscripción: `ventas/signals.py`, `ventas/services.py`

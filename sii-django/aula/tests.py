@@ -96,8 +96,28 @@ class AulaActividadTests(TestCase):
         self.assertRedirects(calificar, reverse("aula_calificar", args=[actividad.pk]))
         self.inscripcion.refresh_from_db()
         self.assertEqual(self.inscripcion.calificacion, Decimal("80.00"))
-        kardex = self.http_alum.get(reverse("aula_kardex"))
+        kardex = self.http_alum.get(reverse("sii_kardex"))
         self.assertContains(kardex, "80")
+        redirect = self.http_alum.get(reverse("aula_kardex"))
+        self.assertRedirects(redirect, reverse("sii_kardex"))
+
+    def test_sidebar_aula_ya_no_lista_kardex(self):
+        response = self.http_alum.get(reverse("aula_dashboard"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Kardex")
+
+    def test_pendiente_de_pago_bloquea_entrega(self):
+        self.inscripcion.puede_cursar = False
+        self.inscripcion.save(update_fields=["puede_cursar"])
+        actividad = Actividad.objects.create(
+            curso=self.curso, nombre="Tarea paga", fecha_limite=date.today(), valor=Decimal("10")
+        )
+        response = self.http_alum.post(
+            reverse("aula_entregar", args=[actividad.pk]),
+            {"entrega": "No debería entrar"},
+        )
+        self.assertRedirects(response, reverse("aula_curso", args=[self.curso.pk]))
+        self.assertFalse(CalificacionActividad.objects.filter(actividad=actividad, entregado=True).exists())
 
     def test_alumno_no_entra_a_calificar(self):
         actividad = Actividad.objects.create(

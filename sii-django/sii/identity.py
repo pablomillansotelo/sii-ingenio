@@ -212,7 +212,7 @@ def cursos_visibles(user):
 def inscripciones_visibles(user):
     from sii.models import Inscripcion
 
-    qs = Inscripcion.objects.select_related("alumno", "curso", "periodo")
+    qs = Inscripcion.objects.select_related("alumno", "curso", "periodo", "id_edicion")
     if es_administrador(user):
         return qs
     docente = docente_para_usuario(user)

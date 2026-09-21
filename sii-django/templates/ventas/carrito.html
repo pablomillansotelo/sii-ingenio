@@ -38,6 +38,7 @@
           <label class="form-label" for="observaciones_add">{{ form_venta.observaciones.label }}</label>
           {{ form_venta.observaciones }}
         </div>
+        <div id="pos-inscripcion-peek" class="alert alert-light border mt-3 mb-0 d-none small"></div>
       </div>
     </div>
   </div>
@@ -98,6 +99,7 @@
 
 {% block extra_js %}
 {{ ediciones_pos|json_script:"ediciones-pos" }}
+{{ inscripciones_peek|json_script:"inscripciones-peek" }}
 <script>
 window.INGENIO_POS = {
   addUrl: "{% url 'AddCarrito' %}",

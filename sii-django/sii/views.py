@@ -66,6 +66,32 @@ def home(request):
     )
 
 
+def _kardex_rows(inscripciones):
+    return [
+        {
+            "clave": inscripcion.curso_id,
+            "nombre": inscripcion.curso.nombre,
+            "edicion": inscripcion.id_edicion.codigo_edicion if inscripcion.id_edicion_id else "",
+            "creditos": "",
+            "calificacion": inscripcion.calificacion,
+            "periodo": inscripcion.periodo.nombre if inscripcion.periodo_id else "",
+            "alumno": inscripcion.alumno,
+        }
+        for inscripcion in inscripciones.select_related("alumno", "curso", "periodo", "id_edicion")
+    ]
+
+
+@login_required
+def kardex(request):
+    inscripciones = inscripciones_visibles(request.user)
+    mostrar_alumno = es_administrador(request.user) or docente_para_usuario(request.user) is not None
+    return render(
+        request,
+        "alumnos/kardex.html",
+        {"kardex": _kardex_rows(inscripciones), "mostrar_alumno": mostrar_alumno},
+    )
+
+
 @login_required
 def alumnos_list(request):
     return render(
@@ -287,8 +313,11 @@ def inscripcion_crear(request):
         return redirect("sii_inscripciones")
     alumno = request.POST.get("alumno")
     curso = request.POST.get("curso")
-    if alumno and curso and Inscripcion.objects.filter(alumno_id=alumno, curso_id=curso).exists():
-        messages.error(request, "Ese alumno ya tiene este curso. Usa reintento si estaba de baja.")
+    periodo = request.POST.get("periodo")
+    if alumno and curso and periodo and Inscripcion.objects.filter(
+        alumno_id=alumno, curso_id=curso, periodo_id=periodo
+    ).exists():
+        messages.error(request, "Ese alumno ya tiene este curso en el periodo. Usa reintento si estaba de baja.")
     else:
         messages.error(request, "Revisa alumno, curso y periodo.")
     return redirect("sii_inscripciones")

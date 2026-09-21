@@ -14,6 +14,7 @@ urlpatterns = [
     path("inscripciones/crear/", views.inscripcion_crear, name="sii_inscripcion_crear"),
     path("inscripciones/baja/", views.inscripcion_baja, name="sii_inscripcion_baja"),
     path("inscripciones/reintento/", views.inscripcion_reintento, name="sii_inscripcion_reintento"),
+    path("kardex/", views.kardex, name="sii_kardex"),
     path("periodos/", views.periodos_list, name="sii_periodos"),
     path("periodos/crear/", views.periodo_crear, name="sii_periodo_crear"),
     path("periodos/editar/", views.periodo_editar, name="sii_periodo_editar"),

@@ -7,7 +7,7 @@
   <div class="card-body">
     <p class="mb-1"><strong>{{ user.get_full_name|default:user.username }}</strong></p>
     <p class="text-muted mb-4">{{ user.email }}</p>
-    <a class="btn btn-outline-primary" href="{% url 'aula_kardex' %}">Ver kardex</a>
+    <a class="btn btn-outline-primary" href="{% url 'sii_kardex' %}">Ver kardex</a>
     <a class="btn btn-outline-secondary" href="{% url 'logout' %}">Cerrar sesión</a>
   </div>
 </div>

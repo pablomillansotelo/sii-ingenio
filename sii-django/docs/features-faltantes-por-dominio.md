@@ -203,10 +203,10 @@ El documento de RBAC ordenaba: candado → kardex a SII → mis compras → iden
 
 Tras este inventario, **se inserta un corte de modelo antes de pintar más pantallas de alumno**:
 
-1. **Fase 0** — RBAC (catálogo, unión de grupos, candado por feature, placeholder mis compras). **Hecha en código.**
-2. **Fase 0.5 — Costura de grupo** — `Inscripcion` ligada a edición/grupo; historial por periodo; gate de pago; sync cliente-alumno. Si no, mis compras y el aula mienten. El peek de inscripción sigue el mismo vínculo.
-3. **Fase 1** — Kardex a SII + ficha + lista de grupo (ya con el vínculo correcto).
-4. **Fase 2** — Mis compras (UI completa: pendiente + pagado) + recibo + detalle de folio + peek de inscripción en ficha cliente.
+1. **Fase 0** — RBAC (catálogo, unión de grupos, candado por feature, placeholder mis compras). **Hecha.**
+2. **Fase 0.5 — Costura de grupo** — `Inscripcion` ligada a edición; historial por periodo; gate `puede_cursar`; sync cliente-alumno. **Hecha.**
+3. **Fase 1** — Kardex a SII. **Hecha.**
+4. **Fase 2** — Mis compras + recibo + peek. **Hecha.**
 5. **Fase 3** — Identidad usable (invitación, reset). Sin esto nadie prueba 1–2 como alumno de verdad. La unión vendedor+docente ya vive en Fase 0.
 6. **Fase 4** — Aula usable: materiales, roster, fecha límite, archivos.
 7. **Fase 5** — Actas de calificación final (docente en sus grupos), horario, créditos, cuotas, corte de caja, cancelación con motivo.
