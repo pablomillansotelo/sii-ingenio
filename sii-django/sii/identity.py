@@ -2,8 +2,7 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 
-from docente.models import Docente
-from sii.models import Alumno
+from sii.models import Alumno, Docente
 from sii.permissions import (
     GRUPO_ADMINISTRADOR,
     GRUPO_ALUMNO,

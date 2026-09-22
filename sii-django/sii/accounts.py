@@ -121,8 +121,7 @@ def emitir_password_temporal(user):
 
 
 def grupo_para_modelo(instance):
-    from docente.models import Docente
-    from sii.models import Alumno
+    from sii.models import Alumno, Docente
     from ventas.models import Vendedor
 
     if isinstance(instance, Alumno):

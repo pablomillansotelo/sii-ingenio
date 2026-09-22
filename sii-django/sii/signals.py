@@ -1,9 +1,8 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from docente.models import Docente
 from sii.accounts import provisionar_persona
-from sii.models import Alumno
+from sii.models import Alumno, Docente
 
 
 def _provisionar_si_alta(instance, created, kwargs):

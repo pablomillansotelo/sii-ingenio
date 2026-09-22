@@ -308,3 +308,16 @@ class VentaViewTests(TestCase):
     def test_pagos_view(self):
         response = self.http.get(reverse("Pagos"))
         self.assertEqual(response.status_code, 200)
+
+    def test_recibo_html_y_pdf(self):
+        venta = Venta.objects.create(
+            id_cliente=self.cliente, fecha=date.today(), estado="confirmada", estado_pago="pagado"
+        )
+        html = self.http.get(reverse("recibo", args=[venta.pk]))
+        self.assertEqual(html.status_code, 200)
+        self.assertContains(html, "Descargar PDF")
+        pdf = self.http.get(reverse("recibo_pdf", args=[venta.pk]))
+        self.assertEqual(pdf.status_code, 200)
+        self.assertTrue(pdf.content.startswith(b"%PDF"))
+        folios = self.http.get(reverse("Ventas"))
+        self.assertContains(folios, reverse("recibo", args=[venta.pk]))

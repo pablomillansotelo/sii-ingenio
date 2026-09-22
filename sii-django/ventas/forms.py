@@ -1,24 +1,9 @@
 from datetime import date
 
 from django import forms
-from django.forms.widgets import CheckboxInput, Select, SelectMultiple, FileInput
 
+from sii.bootstrap import BootstrapFormMixin
 from ventas.models import Cliente, Producto, Venta, VentaDetalle, Vendedor, EdicionCurso, Pago
-
-
-class BootstrapFormMixin:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            widget = field.widget
-            if isinstance(widget, CheckboxInput):
-                widget.attrs.setdefault("class", "form-check-input")
-            elif isinstance(widget, (Select, SelectMultiple)):
-                widget.attrs.setdefault("class", "form-select")
-            elif not isinstance(widget, FileInput):
-                existing = widget.attrs.get("class", "")
-                if "form-control" not in existing:
-                    widget.attrs["class"] = (existing + " form-control").strip()
 
 
 class AddClienteForm(BootstrapFormMixin, forms.ModelForm):

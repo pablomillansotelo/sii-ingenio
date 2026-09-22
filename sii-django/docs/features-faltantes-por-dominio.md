@@ -59,7 +59,7 @@ Panel, POS, folios, pagos, clientes, catálogo, ediciones, vendedores, descuento
 | Feature | Estado | Pri | Caso de uso | Notas de diseño |
 | :--- | :--- | :--- | :--- | :--- |
 | **Mis compras** | falta | **P0** | Alumno ve *sus* folios pendientes, parciales y pagados | Vista `own` por `id_alumno_sii` / email. Sin POS. El pendiente es visible a propósito. |
-| **Recibo / comprobante** | falta | **P0** | Alumno o asesor imprime o guarda el folio | HTML imprimible basta; PDF después. No es factura fiscal. |
+| **Recibo / comprobante** | hecha | **P0** | Alumno o asesor imprime o descarga el folio | HTML + PDF interno. CFDI es P3 aparte. |
 | **Detalle de folio** | incompleto | **P0** | Ver líneas, edición, pagos aplicados, no solo editar en modal | Hoy la fila no tiene expediente de la venta. El click del pendiente va a Pagos, el pagado no va a ningún detalle. |
 | **Cancelar venta (flujo)** | incompleto | **P1** | Folio equivocado: libera cupo, no inscribe, deja rastro | Hay `estado=cancelada` y `DeleteVenta` (borra). Hace falta cancelar *con motivo*, no borrar historia. |
 | **Ficha de cliente con estatus SII** | falta | **P1** | El asesor ve “alumno # / inscrito en X / pago” | **Decidido: lectura sí.** No es pantalla de control escolar. |
@@ -210,7 +210,7 @@ Tras este inventario, **se inserta un corte de modelo antes de pintar más panta
 5. **Fase 3** — Identidad usable (invitación, reset, POS sin auto-vendedor). **Hecha.**
 6. **Fase 4** — Actas de calificación final, horario, ficha de alumno. **Hecha.**
 7. **Fase 5** — Aula usable: archivos, por calificar, alias asignar docente. **Hecha.**
-8. **Fase 6** — Pago en línea, CFDI, el resto P3.
+8. **Fase 6** — Recibo PDF, rearme de apps y manual de operación. **Hecha (sin pasarela ni CFDI).** Pago en línea y CFDI siguen abiertos.
 
 Las fases 4 y 5 del RBAC original se parten: **aula operativa** no debe esperar a las actas, y **actas** no deben bloquear materiales.
 

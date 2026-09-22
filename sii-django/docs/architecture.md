@@ -60,22 +60,20 @@ El proyecto está dividido en aplicaciones Django para modularizar la funcionali
 | App | Propósito |
 | :--- | :--- |
 | **api** | Configuración global (settings, urls, wsgi). Actúa como el "proyecto" Django. |
-| **sii** | Núcleo del negocio. Define los modelos base (`Alumno`, `Curso`) y lógica compartida. |
-| **alumnos** | Portal del estudiante. Vistas para consultar calificaciones, kardex, etc. |
-| **docente** | Portal del profesor. Gestión de grupos y captura de calificaciones. |
-| **administrador** | Panel administrativo avanzado (fuera del admin de Django). |
-| **usuario** | Gestión de perfiles y lógica común de usuarios (login/logout). |
-| **ventas** | Dominio comercial (POS, folios, pagos, oferta). |
+| **sii** | Núcleo: `Alumno`, `Curso`, `Docente`, actas, horario, RBAC y API `/api/`. |
+| **ventas** | Dominio comercial (POS, folios, pagos, recibo PDF, oferta). |
 | **aula** | Operación didáctica (actividades, entregas, calificación). |
+| **usuario** | Perfil y cambio de contraseña (`/cuenta/`). |
+| **docente** | Migraciones históricas de `cat_docente`. Sin vistas. |
 
-Roles, dueño de cada feature, matriz RBAC y roadmap: [roles-dominios-rbac.md](roles-dominios-rbac.md). Inventario de pantallas y operaciones que aún no existen, por dominio: [features-faltantes-por-dominio.md](features-faltantes-por-dominio.md).
+Roles, dueño de cada feature, matriz RBAC y roadmap: [roles-dominios-rbac.md](roles-dominios-rbac.md). Inventario de pantallas y operaciones que aún no existen, por dominio: [features-faltantes-por-dominio.md](features-faltantes-por-dominio.md). Operación diaria de Ventas y Aula: [operacion.md](operacion.md).
 
 ## Flujo de Petición (Request Lifecycle)
 
 1.  **Nginx/Gunicorn** recibe la petición HTTP.
 2.  **Django Middleware** procesa la seguridad, sesiones y autenticación (consultando la DB `auth`).
 3.  **URL Dispatcher** (`api/urls.py`) enruta la petición a la vista correspondiente.
-4.  **Vista** (e.g., `alumnos/views.py`) ejecuta la lógica de negocio.
+4.  **Vista** (e.g., `sii/views.py`) ejecuta la lógica de negocio.
     *   Consulta modelos de negocio (DB `default`).
     *   Prepara el contexto.
 5.  **Template** Renderiza el HTML y lo devuelve al usuario.

@@ -24,7 +24,10 @@
           <td>{{ venta.fecha|date:"d/m/Y"|default:"—" }}</td>
           <td class="text-end">${{ venta.monto|floatformat:2 }}</td>
           <td>{% include "includes/pago_badge.html" with estado=venta.estado_pago etiqueta=venta.get_estado_pago_display %}</td>
-          <td><a class="btn btn-outline-primary btn-sm" href="{% url 'recibo' venta.pk %}">Ver recibo</a></td>
+          <td>
+            <a class="btn btn-outline-primary btn-sm" href="{% url 'recibo' venta.pk %}">Ver recibo</a>
+            <a class="btn btn-outline-secondary btn-sm" href="{% url 'recibo_pdf' venta.pk %}">PDF</a>
+          </td>
         </tr>
         {% empty %}
         <tr>

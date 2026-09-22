@@ -8,8 +8,7 @@ from django.contrib.staticfiles import finders
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from docente.models import Docente, DocenteCurso
-from sii.models import Alumno, Curso, Inscripcion, Periodo
+from sii.models import Alumno, Curso, Docente, DocenteCurso, Inscripcion, Periodo
 from sii.permissions import GRUPO_DOCENTE, crear_grupos
 from ventas.models import Cliente, Producto, Venta, VentaDetalle
 
@@ -282,8 +281,25 @@ class RbacFase0Tests(TestCase):
         propio = self.http_alum.get(reverse("recibo", args=[self.venta_propia.pk]))
         self.assertEqual(propio.status_code, 200)
         self.assertContains(propio, self.venta_propia.folio or str(self.venta_propia.pk))
+        self.assertContains(propio, "Descargar PDF")
         ajeno = self.http_alum.get(reverse("recibo", args=[self.venta_ajena.pk]))
         self.assertEqual(ajeno.status_code, 404)
+
+    def test_alumno_recibo_pdf_propio_y_ajeno(self):
+        propio = self.http_alum.get(reverse("recibo_pdf", args=[self.venta_propia.pk]))
+        self.assertEqual(propio.status_code, 200)
+        self.assertEqual(propio["Content-Type"], "application/pdf")
+        self.assertTrue(propio.content.startswith(b"%PDF"))
+        folio = self.venta_propia.folio or str(self.venta_propia.pk)
+        self.assertIn(folio, propio["Content-Disposition"])
+        ajeno = self.http_alum.get(reverse("recibo_pdf", args=[self.venta_ajena.pk]))
+        self.assertEqual(ajeno.status_code, 404)
+
+    def test_apps_rearmadas(self):
+        self.assertNotIn("alumnos", settings.INSTALLED_APPS)
+        self.assertNotIn("administrador", settings.INSTALLED_APPS)
+        self.assertEqual(Docente._meta.app_label, "sii")
+        self.assertEqual(self.http_alum.get("/alumnos/kardex/").status_code, 302)
 
     def test_alumno_kardex_en_sii(self):
         response = self.http_alum.get(reverse("sii_kardex"))

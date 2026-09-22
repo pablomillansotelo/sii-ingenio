@@ -32,12 +32,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "sii",
-    "alumnos",
-    "docente",
-    "administrador",
     "usuario",
     "ventas.apps.VentasConfig",
     "aula.apps.AulaConfig",
+    "docente",
 ]
 
 MIDDLEWARE = [

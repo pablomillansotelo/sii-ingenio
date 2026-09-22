@@ -22,9 +22,10 @@ from .forms import (
 from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
+from django.http import HttpResponse
 
 from sii.rbac import has_feature, requiere_feature
+from .recibo import construir_pdf, venta_para_recibo
 from .services import (
     baja_inscripciones_de_venta,
     inscribir_desde_venta,
@@ -102,21 +103,17 @@ def mis_compras_view(request):
 
 @login_required
 def recibo_view(request, venta_id):
-    from sii.identity import ventas_visibles
-    from sii.rbac import has_any_feature
-
-    if not has_any_feature(request.user, ("ventas.mis_compras", "ventas.folios")):
-        raise Http404()
-    venta = (
-        ventas_visibles(request.user)
-        .select_related("id_cliente", "id_vendedor")
-        .prefetch_related("ventadetalle_set__id_producto", "ventadetalle_set__id_edicion", "pagos")
-        .filter(pk=venta_id)
-        .first()
-    )
-    if venta is None:
-        raise Http404()
+    venta = venta_para_recibo(request.user, venta_id)
     return render(request, "ventas/recibo.html", {"venta": venta})
+
+
+@login_required
+def recibo_pdf_view(request, venta_id):
+    venta = venta_para_recibo(request.user, venta_id)
+    folio = venta.folio or str(venta.pk)
+    response = HttpResponse(construir_pdf(venta), content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="recibo-{folio}.pdf"'
+    return response
 
 
 @login_required

@@ -8,8 +8,7 @@ from django.utils import timezone
 
 from aula.models import Actividad, CalificacionActividad
 from aula.services import actualizar_kardex
-from docente.models import Docente, DocenteCurso
-from sii.models import Alumno, Curso, Inscripcion, Periodo
+from sii.models import Alumno, Curso, Docente, DocenteCurso, Inscripcion, Periodo
 from sii.permissions import GRUPO_ALUMNO, GRUPO_DOCENTE, crear_grupos
 
 

@@ -34,6 +34,7 @@
           <td><span class="badge text-bg-secondary">{{ i.get_estado_display }}</span></td>
           <td>{% include "includes/pago_badge.html" with estado=i.estado_pago etiqueta=i.get_estado_pago_display %}</td>
           <td class="text-nowrap">
+            <a class="btn btn-outline-primary btn-sm" href="{% url 'recibo' i.pk %}">Recibo</a>
             <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editarVenta({{ i.id_venta }})">Editar</button>
             <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEliminar" onclick="eliminarVenta({{ i.id_venta }})">Eliminar</button>
           </td>

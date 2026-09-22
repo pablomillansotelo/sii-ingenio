@@ -126,6 +126,7 @@ URL_FEATURES = {
     "DeleteVendedor": "ventas.vendedores.write",
     "mis_compras": "ventas.mis_compras",
     "recibo": ("ventas.mis_compras", "ventas.folios"),
+    "recibo_pdf": ("ventas.mis_compras", "ventas.folios"),
     "sii_home": "sii.panel",
     "sii_alumnos": "sii.alumnos",
     "sii_alumno_crear": "sii.alumnos.write",
