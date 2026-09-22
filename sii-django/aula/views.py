@@ -8,14 +8,13 @@ from django.views.decorators.http import require_POST
 from aula.forms import ActividadForm, CalificacionForm, EntregaForm
 from aula.models import Actividad, CalificacionActividad
 from aula.services import actualizar_kardex
-from docente.models import DocenteCurso
 from sii.identity import (
     alumno_para_usuario,
     cursos_visibles,
     docente_para_usuario,
     es_administrador,
 )
-from sii.models import Curso, HorarioSlot, Inscripcion
+from sii.models import Curso, DocenteCurso, HorarioSlot, Inscripcion
 
 
 def _puede_gestionar(user, curso):

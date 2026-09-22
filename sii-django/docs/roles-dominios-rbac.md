@@ -62,7 +62,9 @@ Revisados en código y descartados como login aparte:
 | **Coordinador de curso** | Flag `DocenteCurso.es_coordinador`. Es una capacidad del docente, no un grupo. Las actas de calificación final las publica el **docente del grupo**, no hace falta un rol extra. |
 | **Caja / cobranza** | Hoy el vendedor cobra (`/ventas/pagos/`). Separarlo solo tiene sentido si el call center no debe ver montos o catálogo. No hay evidencia de ese oficio todavía. |
 | **Cliente portal** | Sería un segundo login para la misma persona que ya es Alumno. Unificar: el alumno ve “Mis compras”. |
-| **App `administrador/` y `docente/` vacías** | Apps Django sin vistas. No son roles; son deuda de estructura. |
+| **App `administrador/`** | Retirada. No era un rol; era deuda de estructura. |
+| **App `alumnos/`** | Retirada. Kardex, API y redirects viven en `sii` / `api/urls`. |
+| **App `docente/`** | Solo migraciones históricas. `Docente` está en `sii.models`. |
 
 Conclusión: **4 roles de negocio + superusuario**. Un mismo `User` **sí puede llevar más de un grupo** (vendedor + docente). El menú y `has_feature` son la unión. No inventar un quinto oficio hasta que un caso lo pida (el más probable a futuro sería Caja).
 
@@ -86,7 +88,7 @@ flowchart LR
     Insc[Inscripción]
     Kardex[Kardex]
     Periodo[Periodo]
-    Acta[Actas - faltante]
+    Acta[Actas]
   end
   subgraph aula [Aula - operación didáctica]
     Grupo[Mis cursos]
@@ -299,9 +301,9 @@ El alumno **sí entra a SII**, pero no al padrón: Kardex (y ficha / inscripcion
 | Actas de grupo / cierre | SII | Administrador, docente |
 | Horario real | SII (oficial) + Aula (vista semanal) | Alumno, docente |
 | Entrega con archivo | Aula | Alumno |
-| Comprobante descargable (PDF) del folio | Ventas | Alumno, vendedor |
+| Comprobante PDF del folio | Ventas | **Hecho** (HTML + PDF interno; CFDI después) |
 | Pago en línea | Ventas | Alumno (self-service) — después de mis compras |
-| Apps `docente/` y `administrador/` vacías | estructura | mantenimiento |
+| Apps `administrador/` y `alumnos/` | estructura | **Hecho** — retiradas; `docente/` solo migraciones |
 | Alta de alumno **sin** crear usuario / sin invitación usable | SII | Alumno no puede entrar aunque exista la ficha |
 
 ### 6.3 Huecos de autorización (el código permite de más o de menos)
@@ -409,10 +411,9 @@ Las apps actuales no coinciden con los oficios. No hace falta fusionarlas para e
 | App | Debe contener | No debe contener |
 | :--- | :--- | :--- |
 | `ventas` | POS, folios, pagos, clientes, oferta, **mis compras** | Kardex, inscripciones |
-| `sii` | Padrones, periodos, inscripciones, **kardex**, actas | Actividades, POS |
+| `sii` | Padrones, periodos, inscripciones, docentes, **kardex**, actas, API | Actividades, POS |
 | `aula` | Actividades, entregas, calificación de actividad | Kardex de consulta, plantilla docente |
-| `alumnos` | Deprecar vistas; dejar redirects a SII/Aula | Nueva UI |
-| `docente` / `administrador` | Modelos (`Docente`) o retirar apps vacías | Una UI paralela |
+| `docente` | Migraciones históricas | Una UI paralela |
 | `usuario` | Perfil, password | Atajos mal dirigidos |
 
 ---
@@ -487,9 +488,17 @@ Sin fechas: cada fase es un corte mergeable.
 
 ### Fase 6 — Cobro self-service y limpieza
 
+**Hecha en este corte (sin pasarela ni CFDI):**
+
+- Recibo PDF descargable (`/ventas/recibos/<id>/pdf/`) junto al HTML imprimible.
+- Rearme: se retiraron las apps vacías `administrador/` y `alumnos/`; `Docente` vive en SII; `/api/` sale de `sii`.
+- Redirects viejos (`/alumnos/kardex/`, `/dashboard/`, `/docente/`, `/administrador/`) siguen como alias.
+- Manual de operación de Ventas y Aula: [operacion.md](operacion.md).
+
+**Sigue abierta:**
+
 - Pago en línea sobre *mis compras* (pasarela); la caja del call center permanece.
-- Retirar o fusionar apps vacías `administrador/` (vistas) y redirects muertos.
-- Documentar Ventas y Aula para operación (el README hoy habla del SII escolar).
+- CFDI (el PDF no es factura fiscal).
 
 ---
 
@@ -517,9 +526,9 @@ Para no reabrirlas en cada ticket:
 ## 10. Lo que queda abierto (más adelante)
 
 - Política B2B (N alumnos bajo un pagador) si un caso real lo pide.
-- PDF pulido del recibo y CFDI.
-- Actas de calificación final (UI hecha en Fase 4). PDF pulido del recibo y CFDI.
+- CFDI (el PDF del recibo ya existe; no es factura fiscal).
 - Storage persistente de archivos de entrega (hoy es disco local).
+- Pago en línea sobre mis compras.
 
 ---
 

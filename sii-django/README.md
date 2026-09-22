@@ -85,11 +85,11 @@ El proyecto sigue una estructura modular de Django:
 *   **`api/`**: **Directorio de Configuración del Proyecto**.
     *   Contiene `settings.py`, `urls.py` principal y la configuración WSGI/ASGI.
     *   **Nota importante:** A diferencia de la convención estándar donde la carpeta de configuración lleva el mismo nombre que el repositorio, aquí se llama `api`.
-*   **`sii/`**: Aplicación "Core". Contiene modelos de negocio fundamentales (e.g., Catálogos, Tablas de configuración) y configuraciones generales.
-*   **`alumnos/`**: Aplicación encargada de la lógica relacionada con los estudiantes (Kardex, Perfil, etc.).
-*   **`docente/`**: Aplicación para la gestión y vistas de los profesores.
-*   **`administrador/`**: Panel y lógica para administradores del sistema.
-*   **`usuario/`**: Gestión de perfiles de usuario y autenticación común.
+*   **`sii/`**: Núcleo: modelos (`Alumno`, `Curso`, `Docente`, actas, horario), RBAC, API `/api/` y pantallas de control escolar.
+*   **`ventas/`**: POS, folios, pagos, recibo HTML/PDF, clientes y ediciones.
+*   **`aula/`**: Actividades, entregas y calificación.
+*   **`usuario/`**: Perfil y cambio de contraseña (`/cuenta/`).
+*   **`docente/`**: Solo migraciones históricas; los modelos viven en `sii`.
 *   **`templates/`**: Plantillas HTML globales.
 *   **`static/`**: Archivos estáticos de desarrollo (CSS, JS, logo).
 *   **`staticfiles/`**: Salida de `collectstatic` que Vercel publica en `/static/`. Hay que regenerarla al agregar CSS, JS o imágenes (`python manage.py collectstatic --noinput` o `./build_files.sh`).
@@ -106,4 +106,4 @@ Esta separación se gestiona mediante un **Database Router** ubicado en `api/dbr
 
 ### Documentación Adicional
 
-Para detalles más profundos sobre arquitectura, modelos, roles/RBAC y guías avanzadas, revisa el directorio `/docs`.
+Para detalles más profundos sobre arquitectura, modelos, roles/RBAC, operación de Ventas/Aula y el inventario de huecos, revisa el directorio `/docs`.

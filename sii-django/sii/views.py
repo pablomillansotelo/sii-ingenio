@@ -5,7 +5,6 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from docente.models import Docente, DocenteCurso
 from sii.forms import (
     AlumnoForm,
     AsignacionForm,
@@ -27,7 +26,7 @@ from sii.identity import (
     es_administrador,
     inscripciones_visibles,
 )
-from sii.models import Alumno, ActaFinal, Curso, HorarioSlot, Inscripcion, Periodo
+from sii.models import Alumno, ActaFinal, Curso, Docente, DocenteCurso, HorarioSlot, Inscripcion, Periodo
 
 
 def _solo_admin(view_func):
@@ -89,7 +88,7 @@ def kardex(request):
     mostrar_alumno = es_administrador(request.user) or docente_para_usuario(request.user) is not None
     return render(
         request,
-        "alumnos/kardex.html",
+        "sii/kardex.html",
         {"kardex": _kardex_rows(inscripciones), "mostrar_alumno": mostrar_alumno},
     )
 

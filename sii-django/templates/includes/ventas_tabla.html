@@ -21,7 +21,7 @@
       </thead>
       <tbody>
         {% for venta in ventas %}
-        <tr class="table-row-link" data-href="{% if venta.estado_pago == 'pagado' %}{{ folios_url }}{% else %}{{ pagos_url }}{% endif %}" data-filter="{{ venta.estado_pago }}">
+        <tr class="table-row-link" data-href="{% url 'recibo' venta.pk %}" data-filter="{{ venta.estado_pago }}">
           <td class="fw-semibold">{{ venta.folio|default:venta.id_venta }}</td>
           <td>{{ venta.id_cliente }}</td>
           <td>{{ venta.fecha|date:"d/m/Y"|default:"—" }}</td>

@@ -15,6 +15,7 @@
 {% block content %}
 {% include "includes/page_header.html" with title=venta.folio subtitle="Comprobante interno. No es factura fiscal." %}
 <div class="no-print mb-3">
+  <a class="btn btn-primary" href="{% url 'recibo_pdf' venta.pk %}">Descargar PDF</a>
   <button type="button" class="btn btn-outline-primary" onclick="window.print()">Imprimir</button>
   {% if "ventas.mis_compras" in ingenio_features %}
   <a class="btn btn-outline-secondary" href="{% url 'mis_compras' %}">Volver a mis compras</a>

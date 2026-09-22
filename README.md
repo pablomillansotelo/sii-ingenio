@@ -8,18 +8,17 @@
 *   **SII:** alumnos, cursos, periodos, inscripciones, docentes, kardex, actas, horario y ficha.
 *   **Aula:** actividades, entregas (texto o archivo), calificación masiva y aviso por calificar.
 *   **Acceso:** login único, alta de cuenta al crear alumno/docente/vendedor, perfil y recuperación de contraseña.
+*   **Recibo:** HTML imprimible y PDF interno (`/ventas/recibos/<id>/pdf/`). No es CFDI.
 
 ## Qué falta (roadmap)
 
 Prioridad alta:
 
 1. **Pago en línea** — el cobro sigue siendo registro manual del call center.
-2. **Documentación de operación** — Ventas y Aula aún no tienen un manual aparte del SII.
-3. **PDF / CFDI** — el recibo es HTML imprimible.
+2. **CFDI** — el PDF del recibo no es factura fiscal.
 
 Después:
 
-*   Apps `docente/` y `administrador/` vacías (la lógica vive en `sii/` y `aula/`).
 *   Storage persistente de archivos de entrega (hoy es disco local).
 *   `/sii-sql` vacío; las migraciones de Django son la fuente de verdad.
 *   Proyectos Vercel legacy `ventas-ingenio` y `aula-ingenio` (el unificado es `sii-ingenio` → `sii.modeloingenio.xyz`).
