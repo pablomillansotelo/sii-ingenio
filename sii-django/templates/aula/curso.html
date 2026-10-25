@@ -1,46 +1,152 @@
 {% extends "base.html" %}
 {% block title %}{{ curso.nombre }} · Aula{% endblock %}
 {% block content %}
-{% include "includes/page_header.html" with title=curso.nombre subtitle="Actividades, entregas y calificación del grupo." %}
+{% include "includes/page_header.html" with title=curso.nombre subtitle=edicion.codigo_edicion|default:"Actividades, materiales y el recado del grupo." %}
 
 {% if inscripcion and not puede_cursar %}
 <div class="alert alert-warning">Tu inscripción está pendiente de pago. Puedes ver el grupo, pero no entregar hasta que el folio esté pagado.</div>
 {% endif %}
 
+{% if aviso %}
+<div class="alert alert-info">
+  <div class="fw-semibold">{{ aviso.titulo }}</div>
+  <div>{{ aviso.cuerpo|linebreaksbr }}</div>
+  <div class="small mt-1">{{ aviso.fecha }}</div>
+</div>
+{% endif %}
+
 {% if gestionar %}
-<div class="mb-3">
+<div class="mb-3 d-flex flex-wrap gap-2">
+  {% if edicion %}
+  <a class="btn btn-primary" href="{% url 'aula_actividad_nueva_grupo' curso.pk edicion.pk %}">Nueva actividad</a>
+  <a class="btn btn-outline-primary" href="{% url 'aula_seccion_nueva_grupo' curso.pk edicion.pk %}">Nueva sección</a>
+  <a class="btn btn-outline-primary" href="{% url 'aula_aviso_grupo' curso.pk edicion.pk %}">Aviso del grupo</a>
+  {% else %}
   <a class="btn btn-primary" href="{% url 'aula_actividad_nueva' curso.pk %}">Nueva actividad</a>
+  <a class="btn btn-outline-primary" href="{% url 'aula_seccion_nueva' curso.pk %}">Nueva sección</a>
+  <a class="btn btn-outline-primary" href="{% url 'aula_aviso' curso.pk %}">Aviso del grupo</a>
+  {% endif %}
   {% if es_admin %}
   <a class="btn btn-outline-secondary" href="{% url 'sii_docentes' %}">Asignar docente en SII</a>
   {% endif %}
 </div>
 {% endif %}
 
-{% if grupos %}
-<div class="card shadow-sm mb-3">
-  <div class="card-header bg-white"><strong>Docentes del grupo</strong></div>
-  <div class="card-body">
-    <ul class="mb-0">
-      {% for grupo in grupos %}
-      <li>{{ grupo.docente }}{% if grupo.es_coordinador %} · coordinador{% endif %}</li>
-      {% endfor %}
-    </ul>
-  </div>
-</div>
+{% if ediciones and ediciones|length > 1 %}
+<p class="small text-muted">
+  Otros grupos de este curso:
+  {% for grupo in ediciones %}
+    {% if edicion and grupo.pk == edicion.pk %}
+    <strong>{{ grupo.codigo_edicion }}</strong>
+    {% else %}
+    <a href="{% url 'aula_grupo' curso.pk grupo.pk %}">{{ grupo.codigo_edicion }}</a>
+    {% endif %}
+    {% if not forloop.last %}·{% endif %}
+  {% endfor %}
+</p>
 {% endif %}
 
-{% if horarios %}
+<div class="row g-3 mb-3">
+  {% if grupos %}
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white"><strong>Docentes</strong></div>
+      <div class="card-body">
+        <ul class="mb-0">
+          {% for grupo in grupos %}
+          <li>{{ grupo.docente }}{% if grupo.es_coordinador %} · coordinador{% endif %}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% if horarios %}
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white"><strong>Horario</strong></div>
+      <ul class="list-group list-group-flush">
+        {% for slot in horarios %}
+        <li class="list-group-item">{{ slot.get_dia_display }} {{ slot.hora_inicio|time:"H:i" }}–{{ slot.hora_fin|time:"H:i" }}{% if slot.lugar %} · {{ slot.lugar }}{% endif %}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+  {% if gestionar %}
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white"><strong>Inscritos del grupo</strong></div>
+      <ul class="list-group list-group-flush">
+        {% for fila in roster %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span>{{ fila.alumno }}</span>
+          {% if not fila.puede_cursar %}<span class="badge text-bg-warning">pago</span>{% endif %}
+        </li>
+        {% empty %}
+        <li class="list-group-item text-muted">Nadie inscrito en esta edición.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% for bloque in bloques %}
 <div class="card shadow-sm mb-3">
-  <div class="card-header bg-white"><strong>Horario de la semana</strong></div>
+  <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+      <strong>{{ bloque.seccion.titulo }}</strong>
+      {% if bloque.seccion.descripcion %}<div class="small text-muted">{{ bloque.seccion.descripcion }}</div>{% endif %}
+    </div>
+    {% if gestionar %}
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-primary btn-sm" href="{% url 'aula_recurso_nuevo' bloque.seccion.pk %}">Material</a>
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'aula_seccion_editar' bloque.seccion.pk %}">Editar</a>
+    </div>
+    {% endif %}
+  </div>
+  {% if bloque.recursos %}
   <ul class="list-group list-group-flush">
-    {% for slot in horarios %}
-    <li class="list-group-item">{{ slot.get_dia_display }} {{ slot.hora_inicio|time:"H:i" }}–{{ slot.hora_fin|time:"H:i" }}{% if slot.lugar %} · {{ slot.lugar }}{% endif %}</li>
+    {% for recurso in bloque.recursos %}
+    <li class="list-group-item">
+      <div class="fw-semibold">{{ recurso.titulo }} <span class="badge text-bg-light text-muted">{{ recurso.get_tipo_display }}</span></div>
+      {% if recurso.tipo == "url" and recurso.url %}
+      <a href="{{ recurso.url }}" target="_blank" rel="noopener">{{ recurso.url }}</a>
+      {% elif recurso.tipo == "archivo" and recurso.archivo %}
+      <a href="{{ recurso.archivo.url }}">Descargar archivo</a>
+      {% elif recurso.cuerpo %}
+      <div class="small mt-1">{{ recurso.cuerpo|safe }}</div>
+      {% endif %}
+    </li>
     {% endfor %}
   </ul>
+  {% endif %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <tbody>
+        {% for fila in bloque.actividades %}
+        {% include "aula/_actividad_row.html" %}
+        {% empty %}
+        {% if not bloque.recursos %}
+        <tr><td class="text-muted">Esta sección aún no tiene materiales ni actividades.</td></tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% empty %}
+{% if not actividades_sueltas %}
+<div class="card shadow-sm mb-3">
+  <div class="card-body text-muted">Aún no hay secciones. El docente puede armar el temario y colgar materiales o actividades.</div>
 </div>
 {% endif %}
+{% endfor %}
 
+{% if actividades_sueltas %}
 <div class="card shadow-sm">
+  <div class="card-header bg-white"><strong>Actividades sin sección</strong></div>
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
       <thead class="table-light">
@@ -55,40 +161,12 @@
         </tr>
       </thead>
       <tbody>
-        {% for fila in actividades_ui %}
-        <tr>
-          <td>
-            <strong>{{ fila.actividad.nombre }}</strong>
-            {% if fila.actividad.descripcion %}<div class="small text-muted">{{ fila.actividad.descripcion }}</div>{% endif %}
-          </td>
-          <td>{{ fila.actividad.get_tipo_display }}</td>
-          <td>{{ fila.actividad.fecha_limite }}</td>
-          <td>{{ fila.actividad.valor }}</td>
-          <td><span class="badge text-bg-secondary">{{ fila.actividad.get_estado_display }}</span></td>
-          {% if inscripcion %}
-          <td>
-            {% if fila.entrega and fila.entrega.entregado %}
-              Entregada{% if fila.entrega.calificacion is not None %} · {{ fila.entrega.calificacion }}{% endif %}
-            {% else %}
-              Sin entregar
-            {% endif %}
-          </td>
-          {% endif %}
-          <td class="text-nowrap">
-            {% if inscripcion and puede_cursar %}
-            <a class="btn btn-outline-primary btn-sm" href="{% url 'aula_entregar' fila.actividad.pk %}">Entregar</a>
-            {% endif %}
-            {% if gestionar %}
-            <a class="btn btn-outline-primary btn-sm" href="{% url 'aula_calificar' fila.actividad.pk %}">Calificar</a>
-            <a class="btn btn-outline-secondary btn-sm" href="{% url 'aula_actividad_editar' fila.actividad.pk %}">Editar</a>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="7" class="text-center text-muted py-4">Aún no hay actividades.</td></tr>
+        {% for fila in actividades_sueltas %}
+        {% include "aula/_actividad_row.html" %}
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+{% endif %}
 {% endblock %}

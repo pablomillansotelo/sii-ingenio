@@ -9,7 +9,7 @@
       <tbody>
         {% for fila in pendientes %}
         <tr>
-          <td>{{ fila.actividad.curso }}</td>
+          <td>{{ fila.actividad.curso }}{% if fila.actividad.edicion %} · {{ fila.actividad.edicion.codigo_edicion }}{% endif %}</td>
           <td>{{ fila.actividad.nombre }}</td>
           <td>{{ fila.inscripcion.alumno }}</td>
           <td>{{ fila.fecha_entrega|default:"—" }}</td>

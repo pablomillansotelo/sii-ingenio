@@ -56,19 +56,9 @@ def ingenio_shell(request):
         if has_feature(user, "ventas.pagos"):
             pagos_pendientes = Venta.objects.filter(estado_pago="pendiente").count()
         if has_feature(user, "aula.calificar"):
-            from aula.models import CalificacionActividad
-            from sii.identity import docente_para_usuario, es_administrador
+            from aula.services import entregas_pendientes_qs
 
-            qs = CalificacionActividad.objects.filter(entregado=True, calificacion__isnull=True)
-            if not es_administrador(user):
-                docente = docente_para_usuario(user)
-                if docente is None:
-                    qs = qs.none()
-                else:
-                    qs = qs.filter(
-                        actividad__curso_id__in=docente.cursos_asignados.values_list("curso_id", flat=True)
-                    )
-            pendientes_calificar = qs.count()
+            pendientes_calificar = entregas_pendientes_qs(user).count()
 
     modules = []
     for item in catalogo:
@@ -137,5 +127,6 @@ def ingenio_shell(request):
         "ingenio_modulos_permitidos": permitidos,
         "ingenio_features": features,
         "ingenio_pagos_pendientes": pagos_pendientes,
+        "ingenio_pendientes_calificar": pendientes_calificar,
         "ingenio_mostrar_cobro": bool(pagos_pendientes) and not en_pagos and has_feature(user, "ventas.pagos"),
     }

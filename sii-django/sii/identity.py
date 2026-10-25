@@ -208,6 +208,55 @@ def cursos_visibles(user):
     return qs.filter(pk__in=curso_ids)
 
 
+def ediciones_visibles(user):
+    """Grupos académicos = ediciones de ventas ligadas a un curso SII."""
+    from ventas.models import EdicionCurso
+
+    qs = EdicionCurso.objects.select_related("id_curso", "id_curso__id_curso").filter(
+        id_curso__id_curso__isnull=False
+    )
+    if es_administrador(user):
+        return qs
+    edicion_ids = set()
+    docente = docente_para_usuario(user)
+    if docente is not None:
+        curso_ids = docente.cursos_asignados.values_list("curso_id", flat=True)
+        edicion_ids.update(
+            qs.filter(id_curso__id_curso_id__in=curso_ids).values_list("pk", flat=True)
+        )
+    alumno = alumno_para_usuario(user)
+    if alumno is not None:
+        from sii.models import Inscripcion
+
+        edicion_ids.update(
+            Inscripcion.objects.filter(alumno=alumno, id_edicion_id__isnull=False).values_list(
+                "id_edicion_id", flat=True
+            )
+        )
+    if not edicion_ids:
+        return qs.none()
+    return qs.filter(pk__in=edicion_ids)
+
+
+def puede_gestionar_curso(user, curso):
+    if es_administrador(user):
+        return True
+    docente = docente_para_usuario(user)
+    if docente is None:
+        return False
+    return docente.cursos_asignados.filter(curso=curso).exists()
+
+
+def puede_gestionar_edicion(user, edicion):
+    curso = None
+    if edicion is not None:
+        producto = getattr(edicion, "id_curso", None)
+        curso = getattr(producto, "id_curso", None) if producto is not None else None
+    if curso is None:
+        return False
+    return puede_gestionar_curso(user, curso)
+
+
 def inscripciones_visibles(user):
     from sii.models import Inscripcion
 

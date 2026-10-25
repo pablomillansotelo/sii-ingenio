@@ -72,6 +72,15 @@ AUTH_USER=postgres
 AUTH_PASSWORD=tu_password_local
 AUTH_HOST=localhost
 AUTH_PORT=5432
+
+# Archivos (opcional). Sin esto, DEBUG usa MEDIA_ROOT local.
+# STORAGE_BACKEND=local
+# BLOB_READ_WRITE_TOKEN=
+# AWS_STORAGE_BUCKET_NAME=
+# AWS_ACCESS_KEY_ID=
+# AWS_SECRET_ACCESS_KEY=
+# AWS_S3_REGION_NAME=
+# AWS_S3_ENDPOINT_URL=
 ```
 
 ## 7. Inicialización de la Base de Datos
