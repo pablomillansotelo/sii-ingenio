@@ -11,6 +11,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from aula.models import Actividad, CalificacionActividad, Recurso, SeccionTema
 from aula.services import actualizar_kardex
+from aula.storage import LOCAL_BACKEND, S3_BACKEND, backend_archivos
 from sii.models import Alumno, Curso, Docente, DocenteCurso, Inscripcion, Periodo
 from sii.permissions import GRUPO_ALUMNO, GRUPO_DOCENTE, crear_grupos
 from ventas.models import EdicionCurso, Producto
@@ -320,11 +321,31 @@ class AulaActividadTests(TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(SeccionTema.objects.count(), 0)
 
-    def test_storage_local_sin_credenciales(self):
+    def test_storage_elige_neon_con_keys(self):
         self.assertEqual(
-            settings.STORAGES["default"]["BACKEND"],
-            "django.core.files.storage.FileSystemStorage",
+            backend_archivos(
+                endpoint="https://br.example.neon.tech",
+                access_key="key",
+                secret_key="secret",
+            ),
+            S3_BACKEND,
         )
+        self.assertEqual(
+            backend_archivos(endpoint="", access_key="", secret_key=""),
+            LOCAL_BACKEND,
+        )
+        self.assertEqual(
+            backend_archivos(
+                endpoint="https://br.example.neon.tech",
+                access_key="key",
+                secret_key="secret",
+                force_local=True,
+            ),
+            LOCAL_BACKEND,
+        )
+
+    def test_storage_local_sin_credenciales(self):
+        self.assertEqual(settings.STORAGES["default"]["BACKEND"], LOCAL_BACKEND)
         archivo = SimpleUploadedFile("nota.txt", b"hola", content_type="text/plain")
         actividad = Actividad.objects.create(
             curso=self.curso,
