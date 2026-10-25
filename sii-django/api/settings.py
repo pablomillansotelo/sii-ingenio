@@ -7,6 +7,8 @@ from decouple import config
 import os
 import sys
 
+from aula.storage import DEFAULT_BUCKET, DEFAULT_REGION, backend_archivos
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config("SECRET_KEY", default="#%9g2p3)pba4-h0$b5bi5vw$q%lx%#x*odh&xk%$hl6td^kh#2")
@@ -30,6 +32,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "storages",
     "rest_framework",
     "sii",
     "usuario",
@@ -141,50 +144,34 @@ WHITENOISE_AUTOREFRESH = DEBUG
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-# Archivos (entregas y materiales). En Vercel el disco local no persiste.
-BLOB_READ_WRITE_TOKEN = config("BLOB_READ_WRITE_TOKEN", default="")
-VERCEL_BLOB_READ_WRITE_TOKEN = config("VERCEL_BLOB_READ_WRITE_TOKEN", default="")
-AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID", default="")
-AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default="")
-AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME", default="")
-AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="")
-AWS_S3_ENDPOINT_URL = config("AWS_S3_ENDPOINT_URL", default="") or None
-AWS_S3_CUSTOM_DOMAIN = config("AWS_S3_CUSTOM_DOMAIN", default="") or None
-AWS_QUERYSTRING_AUTH = config("AWS_QUERYSTRING_AUTH", default=True, cast=bool)
+# Neon Object Storage (S3 path-style, bucket privado + signed URLs).
+# Mismo naming que Bodamos. En Vercel el disco local no persiste.
+NEON_S3_ENDPOINT = config("NEON_S3_ENDPOINT", default="")
+NEON_S3_REGION = config("NEON_S3_REGION", default=DEFAULT_REGION) or DEFAULT_REGION
+NEON_S3_ACCESS_KEY_ID = config("NEON_S3_ACCESS_KEY_ID", default="")
+NEON_S3_SECRET_ACCESS_KEY = config("NEON_S3_SECRET_ACCESS_KEY", default="")
+NEON_S3_BUCKET = config("NEON_S3_BUCKET", default=DEFAULT_BUCKET) or DEFAULT_BUCKET
+
+AWS_S3_ENDPOINT_URL = NEON_S3_ENDPOINT or None
+AWS_S3_REGION_NAME = NEON_S3_REGION
+AWS_ACCESS_KEY_ID = NEON_S3_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY = NEON_S3_SECRET_ACCESS_KEY
+AWS_STORAGE_BUCKET_NAME = NEON_S3_BUCKET
+AWS_S3_ADDRESSING_STYLE = "path"
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+AWS_QUERYSTRING_AUTH = True
 AWS_DEFAULT_ACL = None
 AWS_S3_FILE_OVERWRITE = False
 
-
-def _storage_backend():
-    elegido = config("STORAGE_BACKEND", default="").strip().lower()
-    tiene_blob = bool(BLOB_READ_WRITE_TOKEN or VERCEL_BLOB_READ_WRITE_TOKEN)
-    tiene_s3 = bool(AWS_STORAGE_BUCKET_NAME)
-    if not elegido:
-        if tiene_blob:
-            elegido = "vercel_blob"
-        elif tiene_s3:
-            elegido = "s3"
-        else:
-            elegido = "local"
-    if elegido in {"vercel", "blob", "vercel_blob"}:
-        if tiene_blob:
-            return "aula.storage.VercelBlobStorage"
-        if DEBUG:
-            return "django.core.files.storage.FileSystemStorage"
-        return "aula.storage.VercelBlobStorage"
-    if elegido == "s3":
-        if tiene_s3:
-            if "storages" not in INSTALLED_APPS:
-                INSTALLED_APPS.append("storages")
-            return "storages.backends.s3boto3.S3Boto3Storage"
-        if DEBUG:
-            return "django.core.files.storage.FileSystemStorage"
-        return "storages.backends.s3boto3.S3Boto3Storage"
-    return "django.core.files.storage.FileSystemStorage"
-
-
 STORAGES = {
-    "default": {"BACKEND": _storage_backend()},
+    "default": {
+        "BACKEND": backend_archivos(
+            endpoint=NEON_S3_ENDPOINT,
+            access_key=NEON_S3_ACCESS_KEY_ID,
+            secret_key=NEON_S3_SECRET_ACCESS_KEY,
+            force_local=config("STORAGE_BACKEND", default="").strip().lower() == "local",
+        )
+    },
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },

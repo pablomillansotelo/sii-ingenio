@@ -28,7 +28,7 @@ Rutas bajo `/aula/`. El **grupo** es la edición de ventas (`EdicionCurso`) liga
 | Actividades | misma página / alta | Fecha límite y `cerrada` **bloquean** entregas |
 | Materiales | sección → “Material” | Archivo, liga o texto/HTML corto |
 | Aviso | `/aula/cursos/<curso>/g/<edicion>/aviso/` | Un recado, no un foro |
-| Entregar | `/aula/actividades/<id>/entregar/` | Texto y/o archivo. En producción configura Blob o S3 |
+| Entregar | `/aula/actividades/<id>/entregar/` | Texto y/o archivo. En producción: Neon Object Storage (bucket `aula`) |
 | Calificar | `/aula/actividades/<id>/calificar/` | Solo inscritos de **esa** edición |
 | Por calificar | `/aula/por-calificar/` y atajo en **Hoy** | Entregas sin nota del docente |
 | Horario | se muestra en el curso; el dueño es SII (`/sii/horario/`) | |
@@ -40,24 +40,25 @@ Asignar docente se hace en `/sii/docentes/`. `/aula/cursos/<id>/asignar/` rediri
 
 ## Archivos (entregas y materiales)
 
-En Vercel el disco local **no persiste**. Orden de resolución:
+En Vercel el disco local **no persiste**. El camino de producción es **Neon Object Storage** (S3 compatible, path-style, bucket privado + signed URLs), igual que Bodamos.
 
-1. `STORAGE_BACKEND=local|s3|vercel_blob` si está definido.
-2. Si no: hay `BLOB_READ_WRITE_TOKEN` → Vercel Blob; si hay `AWS_STORAGE_BUCKET_NAME` → S3; si no → disco local (`MEDIA_ROOT`).
-3. En `DEBUG=True`, S3/Blob sin credenciales caen a disco local.
+Orden de resolución:
 
-Variables:
+1. Si hay `NEON_S3_ENDPOINT` + `NEON_S3_ACCESS_KEY_ID` + `NEON_S3_SECRET_ACCESS_KEY` → Neon (bucket `aula` por default).
+2. Si no → disco local (`MEDIA_ROOT`), pensado para `DEBUG` y tests.
+3. `STORAGE_BACKEND=local` fuerza disco aunque existan keys (solo para desarrollo).
+
+Variables (`NEON_S3_*`, mismo naming que Bodamos):
 
 | Variable | Uso |
 | :--- | :--- |
-| `STORAGE_BACKEND` | `local`, `s3` o `vercel_blob` (opcional) |
-| `BLOB_READ_WRITE_TOKEN` | Token de Vercel Blob (también `VERCEL_BLOB_READ_WRITE_TOKEN`) |
-| `AWS_STORAGE_BUCKET_NAME` | Bucket S3 / R2 / MinIO |
-| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | Credenciales S3 |
-| `AWS_S3_REGION_NAME` | Región |
-| `AWS_S3_ENDPOINT_URL` | Endpoint compatible (R2, MinIO) |
-| `AWS_S3_CUSTOM_DOMAIN` | CDN opcional |
-| `AWS_QUERYSTRING_AUTH` | URLs firmadas (default true) |
+| `NEON_S3_ENDPOINT` | Endpoint S3 del branch (Neon Console → Object Storage) |
+| `NEON_S3_REGION` | Default `us-east-2` |
+| `NEON_S3_ACCESS_KEY_ID` | Access key de la credential del branch |
+| `NEON_S3_SECRET_ACCESS_KEY` | Secret key (no va en el repo) |
+| `NEON_S3_BUCKET` | Default `aula` (privado) |
+
+Proyecto `ingenio`, branch production: bucket `aula` ya creado. En Vercel hay que pegar las `NEON_S3_*` desde Neon Console → Object Storage / credentials. No uses Vercel Blob.
 
 ## Cuentas
 

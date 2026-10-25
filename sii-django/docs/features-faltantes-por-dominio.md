@@ -129,7 +129,7 @@ El aula ya no es un buzón plano: el curso se arma por **secciones/temas**, con 
 
 ### Ya cubre
 
-Alta/edición de actividad (nombre, ponderación, tipo, fecha límite **enforzada**, estado `cerrada`), entrega en texto y archivo, calificación con comentario, promedio ponderado hacia inscripción, secciones/temario ordenable, recursos (PDF/archivo, URL, texto/HTML), aviso del grupo, roster por edición, por calificar en Hoy del docente, storage configurable (local / S3 / Vercel Blob).
+Alta/edición de actividad (nombre, ponderación, tipo, fecha límite **enforzada**, estado `cerrada`), entrega en texto y archivo, calificación con comentario, promedio ponderado hacia inscripción, secciones/temario ordenable, recursos (PDF/archivo, URL, texto/HTML), aviso del grupo, roster por edición, por calificar en Hoy del docente, storage Neon Object Storage (bucket `aula`) o disco local en DEBUG.
 
 ### Faltan
 
@@ -138,7 +138,7 @@ Alta/edición de actividad (nombre, ponderación, tipo, fecha límite **enforzad
 | **Roster del curso** | hecha | **P0** | El docente ve a quién le imparte, no solo tareas | Lista `Inscripcion` activa de la edición. El docente se asigna en SII al catálogo; el alcance del aula es la edición. |
 | **Materiales / recursos** | hecha | **P0** | Subir PDF, liga, texto. Sin esto el alumno no “tiene clase” en la plataforma | Dueño Aula. Storage por env vars. |
 | **Forzar fecha límite** | hecha | **P1** | `estado=cerrada` o fecha vencida bloquean nuevas entregas | Mensaje claro. No hay reabrir (P2). |
-| **Entrega con archivo** | hecha | **P1** | Tarea que no cabe en un textarea | En Vercel hay que configurar Blob o S3; DEBUG cae a disco local. |
+| **Entrega con archivo** | hecha | **P1** | Tarea que no cabe en un textarea | Producción: Neon Object Storage (`NEON_S3_*`, bucket `aula`). DEBUG sin keys: disco local. |
 | **Tablero / aviso del grupo** | hecha | **P1** | “El sábado no hay clase” | Un recado, no un foro. |
 | **Por calificar (Hoy del docente)** | hecha | **P1** | Escritorio: N entregas sin nota | Badge + atajo en Hoy y `/aula/por-calificar/`. |
 | **Unidades / temario** | hecha | **P2** | Ordenar actividades | `SeccionTema` ordenable; actividades con FK nullable. |
