@@ -2,8 +2,30 @@
 {% block title %}Aula · Ingenio{% endblock %}
 {% block page_heading %}Aula{% endblock %}
 {% block content %}
-{% include "includes/page_header.html" with title="Aula" subtitle="Cursos académicos vinculados a la oferta de ventas." %}
+{% include "includes/page_header.html" with title="Aula" subtitle="La semana de cada grupo (edición), no el catálogo suelto." %}
 
+{% if grupos %}
+<div class="row g-3 mb-4">
+  {% for grupo in grupos %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="small text-muted mb-1">{{ grupo.codigo_edicion }}</div>
+        <h2 class="h5">{% if grupo.id_curso.id_curso %}{{ grupo.id_curso.id_curso.nombre }}{% else %}{{ grupo.id_curso }}{% endif %}</h2>
+        <p class="text-muted mb-3">{{ grupo.fecha_inicio }}{% if grupo.fecha_fin %} – {{ grupo.fecha_fin }}{% endif %}</p>
+        <span class="badge text-bg-secondary mb-3">{{ grupo.get_estado_display }}</span>
+        <div>
+          <a href="{% url 'aula_grupo' grupo.id_curso.id_curso_id grupo.pk %}" class="btn btn-primary btn-sm">Abrir grupo</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if cursos %}
+<h2 class="h6 text-muted mb-3">Cursos sin edición ligada</h2>
 <div class="row g-3">
   {% for curso in cursos %}
   <div class="col-md-6 col-xl-4">
@@ -19,16 +41,17 @@
       </div>
     </div>
   </div>
-  {% empty %}
-  <div class="col-12">
-    <div class="card shadow-sm">
-      {% if es_propio %}
-      {% include "includes/empty_state.html" with message="Aún no tienes cursos inscritos." %}
-      {% else %}
-      {% include "includes/empty_state.html" with message="Aún no hay cursos asignados." %}
-      {% endif %}
-    </div>
-  </div>
   {% endfor %}
 </div>
+{% endif %}
+
+{% if not grupos and not cursos %}
+<div class="card shadow-sm">
+  {% if es_propio %}
+  {% include "includes/empty_state.html" with message="Aún no tienes grupos inscritos." %}
+  {% else %}
+  {% include "includes/empty_state.html" with message="Aún no hay grupos asignados." %}
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

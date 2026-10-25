@@ -1,0 +1,33 @@
+<tr>
+  <td>
+    <strong>{{ fila.actividad.nombre }}</strong>
+    {% if fila.actividad.descripcion %}<div class="small text-muted">{{ fila.actividad.descripcion }}</div>{% endif %}
+  </td>
+  <td>{{ fila.actividad.get_tipo_display }}</td>
+  <td>{{ fila.actividad.fecha_limite }}</td>
+  <td>{{ fila.actividad.valor }}</td>
+  <td>
+    <span class="badge text-bg-secondary">{{ fila.actividad.get_estado_display }}</span>
+    {% if not fila.actividad.acepta_entregas %}<span class="badge text-bg-warning">cerrada a entregas</span>{% endif %}
+  </td>
+  {% if inscripcion %}
+  <td>
+    {% if fila.entrega and fila.entrega.entregado %}
+      Entregada{% if fila.entrega.calificacion is not None %} · {{ fila.entrega.calificacion }}{% endif %}
+    {% else %}
+      Sin entregar
+    {% endif %}
+  </td>
+  {% endif %}
+  <td class="text-nowrap">
+    {% if inscripcion and puede_cursar and fila.actividad.acepta_entregas %}
+    <a class="btn btn-outline-primary btn-sm" href="{% url 'aula_entregar' fila.actividad.pk %}">Entregar</a>
+    {% elif inscripcion and puede_cursar %}
+    <span class="small text-muted">Entrega cerrada</span>
+    {% endif %}
+    {% if gestionar %}
+    <a class="btn btn-outline-primary btn-sm" href="{% url 'aula_calificar' fila.actividad.pk %}">Calificar</a>
+    <a class="btn btn-outline-secondary btn-sm" href="{% url 'aula_actividad_editar' fila.actividad.pk %}">Editar</a>
+    {% endif %}
+  </td>
+</tr>

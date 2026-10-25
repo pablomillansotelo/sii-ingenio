@@ -125,29 +125,30 @@ Para ser dueño del expediente, SII debería poder contactar y ubicar al estudia
 
 Ciclo del docente: abrir *su* grupo → ver lista → publicar trabajo → recibir → calificar → (el promedio se va a SII). Ciclo del alumno: entrar al curso, ver material, entregar, ver retro.
 
-Hoy el aula es **solo una lista de actividades**. Eso no es un aula; es un buzón de tareas.
+El aula ya no es un buzón plano: el curso se arma por **secciones/temas**, con materiales y actividades colgadas, aviso del grupo y roster de la **edición** (`Inscripcion.id_edicion` → `EdicionCurso`). No es Moodle: no hay foro, quiz ni rúbricas.
 
 ### Ya cubre
 
-Alta/edición de actividad (nombre, ponderación, tipo, fecha límite), entrega en texto, calificación con comentario, promedio ponderado hacia inscripción.
+Alta/edición de actividad (nombre, ponderación, tipo, fecha límite **enforzada**, estado `cerrada`), entrega en texto y archivo, calificación con comentario, promedio ponderado hacia inscripción, secciones/temario ordenable, recursos (PDF/archivo, URL, texto/HTML), aviso del grupo, roster por edición, por calificar en Hoy del docente, storage configurable (local / S3 / Vercel Blob).
 
 ### Faltan
 
 | Feature | Estado | Pri | Caso de uso | Notas de diseño |
 | :--- | :--- | :--- | :--- | :--- |
-| **Roster del curso** | falta | **P0** | El docente ve a quién le imparte, no solo tareas | Debe leer inscripciones *del grupo*, no el catálogo `Curso` suelto. Depende de la costura edición/grupo. |
-| **Materiales / recursos** | falta | **P0** | Subir PDF, liga, video. Sin esto el alumno no “tiene clase” en la plataforma | Dueño Aula. No es el expediente SII. |
-| **Forzar fecha límite** | incompleto | **P1** | `estado=cerrada` no impide entregar; no hay corte automático | |
-| **Entrega con archivo** | falta | **P1** | Tarea que no cabe en un textarea | Storage. |
-| **Tablero / aviso del grupo** | falta | **P1** | “El sábado no hay clase” | Un recado, no un foro. |
-| **Por calificar (Hoy del docente)** | falta | **P1** | Escritorio: N entregas sin nota | Feature de Hoy, datos de Aula. |
-| **Rúbrica o desglose** | falta | **P2** | Examen con varios criterios | Un decimal basta el primer ciclo. |
-| **Reabrir entrega / intento extra** | falta | **P2** | El maestro permite fuera de tiempo | |
+| **Roster del curso** | hecha | **P0** | El docente ve a quién le imparte, no solo tareas | Lista `Inscripcion` activa de la edición. El docente se asigna en SII al catálogo; el alcance del aula es la edición. |
+| **Materiales / recursos** | hecha | **P0** | Subir PDF, liga, texto. Sin esto el alumno no “tiene clase” en la plataforma | Dueño Aula. Storage por env vars. |
+| **Forzar fecha límite** | hecha | **P1** | `estado=cerrada` o fecha vencida bloquean nuevas entregas | Mensaje claro. No hay reabrir (P2). |
+| **Entrega con archivo** | hecha | **P1** | Tarea que no cabe en un textarea | En Vercel hay que configurar Blob o S3; DEBUG cae a disco local. |
+| **Tablero / aviso del grupo** | hecha | **P1** | “El sábado no hay clase” | Un recado, no un foro. |
+| **Por calificar (Hoy del docente)** | hecha | **P1** | Escritorio: N entregas sin nota | Badge + atajo en Hoy y `/aula/por-calificar/`. |
+| **Unidades / temario** | hecha | **P2** | Ordenar actividades | `SeccionTema` ordenable; actividades con FK nullable. |
+| **Rúbrica o desglose** | falta | **P2** | Examen con varios criterios | **Fuera de este corte.** Un decimal basta el primer ciclo. |
+| **Reabrir entrega / intento extra** | falta | **P2** | El maestro permite fuera de tiempo | **Fuera de este corte.** |
 | **Asistencia diaria** | falta | **P2** | Pase de lista en clase | Toma: Aula. Oficio/acta: SII. No hacer dos padrones. |
-| **Unidades / temario** | falta | **P2** | Ordenar actividades | |
-| **Foro / comentarios entre alumnos** | falta | **P3** | | |
+| **Foro / comentarios entre alumnos** | falta | **P3** | | **Fuera de alcance** (no clonar Moodle). |
+| **Quiz / banco de preguntas** | falta | **P3** | | **Fuera de alcance.** |
 | **Videollamada integrada** | falta | **P3** | Un campo URL en el grupo basta si se necesita | |
-| **Asignar docente desde el curso** | mal colgado | **P2** | Ya está en SII Docentes | Dejar de duplicar o hacerlo alias. |
+| **Asignar docente desde el curso** | mal colgado | **P2** | Ya está en SII Docentes | Alias: redirige a SII. |
 
 **No es de Aula:** kardex de consulta, recibos, plantilla, periodos, cupo.
 
@@ -172,9 +173,9 @@ Alta/edición de actividad (nombre, ponderación, tipo, fecha límite), entrega 
 
 ### Hay que **crear** (no existe)
 
-P0: mis compras, recibo, detalle de folio, grupo/edición en la inscripción, historial de inscripción por periodo, ficha de alumno, roster de grupo, materiales de aula, gate de pago, invitación/password, reset.
+P0: mis compras, recibo, detalle de folio, grupo/edición en la inscripción, historial de inscripción por periodo, ficha de alumno, gate de pago, invitación/password, reset. **Hechos en aula:** roster de grupo, materiales.
 
-P1: cancelación con motivo, cuotas, corte de caja, estatus SII en ficha de cliente, actas, horario, créditos y acreditación, fecha límite real, entrega archivo, aviso de grupo, Hoy del docente, teléfono en expediente, motivo de baja, auditoría, perfil.
+P1: cancelación con motivo, cuotas, corte de caja, estatus SII en ficha de cliente, actas, horario, créditos y acreditación, teléfono en expediente, motivo de baja, auditoría, perfil. **Hechos en aula:** fecha límite real, entrega archivo, aviso de grupo, Hoy del docente.
 
 ### Hay que **recolocar** (existe en el lugar equivocado)
 
@@ -193,7 +194,7 @@ P1: cancelación con motivo, cuotas, corte de caja, estatus SII en ficha de clie
 
 ### **No construir** todavía (P3)
 
-CFDI, pasarela, CRM, lista de espera sofisticada, foro, videollamada nativa, equivalencias, flujo de graduación, becas (hasta decidir si son precio o expediente).
+CFDI, pasarela, CRM, lista de espera sofisticada, **foro, quiz, rúbricas**, videollamada nativa, equivalencias, flujo de graduación, becas (hasta decidir si son precio o expediente).
 
 ---
 
@@ -211,6 +212,7 @@ Tras este inventario, **se inserta un corte de modelo antes de pintar más panta
 6. **Fase 4** — Actas de calificación final, horario, ficha de alumno. **Hecha.**
 7. **Fase 5** — Aula usable: archivos, por calificar, alias asignar docente. **Hecha.**
 8. **Fase 6** — Recibo PDF, rearme de apps y manual de operación. **Hecha (sin pasarela ni CFDI).** Pago en línea y CFDI siguen abiertos.
+9. **Fase 7 — Aula tipo curso** — Secciones, materiales, aviso, grupo=`EdicionCurso`, roster, fecha límite, storage persistente. **Hecha.** Fuera: foro, quiz, rúbricas.
 
 Las fases 4 y 5 del RBAC original se parten: **aula operativa** no debe esperar a las actas, y **actas** no deben bloquear materiales.
 

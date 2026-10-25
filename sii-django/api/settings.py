@@ -141,6 +141,55 @@ WHITENOISE_AUTOREFRESH = DEBUG
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
+# Archivos (entregas y materiales). En Vercel el disco local no persiste.
+BLOB_READ_WRITE_TOKEN = config("BLOB_READ_WRITE_TOKEN", default="")
+VERCEL_BLOB_READ_WRITE_TOKEN = config("VERCEL_BLOB_READ_WRITE_TOKEN", default="")
+AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID", default="")
+AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default="")
+AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME", default="")
+AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="")
+AWS_S3_ENDPOINT_URL = config("AWS_S3_ENDPOINT_URL", default="") or None
+AWS_S3_CUSTOM_DOMAIN = config("AWS_S3_CUSTOM_DOMAIN", default="") or None
+AWS_QUERYSTRING_AUTH = config("AWS_QUERYSTRING_AUTH", default=True, cast=bool)
+AWS_DEFAULT_ACL = None
+AWS_S3_FILE_OVERWRITE = False
+
+
+def _storage_backend():
+    elegido = config("STORAGE_BACKEND", default="").strip().lower()
+    tiene_blob = bool(BLOB_READ_WRITE_TOKEN or VERCEL_BLOB_READ_WRITE_TOKEN)
+    tiene_s3 = bool(AWS_STORAGE_BUCKET_NAME)
+    if not elegido:
+        if tiene_blob:
+            elegido = "vercel_blob"
+        elif tiene_s3:
+            elegido = "s3"
+        else:
+            elegido = "local"
+    if elegido in {"vercel", "blob", "vercel_blob"}:
+        if tiene_blob:
+            return "aula.storage.VercelBlobStorage"
+        if DEBUG:
+            return "django.core.files.storage.FileSystemStorage"
+        return "aula.storage.VercelBlobStorage"
+    if elegido == "s3":
+        if tiene_s3:
+            if "storages" not in INSTALLED_APPS:
+                INSTALLED_APPS.append("storages")
+            return "storages.backends.s3boto3.S3Boto3Storage"
+        if DEBUG:
+            return "django.core.files.storage.FileSystemStorage"
+        return "storages.backends.s3boto3.S3Boto3Storage"
+    return "django.core.files.storage.FileSystemStorage"
+
+
+STORAGES = {
+    "default": {"BACKEND": _storage_backend()},
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
 CSRF_TRUSTED_ORIGINS = [
     "https://*.vercel.app",
     "https://*.modeloingenio.xyz",

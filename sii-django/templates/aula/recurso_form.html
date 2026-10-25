@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }} · Aula{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title=titulo subtitle=seccion.titulo %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% include "includes/form_fields.html" with form=form %}
+      <p class="small text-muted">Según el tipo: sube un archivo, pega una liga, o escribe un texto/HTML corto.</p>
+      <button class="btn btn-primary" type="submit">Publicar</button>
+      <a class="btn btn-outline-secondary" href="{{ aula_volver }}">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}
