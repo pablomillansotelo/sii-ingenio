@@ -53,7 +53,16 @@ Sigue estos pasos para levantar el entorno de desarrollo local.
     AUTH_PASSWORD=tu_password
     AUTH_HOST=localhost
     AUTH_PORT=5432
+
+    # Neon Object Storage (S3-compatible). Vacío en local = disco.
+    # NEON_S3_ENDPOINT=
+    # NEON_S3_REGION=us-east-2
+    # NEON_S3_ACCESS_KEY_ID=
+    # NEON_S3_SECRET_ACCESS_KEY=
+    # NEON_S3_BUCKET=aula
     ```
+
+    La plantilla completa está en `.env.example`.
 
     > **Nota:** El sistema utiliza dos bases de datos separadas. Asegúrate de crear ambas en tu servidor PostgreSQL antes de correr migraciones.
 

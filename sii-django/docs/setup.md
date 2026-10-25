@@ -73,14 +73,13 @@ AUTH_PASSWORD=tu_password_local
 AUTH_HOST=localhost
 AUTH_PORT=5432
 
-# Archivos (opcional). Sin esto, DEBUG usa MEDIA_ROOT local.
-# STORAGE_BACKEND=local
-# BLOB_READ_WRITE_TOKEN=
-# AWS_STORAGE_BUCKET_NAME=
-# AWS_ACCESS_KEY_ID=
-# AWS_SECRET_ACCESS_KEY=
-# AWS_S3_REGION_NAME=
-# AWS_S3_ENDPOINT_URL=
+# Neon Object Storage (S3-compatible). En local puedes omitirlas: DEBUG usa MEDIA_ROOT.
+# En Vercel pégalas desde Neon Console → Object Storage / credentials.
+# NEON_S3_ENDPOINT=https://br-steep-firefly-aeejx5g3.storage.c-2.us-east-2.aws.neon.tech
+# NEON_S3_REGION=us-east-2
+# NEON_S3_ACCESS_KEY_ID=
+# NEON_S3_SECRET_ACCESS_KEY=
+# NEON_S3_BUCKET=aula
 ```
 
 ## 7. Inicialización de la Base de Datos
