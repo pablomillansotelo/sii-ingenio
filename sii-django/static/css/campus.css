@@ -110,6 +110,31 @@
   border-left: 4px solid var(--ingenio-red, #ce0e2d);
 }
 
+.campus-hub {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.campus-hub-tile {
+  min-height: 6.5rem;
+}
+
+.campus-hub-tile .stretched-link {
+  font-size: 0.85rem;
+}
+
+.campus-fav-form {
+  position: relative;
+  z-index: 2;
+}
+
+@media (min-width: 768px) {
+  .campus-hub {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .campus-bottom-nav {
   position: fixed;
   left: 0;

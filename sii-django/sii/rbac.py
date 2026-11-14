@@ -189,6 +189,7 @@ URL_FEATURES = {
     "campus_ficha": "campus.inicio",
     "campus_avisos": "campus.avisos",
     "campus_aviso_leer": "campus.avisos",
+    "campus_favorito": "campus.control_escolar",
 }
 
 NAV = {

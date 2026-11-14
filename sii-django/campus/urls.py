@@ -11,4 +11,5 @@ urlpatterns = [
     path("datos/", views.ficha, name="campus_ficha"),
     path("avisos/", views.avisos, name="campus_avisos"),
     path("avisos/<int:aviso_id>/leer/", views.aviso_leer, name="campus_aviso_leer"),
+    path("control-escolar/favorito/", views.favorito_toggle, name="campus_favorito"),
 ]

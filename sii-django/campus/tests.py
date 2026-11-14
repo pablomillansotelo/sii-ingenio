@@ -540,3 +540,59 @@ class CampusAvisosTests(TestCase):
         response = self.http.get(reverse("campus_avisos"))
         self.assertContains(response, "Aviso del grupo")
         self.assertContains(response, "Tu grupo")
+
+
+class CampusHubTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("alum9", "alum9@example.com", "secret123")
+        self.otro = User.objects.create_user("alum9b", "alum9b@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.otro.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Hub",
+            apellido="Uno",
+            email="alum9@example.com",
+            curp="UNHU000101MDFXXX09",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        Alumno.objects.create(
+            user_id=self.otro.pk,
+            nombre="Hub",
+            apellido="Dos",
+            email="alum9b@example.com",
+            curp="DOHU000101HDFXXX09",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+        self.http_otro = Client()
+        self.http_otro.force_login(self.otro)
+
+    def test_hub_accesos_reales_y_proximamente(self):
+        response = self.http.get(reverse("campus_control_escolar"))
+        self.assertContains(response, "Kardex")
+        self.assertContains(response, reverse("sii_kardex"))
+        self.assertContains(response, reverse("mis_compras"))
+        self.assertContains(response, reverse("campus_ficha"))
+        self.assertContains(response, reverse("sii_horario"))
+        self.assertContains(response, "Próximamente")
+        self.assertNotContains(response, "Punto de venta")
+        self.assertNotContains(response, reverse("Carrito"))
+        self.assertNotContains(response, reverse("sii_alumno_crear"))
+
+    def test_favoritos_persistidos_por_usuario(self):
+        from campus.models import CampusFavorito
+
+        self.http.post(reverse("campus_favorito"), {"clave": "kardex"})
+        self.assertTrue(CampusFavorito.objects.filter(user_id=self.user.pk, clave="kardex").exists())
+        self.assertFalse(CampusFavorito.objects.filter(user_id=self.otro.pk, clave="kardex").exists())
+        propio = self.http.get(reverse("campus_control_escolar"))
+        self.assertContains(propio, "Quitar de favoritos")
+        ajeno = self.http_otro.get(reverse("campus_control_escolar"))
+        self.assertContains(ajeno, "Marcar favorito")
+        self.http.post(reverse("campus_favorito"), {"clave": "kardex"})
+        self.assertFalse(CampusFavorito.objects.filter(user_id=self.user.pk, clave="kardex").exists())

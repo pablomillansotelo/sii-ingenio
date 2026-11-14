@@ -3,12 +3,29 @@
 {% block content %}
 <section class="campus-page">
   <h1 class="campus-page-title">Control Escolar</h1>
-  <p class="text-muted">El hub de trámites y consultas estará aquí. Mientras tanto usa los accesos que ya existen.</p>
-  <div class="d-grid gap-2">
-    <a class="btn btn-outline-primary" href="{% url 'sii_kardex' %}">Kardex</a>
-    <a class="btn btn-outline-primary" href="{% url 'mis_compras' %}">Mis compras</a>
-    <a class="btn btn-outline-primary" href="{% url 'sii_mi_ficha' %}">Mi ficha</a>
-    <a class="btn btn-outline-primary" href="{% url 'sii_horario' %}">Horario</a>
+  <p class="text-muted">Trámites y consultas de tu expediente. Lo que aún no existe se marca como próximo.</p>
+  <div class="campus-hub">
+    {% for tile in tiles %}
+    <article class="campus-hub-tile card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <h2 class="h6 mb-2"><i class="bi {{ tile.icon }} me-1"></i>{{ tile.label }}</h2>
+          <form method="post" action="{% url 'campus_favorito' %}" class="campus-fav-form">
+            {% csrf_token %}
+            <input type="hidden" name="clave" value="{{ tile.clave }}">
+            <button class="btn btn-sm btn-link p-0" type="submit" aria-label="{% if tile.favorito %}Quitar de favoritos{% else %}Marcar favorito{% endif %}">
+              <i class="bi {% if tile.favorito %}bi-star-fill text-warning{% else %}bi-star{% endif %}"></i>
+            </button>
+          </form>
+        </div>
+        {% if tile.estado == "listo" %}
+        <a class="stretched-link" href="{% url tile.url_name %}">Abrir</a>
+        {% else %}
+        <p class="small text-muted mb-0">Próximamente</p>
+        {% endif %}
+      </div>
+    </article>
+    {% endfor %}
   </div>
 </section>
 {% endblock %}
