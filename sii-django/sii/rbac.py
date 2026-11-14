@@ -108,6 +108,8 @@ FEATURES = {
     "sii.bajas": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
     "campus.expediente": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "sii.expediente": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
+    "campus.credencial": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "sii.credencial": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
 }
 
 URL_FEATURES = {
@@ -216,6 +218,8 @@ URL_FEATURES = {
     "sii_expediente": "sii.expediente",
     "sii_expediente_archivo": "sii.expediente",
     "sii_expediente_revisar": "sii.expediente",
+    "campus_credencial": "campus.credencial",
+    "sii_credencial": "sii.credencial",
 }
 
 NAV = {

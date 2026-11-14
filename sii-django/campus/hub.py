@@ -8,7 +8,7 @@ HUB_ACCESOS = [
     {"clave": "constancias", "label": "Constancias", "url_name": "campus_constancias", "icon": "bi-file-earmark-text", "estado": "listo"},
     {"clave": "baja", "label": "Solicitud de baja", "url_name": "campus_bajas", "icon": "bi-x-circle", "estado": "listo"},
     {"clave": "expediente", "label": "Expediente digital", "url_name": "campus_expediente", "icon": "bi-folder", "estado": "listo"},
-    {"clave": "credencial", "label": "Credencial", "url_name": None, "icon": "bi-person-badge", "estado": "proximamente"},
+    {"clave": "credencial", "label": "Credencial", "url_name": "campus_credencial", "icon": "bi-person-badge", "estado": "listo"},
     {"clave": "aceptacion", "label": "Aceptación de materias", "url_name": None, "icon": "bi-check2-square", "estado": "proximamente"},
     {"clave": "normativa", "label": "Normativa", "url_name": None, "icon": "bi-book", "estado": "proximamente"},
     {"clave": "directorio", "label": "Directorio", "url_name": None, "icon": "bi-telephone", "estado": "proximamente"},

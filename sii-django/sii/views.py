@@ -529,6 +529,14 @@ def constancia_pdf(request, alumno_id):
 
 
 @login_required
+def credencial(request, alumno_id):
+    from campus.services.credencial import ficha_credencial
+
+    alumno = _alumno_o_404(request, alumno_id)
+    return render(request, "sii/credencial.html", {"alumno": alumno, "ficha": ficha_credencial(alumno)})
+
+
+@login_required
 @_solo_admin
 @require_POST
 def alumno_reset_cuenta(request, alumno_id):

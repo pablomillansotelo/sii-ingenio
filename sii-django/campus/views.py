@@ -18,6 +18,7 @@ from campus.services.identidad import identidad_campus
 from campus.services.noticias import noticias_publicadas, noticias_publicadas_qs
 from campus.services.preferencias import preferencia_de
 from campus.services.constancia import construir_constancia, tipos_disponibles
+from campus.services.credencial import ficha_credencial
 from sii.identity import alumno_para_usuario
 from sii.models import DocumentoExpediente, Inscripcion, SolicitudBaja
 from sii.services.expediente import resumen_tipos, validar_archivo
@@ -337,3 +338,17 @@ def expediente_archivo(request, pk):
     if not doc.archivo:
         raise Http404()
     return FileResponse(doc.archivo.open("rb"), as_attachment=True, filename=doc.archivo.name.split("/")[-1])
+
+
+@login_required
+@requiere_feature("campus.credencial")
+def credencial(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    return render(
+        request,
+        "campus/credencial.html",
+        _ctx(request, "control", {"ficha": ficha_credencial(alumno)}),
+    )

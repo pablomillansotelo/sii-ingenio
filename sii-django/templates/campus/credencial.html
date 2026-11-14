@@ -1,0 +1,32 @@
+{% extends "campus/base.html" %}
+{% block title %}Credencial · Campus Ingenio{% endblock %}
+{% block extra_css %}
+<style>
+.campus-credencial { max-width: 22rem; margin: 0 auto; border-radius: 1rem; padding: 1.25rem; background: #1d2939; color: #fff; }
+.campus-credencial.is-invalid { background: #6b7280; }
+.campus-credencial-marca { letter-spacing: .12em; font-size: .75rem; text-transform: uppercase; }
+.campus-credencial-foto { width: 4.5rem; height: 4.5rem; border-radius: 50%; background: #ce0e2d; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 700; }
+</style>
+{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Credencial digital</h1>
+  <p class="text-muted">Identificación interna de Ingenio. No es un documento oficial de gobierno.</p>
+  <article class="campus-credencial{% if not ficha.valida %} is-invalid{% endif %}">
+    <p class="campus-credencial-marca mb-2">Ingenio</p>
+    <div class="d-flex gap-3 align-items-center mb-3">
+      <div class="campus-credencial-foto" aria-hidden="true">{{ campus_identidad.iniciales }}</div>
+      <div>
+        <p class="h5 mb-1">{{ campus_identidad.nombre }}</p>
+        <p class="small mb-0">{{ campus_identidad.identificador_etiqueta }}: {{ campus_identidad.identificador }}</p>
+      </div>
+    </div>
+    <p class="mb-1">Estado: {{ ficha.estado_etiqueta }}</p>
+    {% if ficha.periodo %}
+    <p class="small mb-1">Vigencia: {{ ficha.periodo.nombre }} ({{ ficha.periodo.fecha_inicio|date:"d/m/Y" }} – {{ ficha.periodo.fecha_fin|date:"d/m/Y" }})</p>
+    {% endif %}
+    {% if ficha.motivo %}<p class="small mb-0">{{ ficha.motivo }}</p>{% endif %}
+  </article>
+  <p class="text-center mt-3"><a class="btn btn-outline-primary btn-sm" href="{% url 'campus_credencial' %}?pantalla=1">Pantalla completa</a></p>
+</section>
+{% endblock %}

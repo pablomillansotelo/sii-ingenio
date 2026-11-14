@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Credencial · {{ alumno }}{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Credencial digital" subtitle="Vista de staff. Marca Ingenio; no es documento de gobierno." %}
+<div class="card shadow-sm" style="max-width:22rem">
+  <div class="card-body">
+    <p class="text-uppercase small">Ingenio</p>
+    <p class="h5">{{ alumno.nombre }} {{ alumno.apellido }}</p>
+    <p>{{ ficha.estado_etiqueta }}</p>
+    {% if ficha.periodo %}<p class="small">Vigencia: {{ ficha.periodo.nombre }}</p>{% endif %}
+    {% if ficha.motivo %}<p class="small text-muted">{{ ficha.motivo }}</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

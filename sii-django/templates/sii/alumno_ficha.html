@@ -28,6 +28,7 @@
         {% endif %}
         {% if puede_operar or propia %}
         <a class="btn btn-outline-secondary btn-sm" href="{% url 'sii_constancia_pdf' alumno.pk %}?tipo=historial">Constancia PDF</a>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'sii_credencial' alumno.pk %}">Credencial</a>
         {% endif %}
       </div>
     </div>

@@ -278,3 +278,67 @@ class CampusExpedienteTests(TestCase):
         )
         self.assertContains(bloqueado, "ya fue aceptado")
         self.assertEqual(DocumentoExpediente.objects.count(), 1)
+
+
+class CampusCredencialTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("cred1", "cred1@example.com", "secret123")
+        self.otro = User.objects.create_user("cred2", "cred2@example.com", "secret123")
+        self.admin = User.objects.create_user("credadm", "credadm@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.otro.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.admin.groups.add(Group.objects.get(name=GRUPO_ADMINISTRADOR))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Ciro",
+            apellido="Card",
+            email="cred1@example.com",
+            curp="CACI000101HDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+            estado="activo",
+        )
+        self.ajeno = Alumno.objects.create(
+            user_id=self.otro.pk,
+            nombre="Otra",
+            apellido="Card",
+            email="cred2@example.com",
+            curp="CAOT000101MDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        hoy = date.today()
+        self.periodo = Periodo.objects.create(
+            nombre="Vigente", fecha_inicio=hoy.replace(day=1), fecha_fin=hoy.replace(year=hoy.year + 1)
+        )
+        self.curso = Curso.objects.create(nombre="Foto")
+        self.http = Client()
+        self.http.force_login(self.user)
+        self.http_otro = Client()
+        self.http_otro.force_login(self.otro)
+        self.http_admin = Client()
+        self.http_admin.force_login(self.admin)
+
+    def test_valida_solo_con_inscripcion_activa(self):
+        pagina = self.http.get(reverse("campus_credencial"))
+        self.assertContains(pagina, "No válida")
+        self.assertContains(pagina, "Ingenio")
+        self.assertContains(pagina, "Código Ingenio")
+        Inscripcion.objects.create(
+            alumno=self.alumno, curso=self.curso, periodo=self.periodo, estado="activo"
+        )
+        viva = self.http.get(reverse("campus_credencial"))
+        self.assertContains(viva, "Vigente")
+        self.assertContains(viva, "Ciro")
+        self.alumno.estado = "inactivo"
+        self.alumno.save(update_fields=["estado"])
+        baja = self.http.get(reverse("campus_credencial"))
+        self.assertContains(baja, "No válida")
+        self.assertContains(baja, "inactivo")
+        staff = self.http_admin.get(reverse("sii_credencial", args=[self.alumno.pk]))
+        self.assertEqual(staff.status_code, 200)
+        ajeno = self.http_otro.get(reverse("sii_credencial", args=[self.alumno.pk]))
+        self.assertIn(ajeno.status_code, (403, 404))
+        hub = self.http.get(reverse("campus_control_escolar"))
+        self.assertContains(hub, reverse("campus_credencial"))
