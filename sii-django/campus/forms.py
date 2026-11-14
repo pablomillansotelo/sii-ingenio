@@ -75,11 +75,13 @@ class FichaAlumnoForm(BootstrapFormMixin, forms.ModelForm):
 class AparienciaForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = CampusPreferencia
-        fields = ("tema", "acento", "animacion_carga")
+        fields = ("tema", "acento", "animacion_carga", "ayuda_guiada", "asistente_ia")
         labels = {
             "tema": "Tema",
             "acento": "Color de acento",
             "animacion_carga": "Mostrar animación de carga",
+            "ayuda_guiada": "Ayuda guiada",
+            "asistente_ia": "Asistente IA (próximamente)",
         }
         widgets = {
             "tema": forms.RadioSelect,

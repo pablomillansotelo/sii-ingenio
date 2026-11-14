@@ -80,3 +80,24 @@ class CampusAparienciaTests(TestCase):
         pagina = self.http.get(reverse("campus_configuracion"))
         self.assertContains(pagina, 'data-campus-carga="0"')
         self.assertContains(pagina, "indicador simple")
+
+    def test_flags_ayuda_e_ia_persisten_sin_chatbot(self):
+        self.http.post(
+            reverse("campus_configuracion"),
+            {
+                "tema": "claro",
+                "acento": "rojo",
+                "ayuda_guiada": "on",
+                "asistente_ia": "on",
+            },
+        )
+        pref = CampusPreferencia.objects.get(user_id=self.user.pk)
+        self.assertTrue(pref.ayuda_guiada)
+        self.assertTrue(pref.asistente_ia)
+        pagina = self.http.get(reverse("campus_configuracion"))
+        self.assertContains(pagina, "Próximamente")
+        self.assertContains(pagina, "No hay un chatbot")
+        self.assertNotContains(pagina, "Escribe tu pregunta")
+        inicio = self.http.get(reverse("campus_inicio"))
+        self.assertContains(inicio, "Ayuda guiada")
+        self.assertContains(inicio, "recorridos paso a paso")

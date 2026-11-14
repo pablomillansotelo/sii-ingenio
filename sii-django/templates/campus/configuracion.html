@@ -21,6 +21,19 @@
         <label class="form-check-label" for="{{ form.animacion_carga.id_for_label }}">{{ form.animacion_carga.label }}</label>
         <p class="small text-muted mb-0">Muestra un indicador simple al cargar pantallas del campus. Si lo apagas, no se finge ningún efecto.</p>
       </div>
+      <fieldset class="mb-3">
+        <legend class="h6">Ayudas</legend>
+        <div class="form-check mb-2">
+          {{ form.ayuda_guiada }}
+          <label class="form-check-label" for="{{ form.ayuda_guiada.id_for_label }}">{{ form.ayuda_guiada.label }}</label>
+          <p class="small text-muted mb-0">Todavía no hay recorridos en el campus. Si activas esta opción, la preferencia queda guardada para cuando existan.</p>
+        </div>
+        <div class="form-check">
+          {{ form.asistente_ia }}
+          <label class="form-check-label" for="{{ form.asistente_ia.id_for_label }}">{{ form.asistente_ia.label }}</label>
+          <p class="small text-muted mb-0">No hay un chatbot. Este interruptor solo recuerda si quieres usarlo cuando Ingenio tenga un asistente. No se llama a ningún modelo.</p>
+        </div>
+      </fieldset>
       <button class="btn btn-primary" type="submit">Guardar</button>
     </div>
   </form>

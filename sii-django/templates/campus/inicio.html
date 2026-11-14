@@ -4,6 +4,9 @@
 <section class="campus-page">
   <h1 class="campus-page-title">Inicio</h1>
   <p class="text-muted">Tu campus en Ingenio.</p>
+  {% if campus_pref.ayuda_guiada %}
+  <div class="alert alert-info">Ayuda guiada: los recorridos paso a paso estarán disponibles más adelante. Tu preferencia ya está guardada.</div>
+  {% endif %}
 
   {% if cuenta.hay_deuda %}
   <div class="alert alert-warning">

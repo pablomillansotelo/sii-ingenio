@@ -99,6 +99,8 @@ class CampusPreferencia(models.Model):
     tema = models.CharField(max_length=12, choices=TEMA_CHOICES, default=TEMA_CLARO)
     acento = models.CharField(max_length=12, choices=ACENTO_CHOICES, default=ACENTO_ROJO)
     animacion_carga = models.BooleanField(default=True)
+    ayuda_guiada = models.BooleanField(default=False)
+    asistente_ia = models.BooleanField(default=False)
 
     class Meta:
         db_table = "campus_preferencia"
