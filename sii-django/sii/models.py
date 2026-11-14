@@ -19,6 +19,13 @@ class Alumno(models.Model):
         ('graduado', 'Graduado'),
         ('cancelado', 'Cancelado')
     ], default='activo')
+    codigo_ingenio = models.CharField(
+        max_length=20,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Identificador interno de Ingenio. No es una matrícula de otra institución.",
+    )
 
     class Meta:
         managed = True
@@ -26,6 +33,12 @@ class Alumno(models.Model):
 
     def __str__(self):
         return f"{self.nombre} {self.apellido}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.codigo_ingenio and self.pk:
+            self.codigo_ingenio = f"ING-{self.pk:06d}"
+            super().save(update_fields=["codigo_ingenio"])
 
     def get_user(self):
         from django.contrib.auth import get_user_model

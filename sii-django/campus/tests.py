@@ -10,6 +10,7 @@ from sii.models import Alumno, Curso, Inscripcion, Periodo
 from sii.permissions import GRUPO_ALUMNO, GRUPO_VENDEDOR, crear_grupos
 from aula.models import Actividad, CalificacionActividad
 from campus.services.cursos import tarjetas_curso_actual
+from campus.services.identidad import identidad_campus, iniciales_de
 from sii.services.avance import avance_academico
 from ventas.models import EdicionCurso, Producto, Vendedor
 
@@ -280,3 +281,47 @@ class CampusCursoActualTests(TestCase):
         )
         nombres = [t["curso"].nombre for t in tarjetas_curso_actual(self.alumno)["tarjetas"]]
         self.assertEqual(nombres, ["Diseño"])
+
+
+class CampusPerfilTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("alum5", "cuenta5@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Mario",
+            apellido="Nava",
+            email="expediente5@example.com",
+            telefono="5512345678",
+            curp="NAMA000101HDFXXX03",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+
+    def test_iniciales_e_identidad(self):
+        self.assertEqual(iniciales_de("Mario Nava"), "MN")
+        data = identidad_campus(self.user, self.alumno)
+        self.assertEqual(data["iniciales"], "MN")
+        self.assertEqual(data["identificador_etiqueta"], "Código Ingenio")
+        self.assertTrue(data["identificador"].startswith("ING-"))
+        labels = [c["label"] for c in data["correos"]]
+        self.assertIn("Correo del expediente", labels)
+        self.assertIn("Correo de la cuenta", labels)
+
+    def test_menu_perfil_y_logout(self):
+        response = self.http.get(reverse("campus_inicio"))
+        self.assertContains(response, "MN")
+        self.assertContains(response, "Mario Nava")
+        self.assertContains(response, "Código Ingenio")
+        self.assertContains(response, reverse("sii_mi_ficha"))
+        self.assertContains(response, reverse("usuario"))
+        self.assertContains(response, reverse("logout"))
+        self.assertContains(response, "Cerrar sesión")
+        self.assertContains(response, 'aria-label="Perfil"')
+        self.assertNotContains(response, self.alumno.curp)
+        self.assertNotContains(response, "5512345678")
+        self.assertEqual(self.http.get(reverse("logout")).status_code, 302)
