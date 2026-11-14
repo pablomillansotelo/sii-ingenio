@@ -32,5 +32,43 @@
       {% endif %}
     </div>
   </article>
+
+  <section aria-labelledby="cursos-titulo">
+    <h2 class="h5 mb-2" id="cursos-titulo">Cursos de este periodo</h2>
+    {% for tarjeta in cursos_actuales %}
+    <article class="card shadow-sm campus-card mb-3">
+      <div class="card-body">
+        <h3 class="h6 mb-1">{{ tarjeta.curso.nombre }}</h3>
+        <p class="small text-muted mb-2">
+          {{ tarjeta.periodo.nombre }}
+          {% if tarjeta.edicion %} · {{ tarjeta.edicion.codigo_edicion }}{% endif %}
+        </p>
+        <div class="progress mb-2" role="progressbar" aria-valuenow="{{ tarjeta.progreso.porcentaje }}" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress-bar bg-primary" style="width: {{ tarjeta.progreso.porcentaje }}%"></div>
+        </div>
+        <p class="small text-muted">
+          {% if tarjeta.progreso.total %}
+          {{ tarjeta.progreso.hechos }} de {{ tarjeta.progreso.total }} {{ tarjeta.progreso.unidad }} · {{ tarjeta.progreso.porcentaje }} %
+          {% else %}
+          Aún no hay actividades publicadas en este grupo.
+          {% endif %}
+        </p>
+        {% if tarjeta.puede_cursar %}
+        <a class="btn btn-primary btn-sm" href="{{ tarjeta.url_aula }}">Ir al curso</a>
+        {% else %}
+        <p class="small mb-0 text-warning">No puedes entrar al aula: hay un pago pendiente o la inscripción no está habilitada para cursar.</p>
+        {% endif %}
+      </div>
+    </article>
+    {% empty %}
+    <div class="campus-placeholder card shadow-sm">
+      <div class="card-body">
+        <p class="mb-2">No tienes cursos en este periodo.</p>
+        <a class="btn btn-outline-primary btn-sm" href="{% url 'campus_control_escolar' %}">Control Escolar</a>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'mis_compras' %}">Mis compras</a>
+      </div>
+    </div>
+    {% endfor %}
+  </section>
 </section>
 {% endblock %}

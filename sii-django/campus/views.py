@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from campus.nav import MAS_PROXIMAMENTE, MAS_REALES
+from campus.services.cursos import tarjetas_curso_actual
 from sii.identity import alumno_para_usuario
 from sii.rbac import requiere_feature
 from sii.services.avance import avance_academico
@@ -23,10 +24,19 @@ def _ctx(request, tab, extra=None):
 @requiere_feature("campus.inicio")
 def inicio(request):
     alumno = alumno_para_usuario(request.user)
+    cursos = tarjetas_curso_actual(alumno)
     return render(
         request,
         "campus/inicio.html",
-        _ctx(request, "inicio", {"avance": avance_academico(alumno)}),
+        _ctx(
+            request,
+            "inicio",
+            {
+                "avance": avance_academico(alumno),
+                "cursos_actuales": cursos["tarjetas"],
+                "periodo_actual": cursos["periodo"],
+            },
+        ),
     )
 
 
