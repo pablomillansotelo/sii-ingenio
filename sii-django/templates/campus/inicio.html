@@ -90,5 +90,21 @@
     </div>
     {% endfor %}
   </section>
+
+  {% if noticias %}
+  <section aria-labelledby="noticias-titulo" class="mt-4">
+    <h2 class="h5 mb-2" id="noticias-titulo">Noticias de Ingenio</h2>
+    {% for noticia in noticias %}
+    <article class="card shadow-sm mb-2">
+      <div class="card-body">
+        <p class="small text-muted mb-1">{{ noticia.creada_en|date:"d/m/Y" }}</p>
+        <h3 class="h6"><a href="{% url 'campus_noticia' noticia.pk %}">{{ noticia.titulo }}</a></h3>
+        <p class="small mb-0">{{ noticia.recorte }}</p>
+      </div>
+    </article>
+    {% endfor %}
+  </section>
+  {% endif %}
 </section>
 {% endblock %}
+

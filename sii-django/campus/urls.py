@@ -14,4 +14,5 @@ urlpatterns = [
     path("control-escolar/favorito/", views.favorito_toggle, name="campus_favorito"),
     path("kardex/", views.kardex, name="campus_kardex"),
     path("estado-cuenta/", views.estado_cuenta_view, name="campus_estado_cuenta"),
+    path("noticias/<int:noticia_id>/", views.noticia_detalle, name="campus_noticia"),
 ]

@@ -5,7 +5,7 @@ from django.views.decorators.http import require_POST
 
 from campus.forms import FichaAlumnoForm
 from campus.hub import CLAVES_VALIDAS, HUB_ACCESOS
-from campus.models import CampusFavorito
+from campus.models import CampusFavorito, Noticia
 from campus.services.avisos import bandeja_avisos, marcar_leido
 
 from campus.nav import MAS_PROXIMAMENTE, MAS_REALES
@@ -13,6 +13,7 @@ from campus.services.calendario import hitos_calendario
 from campus.services.cuenta import estado_cuenta
 from campus.services.cursos import tarjetas_curso_actual
 from campus.services.identidad import identidad_campus
+from campus.services.noticias import noticias_publicadas, noticias_publicadas_qs
 from sii.identity import alumno_para_usuario
 from sii.rbac import requiere_feature
 from sii.services.avance import avance_academico
@@ -50,6 +51,7 @@ def inicio(request):
                 "periodo_actual": cursos["periodo"],
                 "avisos_importantes": avisos["importantes_pendientes"],
                 "cuenta": estado_cuenta(request.user),
+                "noticias": list(noticias_publicadas()),
             },
         ),
     )
@@ -180,3 +182,10 @@ def estado_cuenta_view(request):
         "campus/estado_cuenta.html",
         _ctx(request, "control", {"cuenta": estado_cuenta(request.user)}),
     )
+
+
+@login_required
+@requiere_feature("campus.noticias")
+def noticia_detalle(request, noticia_id):
+    noticia = get_object_or_404(noticias_publicadas_qs(), pk=noticia_id)
+    return render(request, "campus/noticia.html", _ctx(request, "inicio", {"noticia": noticia}))
