@@ -7,7 +7,7 @@ from django.views.decorators.http import require_POST
 
 from campus.forms import AparienciaForm, FichaAlumnoForm
 from campus.hub import CLAVES_VALIDAS, HUB_ACCESOS
-from campus.models import CampusFavorito, Hilo, Noticia
+from campus.models import CampusFavorito, ContactoDirectorio, DocumentoNormativa, Hilo, Noticia
 from campus.services.avisos import bandeja_avisos, marcar_leido
 
 from campus.nav import MAS_PROXIMAMENTE, MAS_REALES
@@ -510,3 +510,26 @@ def aceptacion(request):
             },
         ),
     )
+
+
+@login_required
+@requiere_feature("campus.normativa")
+def normativa(request):
+    docs = DocumentoNormativa.objects.filter(publicado=True)
+    return render(request, "campus/normativa.html", _ctx(request, "control", {"documentos": docs}))
+
+
+@login_required
+@requiere_feature("campus.normativa")
+def normativa_archivo(request, pk):
+    doc = get_object_or_404(DocumentoNormativa, pk=pk, publicado=True)
+    if not doc.archivo:
+        raise Http404()
+    return FileResponse(doc.archivo.open("rb"), as_attachment=True, filename=doc.archivo.name.split("/")[-1])
+
+
+@login_required
+@requiere_feature("campus.directorio")
+def directorio(request):
+    contactos = ContactoDirectorio.objects.filter(publicado=True)
+    return render(request, "campus/directorio.html", _ctx(request, "control", {"contactos": contactos}))

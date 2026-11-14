@@ -520,6 +520,42 @@ def ludico_reset(request, alumno_id):
 
 
 @login_required
+def normativa_staff(request):
+    from campus.models import ContactoDirectorio, DocumentoNormativa
+
+    if request.method == "POST":
+        accion = request.POST.get("accion")
+        publicado = bool(request.POST.get("publicado"))
+        if accion == "normativa":
+            DocumentoNormativa.objects.create(
+                titulo=(request.POST.get("titulo") or "").strip() or "Sin título",
+                cuerpo=(request.POST.get("cuerpo") or "").strip(),
+                archivo=request.FILES.get("archivo"),
+                publicado=publicado,
+                autor_id=request.user.pk,
+            )
+            messages.success(request, "Normativa guardada.")
+        elif accion == "directorio":
+            ContactoDirectorio.objects.create(
+                area=(request.POST.get("area") or "").strip(),
+                nombre=(request.POST.get("nombre") or "").strip(),
+                medio=(request.POST.get("medio") or "").strip(),
+                publicado=publicado,
+                autor_id=request.user.pk,
+            )
+            messages.success(request, "Contacto guardado.")
+        return redirect("sii_normativa")
+    return render(
+        request,
+        "sii/normativa.html",
+        {
+            "documentos": DocumentoNormativa.objects.all(),
+            "contactos": ContactoDirectorio.objects.all(),
+        },
+    )
+
+
+@login_required
 @_solo_admin
 @require_POST
 def inscripcion_reintento(request):

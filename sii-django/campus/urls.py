@@ -28,4 +28,7 @@ urlpatterns = [
     path("notificaciones/<int:pk>/leer/", views.notificacion_leer, name="campus_notificacion_leer"),
     path("notificaciones/leer-todas/", views.notificaciones_leer_todas, name="campus_notificaciones_leer_todas"),
     path("progreso/", views.ludico, name="campus_ludico"),
+    path("normativa/", views.normativa, name="campus_normativa"),
+    path("normativa/<int:pk>/archivo/", views.normativa_archivo, name="campus_normativa_archivo"),
+    path("directorio/", views.directorio, name="campus_directorio"),
 ]

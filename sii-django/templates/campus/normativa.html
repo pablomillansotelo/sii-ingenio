@@ -1,0 +1,19 @@
+{% extends "campus/base.html" %}
+{% block title %}Normativa · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Normativa de Ingenio</h1>
+  <p class="text-muted">Reglamento y lineamientos publicados por control escolar. No es el reglamento de otra institución.</p>
+  {% for doc in documentos %}
+  <article class="card shadow-sm mb-3">
+    <div class="card-body">
+      <h2 class="h6">{{ doc.titulo }}</h2>
+      {% if doc.cuerpo %}<div class="small mb-2">{{ doc.cuerpo|linebreaksbr }}</div>{% endif %}
+      {% if doc.archivo %}<a class="btn btn-sm btn-outline-primary" href="{% url 'campus_normativa_archivo' doc.pk %}">Descargar PDF</a>{% endif %}
+    </div>
+  </article>
+  {% empty %}
+  <p>Aún no hay normativa publicada.</p>
+  {% endfor %}
+</section>
+{% endblock %}

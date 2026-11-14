@@ -287,3 +287,35 @@ class RetoSemanal(models.Model):
             return 0
         return min(100, int(round(100 * self.progreso / self.meta)))
 
+
+class DocumentoNormativa(models.Model):
+    titulo = models.CharField(max_length=200)
+    cuerpo = models.TextField(blank=True, default="")
+    archivo = models.FileField(upload_to="normativa/%Y/%m/", blank=True, null=True)
+    publicado = models.BooleanField(default=False)
+    autor_id = models.PositiveIntegerField(null=True, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "campus_documento_normativa"
+        ordering = ["titulo"]
+
+    def __str__(self):
+        return self.titulo
+
+
+class ContactoDirectorio(models.Model):
+    area = models.CharField(max_length=80)
+    nombre = models.CharField(max_length=120)
+    medio = models.CharField(max_length=160, help_text="Correo, teléfono o horario.")
+    publicado = models.BooleanField(default=False)
+    autor_id = models.PositiveIntegerField(null=True, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "campus_contacto_directorio"
+        ordering = ["area", "nombre"]
+
+    def __str__(self):
+        return f"{self.area}: {self.nombre}"
+

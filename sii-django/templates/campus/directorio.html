@@ -1,0 +1,19 @@
+{% extends "campus/base.html" %}
+{% block title %}Directorio · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Directorio institucional</h1>
+  <p class="text-muted">Contactos útiles publicados por Ingenio. No es el listado de todas las cuentas del sistema.</p>
+  {% for c in contactos %}
+  <article class="card shadow-sm mb-2">
+    <div class="card-body">
+      <p class="fw-semibold mb-1">{{ c.area }}</p>
+      <p class="mb-1">{{ c.nombre }}</p>
+      <p class="small mb-0">{{ c.medio }}</p>
+    </div>
+  </article>
+  {% empty %}
+  <p>Aún no hay contactos publicados.</p>
+  {% endfor %}
+</section>
+{% endblock %}
