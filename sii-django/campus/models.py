@@ -56,3 +56,16 @@ class AvisoLectura(models.Model):
 
     def __str__(self):
         return f"{self.alumno} leyó {self.aviso}"
+
+
+class CampusFavorito(models.Model):
+    user_id = models.PositiveIntegerField()
+    clave = models.CharField(max_length=40)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "campus_favorito"
+        unique_together = ("user_id", "clave")
+
+    def __str__(self):
+        return f"{self.user_id}:{self.clave}"

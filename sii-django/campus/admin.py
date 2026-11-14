@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from campus.models import AvisoInstitucional, AvisoLectura
+from campus.models import AvisoInstitucional, AvisoLectura, CampusFavorito
 
 
 @admin.register(AvisoInstitucional)
@@ -10,3 +10,4 @@ class AvisoInstitucionalAdmin(admin.ModelAdmin):
 
 
 admin.site.register(AvisoLectura)
+admin.site.register(CampusFavorito)

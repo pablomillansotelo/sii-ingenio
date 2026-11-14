@@ -4,7 +4,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from campus.forms import FichaAlumnoForm
-from campus.models import AvisoInstitucional
+from campus.hub import CLAVES_VALIDAS, HUB_ACCESOS
+from campus.models import CampusFavorito
 from campus.services.avisos import bandeja_avisos, marcar_leido
 
 from campus.nav import MAS_PROXIMAMENTE, MAS_REALES
@@ -55,7 +56,14 @@ def inicio(request):
 @login_required
 @requiere_feature("campus.control_escolar")
 def control_escolar(request):
-    return render(request, "campus/control_escolar.html", _ctx(request, "control"))
+    favoritos = set(
+        CampusFavorito.objects.filter(user_id=request.user.pk).values_list("clave", flat=True)
+    )
+    tiles = []
+    for item in HUB_ACCESOS:
+        tiles.append({**item, "favorito": item["clave"] in favoritos})
+    tiles.sort(key=lambda t: (not t["favorito"], t["label"]))
+    return render(request, "campus/control_escolar.html", _ctx(request, "control", {"tiles": tiles}))
 
 
 @login_required
@@ -128,3 +136,19 @@ def avisos_vigentes_qs_safe(alumno):
     from campus.services.avisos import avisos_vigentes_qs
 
     return avisos_vigentes_qs(alumno)
+
+
+@login_required
+@require_POST
+@requiere_feature("campus.control_escolar")
+def favorito_toggle(request):
+    clave = request.POST.get("clave")
+    if clave not in CLAVES_VALIDAS:
+        messages.error(request, "Ese acceso no existe.")
+        return redirect("campus_control_escolar")
+    existente = CampusFavorito.objects.filter(user_id=request.user.pk, clave=clave).first()
+    if existente:
+        existente.delete()
+    else:
+        CampusFavorito.objects.create(user_id=request.user.pk, clave=clave)
+    return redirect("campus_control_escolar")
