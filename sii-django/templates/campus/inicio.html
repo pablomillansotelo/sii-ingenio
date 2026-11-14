@@ -37,11 +37,11 @@
         </div>
       </div>
       <p class="small text-muted mb-3">{{ avance.plan_etiqueta }}</p>
-      <a class="btn btn-outline-primary btn-sm" href="{% url 'sii_kardex' %}">Ver kardex</a>
+      <a class="btn btn-outline-primary btn-sm" href="{% url 'campus_kardex' %}">Ver kardex</a>
       {% else %}
       <p class="mb-2">Aún no tienes inscripciones en tu expediente.</p>
       <p class="small text-muted mb-3">Cuando control escolar registre tus materias, aquí verás promedio y avance. No hay un plan de estudios formal todavía: el total se calcula con las materias distintas que hayas inscrito.</p>
-      <a class="btn btn-outline-primary btn-sm" href="{% url 'sii_kardex' %}">Ver kardex</a>
+      <a class="btn btn-outline-primary btn-sm" href="{% url 'campus_kardex' %}">Ver kardex</a>
       {% endif %}
     </div>
   </article>

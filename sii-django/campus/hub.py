@@ -1,7 +1,7 @@
 """Accesos del hub de Control Escolar. Solo destinos reales o «Próximamente»."""
 
 HUB_ACCESOS = [
-    {"clave": "kardex", "label": "Kardex", "url_name": "sii_kardex", "icon": "bi-table", "estado": "listo"},
+    {"clave": "kardex", "label": "Kardex", "url_name": "campus_kardex", "icon": "bi-table", "estado": "listo"},
     {"clave": "estado_cuenta", "label": "Estado de cuenta", "url_name": "mis_compras", "icon": "bi-wallet2", "estado": "listo"},
     {"clave": "ficha", "label": "Mi ficha", "url_name": "campus_ficha", "icon": "bi-person-vcard", "estado": "listo"},
     {"clave": "horario", "label": "Horario", "url_name": "sii_horario", "icon": "bi-clock", "estado": "listo"},

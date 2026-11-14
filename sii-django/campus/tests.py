@@ -81,7 +81,7 @@ class CampusShellTests(TestCase):
         response = self.http_alum.get(reverse("campus_mas"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("usuario"))
-        self.assertContains(response, reverse("sii_kardex"))
+        self.assertContains(response, reverse("campus_kardex"))
         self.assertContains(response, reverse("mis_compras"))
         self.assertContains(response, reverse("aula_dashboard"))
         self.assertContains(response, "Próximamente")
@@ -181,7 +181,7 @@ class CampusAvanceTests(TestCase):
         response = self.http.get(reverse("campus_inicio"))
         self.assertContains(response, "8.00")
         self.assertContains(response, "1 de 3")
-        self.assertContains(response, reverse("sii_kardex"))
+        self.assertContains(response, reverse("campus_kardex"))
         self.assertContains(response, "Sin plan de estudios formal")
 
 
@@ -575,7 +575,7 @@ class CampusHubTests(TestCase):
     def test_hub_accesos_reales_y_proximamente(self):
         response = self.http.get(reverse("campus_control_escolar"))
         self.assertContains(response, "Kardex")
-        self.assertContains(response, reverse("sii_kardex"))
+        self.assertContains(response, reverse("campus_kardex"))
         self.assertContains(response, reverse("mis_compras"))
         self.assertContains(response, reverse("campus_ficha"))
         self.assertContains(response, reverse("sii_horario"))
@@ -596,3 +596,78 @@ class CampusHubTests(TestCase):
         self.assertContains(ajeno, "Marcar favorito")
         self.http.post(reverse("campus_favorito"), {"clave": "kardex"})
         self.assertFalse(CampusFavorito.objects.filter(user_id=self.user.pk, clave="kardex").exists())
+
+
+class CampusKardexTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.a = User.objects.create_user("kdxa", "kdxa@example.com", "secret123")
+        self.b = User.objects.create_user("kdxb", "kdxb@example.com", "secret123")
+        self.admin = User.objects.create_superuser("kdxadm", "kdxadm@example.com", "secret123")
+        self.a.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.b.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.alum_a = Alumno.objects.create(
+            user_id=self.a.pk,
+            nombre="Ana",
+            apellido="Kar",
+            email="kdxa@example.com",
+            curp="KANA000101MDFXXX10",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.alum_b = Alumno.objects.create(
+            user_id=self.b.pk,
+            nombre="Beto",
+            apellido="Kar",
+            email="kdxb@example.com",
+            curp="KABE000101HDFXXX10",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        periodo = Periodo.objects.create(
+            nombre="K", fecha_inicio=date(2026, 1, 1), fecha_fin=date(2026, 6, 1)
+        )
+        curso = Curso.objects.create(nombre="Privado")
+        Inscripcion.objects.create(
+            alumno=self.alum_a,
+            curso=curso,
+            periodo=periodo,
+            calificacion=Decimal("9.00"),
+            estado="completado",
+            intento=1,
+        )
+        Inscripcion.objects.create(
+            alumno=self.alum_b,
+            curso=curso,
+            periodo=periodo,
+            calificacion=Decimal("5.00"),
+            estado="completado",
+        )
+        self.http_a = Client()
+        self.http_a.force_login(self.a)
+        self.http_b = Client()
+        self.http_b.force_login(self.b)
+        self.http_admin = Client()
+        self.http_admin.force_login(self.admin)
+
+    def test_alumno_solo_ve_el_suyo(self):
+        response = self.http_a.get(reverse("campus_kardex"))
+        self.assertContains(response, "Privado")
+        self.assertContains(response, "9.00")
+        self.assertContains(response, "Acreditada")
+        self.assertNotContains(response, "Beto")
+        self.assertNotContains(response, "5.00")
+        ajeno = self.http_b.get(reverse("campus_kardex"))
+        self.assertContains(ajeno, "5.00")
+        self.assertNotContains(ajeno, "9.00")
+
+    def test_staff_sigue_consultando_sii_kardex(self):
+        response = self.http_admin.get(reverse("sii_kardex"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Ana")
+        self.assertContains(response, "Beto")
+        vend = User.objects.create_user("kdxvend", "kdxvend@example.com", "secret123")
+        vend.groups.add(Group.objects.get(name=GRUPO_VENDEDOR))
+        http_vend = Client()
+        http_vend.force_login(vend)
+        self.assertEqual(http_vend.get(reverse("campus_kardex")).status_code, 403)

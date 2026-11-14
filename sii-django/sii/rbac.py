@@ -97,6 +97,7 @@ FEATURES = {
     "campus.calendario": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "campus.avisos": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "campus.avisos.write": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
+    "campus.kardex": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
 }
 
 URL_FEATURES = {
@@ -190,6 +191,7 @@ URL_FEATURES = {
     "campus_avisos": "campus.avisos",
     "campus_aviso_leer": "campus.avisos",
     "campus_favorito": "campus.control_escolar",
+    "campus_kardex": "campus.kardex",
 }
 
 NAV = {
