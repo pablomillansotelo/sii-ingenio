@@ -168,6 +168,18 @@ Aula **no es dueño** de: plantilla docente, periodos, bajas, recibos, POS. Asig
 | Mi cuenta | `/cuenta/` | Perfil; hoy es de solo lectura y enlaza kardex del aula (hay que apuntarlo a SII) |
 | Django Admin | `/admin/` | Solo superusuario / staff |
 
+### 3.5 Campus del alumno — cáscara de consulta
+
+No es un cuarto dominio de datos. Es el **shell móvil** del alumno (`/campus/`). Reutiliza SII, Aula y Ventas.
+
+| Feature | Roles | Caso de uso |
+| :--- | :--- | :--- |
+| `campus.inicio` | Alumno (`own`) | Inicio, Más, Mensajes (próximamente) |
+| `campus.control_escolar` | Alumno (`own`) | Hub de trámites |
+| `campus.calendario` | Alumno (`own`) | Hitos del periodo |
+
+Vendedor, docente y administrador conservan el chrome de escritorio. Tras el login, un usuario que **solo** es alumno aterriza en `/campus/`.
+
 ---
 
 ## 4. Casos de uso por persona

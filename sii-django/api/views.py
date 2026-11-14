@@ -3,7 +3,7 @@ from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
-from sii.identity import alumnos_visibles, destino_post_login, inscripciones_visibles
+from sii.identity import alumnos_visibles, destino_post_login, es_persona_campus, inscripciones_visibles
 from sii.rbac import has_feature
 from ventas.models import Cliente, Producto, Venta
 
@@ -24,6 +24,8 @@ class CustomLoginView(LoginView):
 
 @login_required
 def inicio(request):
+    if es_persona_campus(request.user) and has_feature(request.user, "campus.inicio"):
+        return redirect("campus_inicio")
     stats_ventas = []
     stats_sii = []
     ventas_recientes = []

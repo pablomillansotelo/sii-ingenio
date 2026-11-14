@@ -12,7 +12,7 @@ from sii.permissions import (
 )
 from ventas.models import Vendedor
 
-MODULOS = ("ventas", "sii", "aula")
+MODULOS = ("ventas", "sii", "aula", "campus")
 
 
 def alumno_para_usuario(user):
@@ -96,7 +96,25 @@ def puede_ver_modulo(user, modulo):
     return modulo in modulos_permitidos(user)
 
 
+def es_persona_campus(user):
+    """Alumno sin oficio de staff: usa el shell móvil, no el escritorio del call center."""
+    if user is None or not getattr(user, "is_authenticated", False):
+        return False
+    if user.is_superuser:
+        return False
+    roles = roles_inferidos(user)
+    return GRUPO_ALUMNO in roles and not roles & {
+        GRUPO_ADMINISTRADOR,
+        GRUPO_DOCENTE,
+        GRUPO_VENDEDOR,
+    }
+
+
 def destino_post_login(user):
+    from sii.rbac import has_feature
+
+    if es_persona_campus(user) and has_feature(user, "campus.inicio"):
+        return "campus_inicio"
     permitidos = modulos_permitidos(user)
     if permitidos == {"aula"}:
         return "aula_dashboard"

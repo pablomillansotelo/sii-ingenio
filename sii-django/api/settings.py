@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "usuario",
     "ventas.apps.VentasConfig",
     "aula.apps.AulaConfig",
+    "campus.apps.CampusConfig",
     "docente",
 ]
 

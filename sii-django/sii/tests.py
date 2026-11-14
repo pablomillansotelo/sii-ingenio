@@ -308,7 +308,7 @@ class RbacFase0Tests(TestCase):
         self.assertNotContains(aula, "Kardex")
 
     def test_alumno_menu_sin_pos_ni_cobro(self):
-        response = self.http_alum.get(reverse("inicio"))
+        response = self.http_alum.get(reverse("inicio"), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "Nueva venta")
         self.assertNotContains(response, "Punto de venta")

@@ -92,6 +92,9 @@ FEATURES = {
         "scopes": {ADMIN: "all", DOCENTE: "assigned"},
     },
     "aula.asignar_docente": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
+    "campus.inicio": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "campus.control_escolar": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "campus.calendario": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
 }
 
 URL_FEATURES = {
@@ -176,6 +179,11 @@ URL_FEATURES = {
     "aula_guardar_calificaciones": "aula.calificar",
     "aula_por_calificar": "aula.calificar",
     "aula_asignar_docente": "aula.asignar_docente",
+    "campus_inicio": "campus.inicio",
+    "campus_control_escolar": "campus.control_escolar",
+    "campus_calendario": "campus.calendario",
+    "campus_mensajes": "campus.inicio",
+    "campus_mas": "campus.inicio",
 }
 
 NAV = {
@@ -214,6 +222,16 @@ NAV = {
         {"label": "Actas", "url_name": "sii_actas", "icon": "bi-file-earmark-check", "feature": "sii.actas"},
         {"label": "Horario", "url_name": "sii_horario", "icon": "bi-clock", "feature": "sii.horario"},
     ],
+    "campus": [
+        {"label": "Inicio", "url_name": "campus_inicio", "icon": "bi-house", "feature": "campus.inicio"},
+        {
+            "label": "Control Escolar",
+            "url_name": "campus_control_escolar",
+            "icon": "bi-building",
+            "feature": "campus.control_escolar",
+        },
+        {"label": "Calendario", "url_name": "campus_calendario", "icon": "bi-calendar3", "feature": "campus.calendario"},
+    ],
     "aula": [
         {"label": "Mis cursos", "url_name": "aula_dashboard", "icon": "bi-grid", "feature": "aula.cursos"},
         {
@@ -230,6 +248,7 @@ MODULE_LANDINGS = {
     "ventas": (("ventas_home", "ventas.panel"), ("mis_compras", "ventas.mis_compras")),
     "sii": (("sii_home", "sii.panel"), ("sii_kardex", "sii.kardex")),
     "aula": (("aula_dashboard", "aula.cursos"),),
+    "campus": (("campus_inicio", "campus.inicio"),),
 }
 
 HOY_SHORTCUTS = [

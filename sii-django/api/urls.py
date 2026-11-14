@@ -83,6 +83,7 @@ urlpatterns = [
     path("usuario/", RedirectView.as_view(url="/cuenta/", permanent=False)),
     path("ventas/", include("ventas.urls")),
     path("aula/", include("aula.urls")),
+    path("campus/", include("campus.urls")),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(
     settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
 )

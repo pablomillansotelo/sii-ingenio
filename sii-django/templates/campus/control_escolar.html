@@ -1,0 +1,14 @@
+{% extends "campus/base.html" %}
+{% block title %}Control Escolar · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Control Escolar</h1>
+  <p class="text-muted">El hub de trámites y consultas estará aquí. Mientras tanto usa los accesos que ya existen.</p>
+  <div class="d-grid gap-2">
+    <a class="btn btn-outline-primary" href="{% url 'sii_kardex' %}">Kardex</a>
+    <a class="btn btn-outline-primary" href="{% url 'mis_compras' %}">Mis compras</a>
+    <a class="btn btn-outline-primary" href="{% url 'sii_mi_ficha' %}">Mi ficha</a>
+    <a class="btn btn-outline-primary" href="{% url 'sii_horario' %}">Horario</a>
+  </div>
+</section>
+{% endblock %}

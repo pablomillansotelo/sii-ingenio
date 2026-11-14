@@ -1,0 +1,22 @@
+{% extends "campus/base.html" %}
+{% block title %}Más · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Más</h1>
+  <ul class="list-unstyled campus-mas-list">
+    {% for item in mas_reales %}
+    <li>
+      <a class="campus-mas-link" href="{% url item.url_name %}">
+        <i class="bi {{ item.icon }}"></i>{{ item.label }}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="text-muted small mt-3 mb-2">Próximamente</p>
+  <ul class="list-unstyled campus-mas-soon">
+    {% for label in mas_proximamente %}
+    <li class="text-muted">{{ label }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}
