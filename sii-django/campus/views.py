@@ -1,11 +1,13 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from campus.forms import FichaAlumnoForm
+from campus.forms import AparienciaForm, FichaAlumnoForm
 from campus.hub import CLAVES_VALIDAS, HUB_ACCESOS
-from campus.models import CampusFavorito, Noticia
+from campus.models import CampusFavorito, Hilo, Noticia
 from campus.services.avisos import bandeja_avisos, marcar_leido
 
 from campus.nav import MAS_PROXIMAMENTE, MAS_REALES
@@ -14,7 +16,17 @@ from campus.services.cuenta import estado_cuenta
 from campus.services.cursos import tarjetas_curso_actual
 from campus.services.identidad import identidad_campus
 from campus.services.noticias import noticias_publicadas, noticias_publicadas_qs
+from campus.services.preferencias import preferencia_de
+from campus.services.mensajes import destinos_alumno, marcar_hilo_leido, no_leidos, abrir_hilo, puede_ver, responder, resumen_hilos
+from campus.services.notificaciones import lista as lista_notif, marcar_todas, marcar_una, no_leidas as notif_no_leidas, sincronizar as sync_notif
+from campus.services.ludico import perfil_de, ranking as ranking_ludico
+from campus.services.retos import sincronizar_retos
+from campus.services.constancia import construir_constancia, tipos_disponibles
+from campus.services.aceptacion import carga_del_periodo, ventana_abierta
+from campus.services.credencial import ficha_credencial
 from sii.identity import alumno_para_usuario
+from sii.models import AceptacionCarga, DocumentoExpediente, Inscripcion, SolicitudBaja
+from sii.services.expediente import resumen_tipos, validar_archivo
 from sii.rbac import requiere_feature
 from sii.services.avance import avance_academico
 
@@ -27,6 +39,10 @@ def _ctx(request, tab, extra=None):
         "campus_identidad": identidad_campus(request.user, alumno),
         "mas_reales": MAS_REALES,
         "mas_proximamente": MAS_PROXIMAMENTE,
+        "campus_pref": preferencia_de(request.user),
+        "campus_mensajes_nuevos": no_leidos(request.user),
+        "campus_notif_nuevas": notif_no_leidas(request.user),
+        "campus_ludico": perfil_de(alumno),
     }
     if extra:
         ctx.update(extra)
@@ -37,6 +53,8 @@ def _ctx(request, tab, extra=None):
 @requiere_feature("campus.inicio")
 def inicio(request):
     alumno = alumno_para_usuario(request.user)
+    sync_notif(request.user, alumno)
+    retos = sincronizar_retos(alumno)
     cursos = tarjetas_curso_actual(alumno)
     avisos = bandeja_avisos(alumno, filtro="no_leidos")
     return render(
@@ -52,6 +70,7 @@ def inicio(request):
                 "avisos_importantes": avisos["importantes_pendientes"],
                 "cuenta": estado_cuenta(request.user),
                 "noticias": list(noticias_publicadas()),
+                "retos": retos,
             },
         ),
     )
@@ -84,13 +103,129 @@ def calendario(request):
 @login_required
 @requiere_feature("campus.inicio")
 def mensajes(request):
-    return render(request, "campus/mensajes.html", _ctx(request, "mensajes"))
+    alumno = alumno_para_usuario(request.user)
+    if request.method == "POST":
+        try:
+            hilo = abrir_hilo(
+                request.user,
+                request.POST.get("asunto"),
+                request.POST.get("cuerpo"),
+                request.POST.get("destino"),
+                request.FILES.get("archivo"),
+            )
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+        else:
+            messages.success(request, "Mensaje enviado.")
+            return redirect("campus_hilo", pk=hilo.pk)
+    return render(
+        request,
+        "campus/mensajes.html",
+        _ctx(
+            request,
+            "mensajes",
+            {"hilos": resumen_hilos(request.user), "destinos": destinos_alumno(alumno)},
+        ),
+    )
+
+
+@login_required
+@requiere_feature("campus.mensajes")
+def hilo(request, pk):
+    hilo = get_object_or_404(Hilo, pk=pk)
+    if not puede_ver(request.user, hilo):
+        raise PermissionDenied()
+    if request.method == "POST":
+        try:
+            responder(request.user, hilo, request.POST.get("cuerpo"), request.FILES.get("archivo"))
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+        else:
+            return redirect("campus_hilo", pk=hilo.pk)
+    marcar_hilo_leido(request.user, hilo)
+    return render(request, "campus/hilo.html", _ctx(request, "mensajes", {"hilo": hilo}))
+
+
+@login_required
+@requiere_feature("campus.notificaciones")
+def notificaciones(request):
+    alumno = alumno_para_usuario(request.user)
+    sync_notif(request.user, alumno)
+    return render(
+        request,
+        "campus/notificaciones.html",
+        _ctx(request, "mas", {"items": lista_notif(request.user)}),
+    )
+
+
+@login_required
+@requiere_feature("campus.notificaciones")
+@require_POST
+def notificacion_leer(request, pk):
+    marcar_una(request.user, pk)
+    return redirect("campus_notificaciones")
+
+
+@login_required
+@requiere_feature("campus.notificaciones")
+@require_POST
+def notificaciones_leer_todas(request):
+    marcar_todas(request.user)
+    return redirect("campus_notificaciones")
+
+
+@login_required
+@requiere_feature("campus.ludico")
+def ludico(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    perfil = perfil_de(alumno)
+    if request.method == "POST":
+        perfil.ranking_publico = bool(request.POST.get("ranking_publico"))
+        perfil.save(update_fields=["ranking_publico"])
+        messages.success(request, "Preferencia de ranking guardada.")
+        return redirect("campus_ludico")
+    return render(
+        request,
+        "campus/ludico.html",
+        _ctx(
+            request,
+            "inicio",
+            {
+                "perfil": perfil,
+                "insignias": perfil.insignias.select_related("insignia"),
+                "ranking": ranking_ludico(),
+            },
+        ),
+    )
 
 
 @login_required
 @requiere_feature("campus.inicio")
 def mas(request):
     return render(request, "campus/mas.html", _ctx(request, "mas"))
+
+
+@login_required
+@requiere_feature("campus.configuracion")
+def configuracion(request):
+    pref = preferencia_de(request.user)
+    form = AparienciaForm(request.POST or None, instance=pref)
+    if request.method == "POST":
+        if form.is_valid():
+            guardada = form.save(commit=False)
+            guardada.user_id = request.user.pk
+            guardada.save()
+            messages.success(request, "Tus preferencias de apariencia se guardaron.")
+            return redirect("campus_configuracion")
+        messages.error(request, "Revisa las opciones de apariencia.")
+    return render(
+        request,
+        "campus/configuracion.html",
+        _ctx(request, "mas", {"form": form, "campus_pref": preferencia_de(request.user)}),
+    )
 
 
 @login_required
@@ -189,3 +324,189 @@ def estado_cuenta_view(request):
 def noticia_detalle(request, noticia_id):
     noticia = get_object_or_404(noticias_publicadas_qs(), pk=noticia_id)
     return render(request, "campus/noticia.html", _ctx(request, "inicio", {"noticia": noticia}))
+
+
+@login_required
+@requiere_feature("campus.constancias")
+def constancias(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    return render(
+        request,
+        "campus/constancias.html",
+        _ctx(
+            request,
+            "control",
+            {"alumno": alumno, "tipos": tipos_disponibles(alumno)},
+        ),
+    )
+
+
+@login_required
+@requiere_feature("campus.constancias")
+def constancia_pdf(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    tipo = request.GET.get("tipo") or "historial"
+    pdf_bytes, tipo_real = construir_constancia(alumno, tipo)
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="constancia-{tipo_real}-{alumno.pk}.pdf"'
+    return response
+
+
+@login_required
+@requiere_feature("campus.bajas")
+def bajas(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    activas = (
+        Inscripcion.objects.filter(alumno=alumno, estado="activo")
+        .select_related("curso", "periodo")
+        .order_by("curso__nombre")
+    )
+    if request.method == "POST":
+        motivo = (request.POST.get("motivo") or "").strip()
+        ins = get_object_or_404(
+            Inscripcion, pk=request.POST.get("inscripcion_id"), alumno=alumno, estado="activo"
+        )
+        if not motivo:
+            messages.error(request, "El motivo es obligatorio.")
+        elif SolicitudBaja.objects.filter(inscripcion=ins, estado=SolicitudBaja.ESTADO_ENVIADA).exists():
+            messages.error(request, "Ya hay una solicitud pendiente para esa inscripción.")
+        else:
+            SolicitudBaja.objects.create(
+                inscripcion=ins,
+                alumno=alumno,
+                motivo=motivo,
+                creada_por_id=request.user.pk,
+            )
+            messages.success(request, "Solicitud enviada. Control escolar debe aprobarla para aplicar la baja.")
+            return redirect("campus_bajas")
+    solicitudes = (
+        SolicitudBaja.objects.filter(alumno=alumno)
+        .select_related("inscripcion__curso", "inscripcion__periodo")
+    )
+    return render(
+        request,
+        "campus/bajas.html",
+        _ctx(request, "control", {"activas": activas, "solicitudes": solicitudes}),
+    )
+
+
+@login_required
+@requiere_feature("campus.expediente")
+def expediente(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    if request.method == "POST":
+        tipo = request.POST.get("tipo")
+        archivo = request.FILES.get("archivo")
+        tipos_ok = {c[0] for c in DocumentoExpediente.TIPO_CHOICES}
+        if tipo not in tipos_ok or archivo is None:
+            messages.error(request, "Indica el tipo y el archivo.")
+        elif DocumentoExpediente.objects.filter(
+            alumno=alumno, tipo=tipo, estado=DocumentoExpediente.ESTADO_ACEPTADO
+        ).exists():
+            messages.error(request, "Ese documento ya fue aceptado y no se reemplaza desde aquí.")
+        else:
+            try:
+                validar_archivo(archivo)
+            except ValidationError as exc:
+                messages.error(request, " ".join(exc.messages))
+            else:
+                DocumentoExpediente.objects.create(
+                    alumno=alumno,
+                    tipo=tipo,
+                    archivo=archivo,
+                    subido_por_id=request.user.pk,
+                )
+                messages.success(request, "Documento enviado a revisión.")
+                return redirect("campus_expediente")
+    return render(
+        request,
+        "campus/expediente.html",
+        _ctx(request, "control", {"filas": resumen_tipos(alumno)}),
+    )
+
+
+@login_required
+@requiere_feature("campus.expediente")
+def expediente_archivo(request, pk):
+    alumno = alumno_para_usuario(request.user)
+    doc = get_object_or_404(DocumentoExpediente, pk=pk, alumno=alumno)
+    if not doc.archivo:
+        raise Http404()
+    return FileResponse(doc.archivo.open("rb"), as_attachment=True, filename=doc.archivo.name.split("/")[-1])
+
+
+@login_required
+@requiere_feature("campus.credencial")
+def credencial(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    return render(
+        request,
+        "campus/credencial.html",
+        _ctx(request, "control", {"ficha": ficha_credencial(alumno)}),
+    )
+
+
+@login_required
+@requiere_feature("campus.aceptacion")
+def aceptacion(request):
+    from campus.services.cursos import periodo_vigente
+
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    periodo = periodo_vigente()
+    abierta = ventana_abierta(periodo)
+    if request.method == "POST":
+        if not abierta:
+            messages.error(request, "La ventana de aceptación no está abierta.")
+            return redirect("campus_aceptacion")
+        ins = get_object_or_404(
+            Inscripcion, pk=request.POST.get("inscripcion_id"), alumno=alumno, periodo=periodo, estado="activo"
+        )
+        decision = request.POST.get("decision")
+        if decision not in (AceptacionCarga.ESTADO_ACEPTADA, AceptacionCarga.ESTADO_CAMBIO):
+            messages.error(request, "Indica si aceptas o solicitas un cambio.")
+        elif hasattr(ins, "aceptacion"):
+            messages.error(request, "Ya registraste un acuse para esa materia.")
+        else:
+            puede = ins.puede_cursar
+            AceptacionCarga.objects.create(
+                inscripcion=ins,
+                estado=decision,
+                comentario=(request.POST.get("comentario") or "").strip(),
+            )
+            ins.refresh_from_db()
+            if ins.puede_cursar != puede:
+                ins.puede_cursar = puede
+                ins.save(update_fields=["puede_cursar"])
+            messages.success(request, "Acuse guardado. El folio de Ventas no se modifica.")
+            return redirect("campus_aceptacion")
+    return render(
+        request,
+        "campus/aceptacion.html",
+        _ctx(
+            request,
+            "control",
+            {
+                "periodo": periodo,
+                "ventana": abierta,
+                "inscripciones": carga_del_periodo(alumno, periodo),
+            },
+        ),
+    )

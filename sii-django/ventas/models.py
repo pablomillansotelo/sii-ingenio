@@ -116,6 +116,10 @@ class EdicionCurso(models.Model):
     )
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_PROGRAMADA)
     activo = models.BooleanField(default=True)
+    candado_academico = models.BooleanField(
+        default=False,
+        help_text="Si está activo, oculta recursos de secciones aún no desbloqueadas. Por defecto el candado es solo lúdico.",
+    )
 
     class Meta:
         managed = True

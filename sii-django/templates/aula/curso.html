@@ -97,6 +97,9 @@
   <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
     <div>
       <strong>{{ bloque.seccion.titulo }}</strong>
+      {% if bloque.reto_bloqueado %}
+      <div class="small text-muted">{% if bloque.candado_duro %}Bloqueada (candado académico){% else %}Reto de la unidad bloqueado (el material publicado sigue disponible){% endif %}</div>
+      {% endif %}
       {% if bloque.seccion.descripcion %}<div class="small text-muted">{{ bloque.seccion.descripcion }}</div>{% endif %}
     </div>
     {% if gestionar %}
@@ -111,12 +114,16 @@
     {% for recurso in bloque.recursos %}
     <li class="list-group-item">
       <div class="fw-semibold">{{ recurso.titulo }} <span class="badge text-bg-light text-muted">{{ recurso.get_tipo_display }}</span></div>
+      {% if bloque.candado_duro %}
+      <p class="small text-muted mb-0">El docente activó el candado académico para esta unidad.</p>
+      {% else %}
       {% if recurso.tipo == "url" and recurso.url %}
       <a href="{{ recurso.url }}" target="_blank" rel="noopener">{{ recurso.url }}</a>
       {% elif recurso.tipo == "archivo" and recurso.archivo %}
       <a href="{{ recurso.archivo.url }}">Descargar archivo</a>
       {% elif recurso.cuerpo %}
       <div class="small mt-1">{{ recurso.cuerpo|safe }}</div>
+      {% endif %}
       {% endif %}
     </li>
     {% endfor %}

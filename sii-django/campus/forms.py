@@ -2,6 +2,7 @@ import re
 
 from django import forms
 
+from campus.models import CampusPreferencia
 from sii.bootstrap import BootstrapFormMixin
 from sii.models import Alumno
 
@@ -69,3 +70,20 @@ class FichaAlumnoForm(BootstrapFormMixin, forms.ModelForm):
         if not _CP.match(valor):
             raise forms.ValidationError("El código postal debe tener 5 dígitos.")
         return valor
+
+
+class AparienciaForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = CampusPreferencia
+        fields = ("tema", "acento", "animacion_carga", "ayuda_guiada", "asistente_ia")
+        labels = {
+            "tema": "Tema",
+            "acento": "Color de acento",
+            "animacion_carga": "Mostrar animación de carga",
+            "ayuda_guiada": "Ayuda guiada",
+            "asistente_ia": "Asistente IA (próximamente)",
+        }
+        widgets = {
+            "tema": forms.RadioSelect,
+            "acento": forms.RadioSelect,
+        }

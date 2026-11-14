@@ -1,0 +1,35 @@
+{% extends "campus/base.html" %}
+{% block title %}Expediente digital · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Expediente digital</h1>
+  <p class="text-muted">Sube identificación, comprobante de domicilio o certificado. Los archivos van a almacenamiento persistente (prefijo expediente/), no al disco de la app.</p>
+  <p class="small">PDF o imagen, máximo 5 MB. Un documento aceptado no se puede borrar.</p>
+
+  {% for fila in filas %}
+  <article class="card shadow-sm mb-3">
+    <div class="card-body">
+      <h2 class="h6">{{ fila.etiqueta }}</h2>
+      <p class="small text-muted mb-2">
+        {% if fila.estado == "faltante" %}Faltante
+        {% elif fila.estado == "en_revision" %}En revisión
+        {% elif fila.estado == "aceptado" %}Aceptado
+        {% else %}Rechazado{% endif %}
+      </p>
+      {% if fila.documento %}
+      <p class="small mb-2"><a href="{% url 'campus_expediente_archivo' fila.documento.pk %}">Ver archivo</a></p>
+      {% if fila.documento.comentario_staff %}<p class="small">{{ fila.documento.comentario_staff }}</p>{% endif %}
+      {% endif %}
+      {% if not fila.documento or fila.documento.estado != "aceptado" %}
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="tipo" value="{{ fila.tipo }}">
+        <input class="form-control form-control-sm mb-2" type="file" name="archivo" accept=".pdf,.jpg,.jpeg,.png,.webp" required>
+        <button class="btn btn-sm btn-primary" type="submit">Subir</button>
+      </form>
+      {% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}

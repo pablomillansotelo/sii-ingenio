@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Progreso Ingenio · Staff{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Progreso Ingenio" subtitle="Motivacional. Resetear no toca kardex ni ventas. Queda quién y cuándo." %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Alumno</th><th>XP</th><th>Nivel</th><th>Monedas</th><th>Último reset</th><th></th></tr></thead>
+      <tbody>
+        {% for p in perfiles %}
+        <tr>
+          <td>{{ p.alumno }}</td>
+          <td>{{ p.xp }}</td>
+          <td>{{ p.nivel }}</td>
+          <td>{{ p.monedas }}</td>
+          <td>{{ p.reset_en|date:"d/m/Y H:i"|default:"—" }} {% if p.reset_por_id %}· user {{ p.reset_por_id }}{% endif %}</td>
+          <td>
+            <form method="post" action="{% url 'sii_ludico_reset' p.alumno_id %}">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger" type="submit">Resetear</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">Nadie tiene perfil lúdico todavía.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

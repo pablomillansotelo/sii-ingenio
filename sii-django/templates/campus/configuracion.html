@@ -1,0 +1,41 @@
+{% extends "campus/base.html" %}
+{% block title %}Configuración · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Configuración</h1>
+  <p class="text-muted">Apariencia del campus. Paleta de Ingenio; el cambio se guarda en tu cuenta.</p>
+  <form method="post" class="card shadow-sm" id="campus-apariencia-form">
+    {% csrf_token %}
+    <div class="card-body">
+      <fieldset class="mb-3">
+        <legend class="h6">Tema</legend>
+        {{ form.tema }}
+      </fieldset>
+      <fieldset class="mb-3">
+        <legend class="h6">Color de acento</legend>
+        <p class="small text-muted">Lista corta de marca Ingenio (sin selector libre, para no romper el contraste).</p>
+        {{ form.acento }}
+      </fieldset>
+      <div class="form-check mb-3">
+        {{ form.animacion_carga }}
+        <label class="form-check-label" for="{{ form.animacion_carga.id_for_label }}">{{ form.animacion_carga.label }}</label>
+        <p class="small text-muted mb-0">Muestra un indicador simple al cargar pantallas del campus. Si lo apagas, no se finge ningún efecto.</p>
+      </div>
+      <fieldset class="mb-3">
+        <legend class="h6">Ayudas</legend>
+        <div class="form-check mb-2">
+          {{ form.ayuda_guiada }}
+          <label class="form-check-label" for="{{ form.ayuda_guiada.id_for_label }}">{{ form.ayuda_guiada.label }}</label>
+          <p class="small text-muted mb-0">Todavía no hay recorridos en el campus. Si activas esta opción, la preferencia queda guardada para cuando existan.</p>
+        </div>
+        <div class="form-check">
+          {{ form.asistente_ia }}
+          <label class="form-check-label" for="{{ form.asistente_ia.id_for_label }}">{{ form.asistente_ia.label }}</label>
+          <p class="small text-muted mb-0">No hay un chatbot. Este interruptor solo recuerda si quieres usarlo cuando Ingenio tenga un asistente. No se llama a ningún modelo.</p>
+        </div>
+      </fieldset>
+      <button class="btn btn-primary" type="submit">Guardar</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

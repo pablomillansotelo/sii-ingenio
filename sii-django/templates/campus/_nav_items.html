@@ -6,6 +6,7 @@
 </a>
 <a class="campus-nav-item{% if campus_tab == 'mensajes' %} is-active{% endif %}" href="{% url 'campus_mensajes' %}">
   <i class="bi bi-chat-dots"></i><span>Mensajes</span>
+  {% if campus_mensajes_nuevos %}<span class="campus-nav-badge">{{ campus_mensajes_nuevos }}</span>{% endif %}
 </a>
 <a class="campus-nav-item{% if campus_tab == 'calendario' %} is-active{% endif %}" href="{% url 'campus_calendario' %}">
   <i class="bi bi-calendar3"></i><span>Calendario</span>

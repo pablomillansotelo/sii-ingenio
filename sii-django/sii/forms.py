@@ -39,15 +39,19 @@ class EditarAlumnoForm(AlumnoForm):
 class PeriodoForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Periodo
-        fields = ("nombre", "fecha_inicio", "fecha_fin")
+        fields = ("nombre", "fecha_inicio", "fecha_fin", "ventana_aceptacion_inicio", "ventana_aceptacion_fin")
         labels = {
             "nombre": "Periodo",
             "fecha_inicio": "Inicio",
             "fecha_fin": "Fin",
+            "ventana_aceptacion_inicio": "Inicio de aceptación de materias",
+            "ventana_aceptacion_fin": "Fin de aceptación de materias",
         }
         widgets = {
             "fecha_inicio": forms.DateInput(attrs={"type": "date"}),
             "fecha_fin": forms.DateInput(attrs={"type": "date"}),
+            "ventana_aceptacion_inicio": forms.DateInput(attrs={"type": "date"}),
+            "ventana_aceptacion_fin": forms.DateInput(attrs={"type": "date"}),
         }
 
 
@@ -59,6 +63,8 @@ class EditarPeriodoForm(PeriodoForm):
             "nombre": forms.TextInput(attrs={"id": "nombre_periodo_editar"}),
             "fecha_inicio": forms.DateInput(attrs={"type": "date", "id": "inicio_periodo_editar"}),
             "fecha_fin": forms.DateInput(attrs={"type": "date", "id": "fin_periodo_editar"}),
+            "ventana_aceptacion_inicio": forms.DateInput(attrs={"type": "date", "id": "ventana_inicio_editar"}),
+            "ventana_aceptacion_fin": forms.DateInput(attrs={"type": "date", "id": "ventana_fin_editar"}),
         }
 
 

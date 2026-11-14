@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Mensajes · Ingenio{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Mensajes" subtitle="Bandeja in-app con alumnos. Sin WebSockets." %}
+<form method="post" enctype="multipart/form-data" class="card shadow-sm mb-3">
+  {% csrf_token %}
+  <div class="card-body">
+    <select class="form-select mb-2" name="destino" required>
+      {% for alum in alumnos %}
+      <option value="alumno:{{ alum.user_id }}">{{ alum }}</option>
+      {% endfor %}
+    </select>
+    <input class="form-control mb-2" name="asunto" placeholder="Asunto" required>
+    <textarea class="form-control mb-2" name="cuerpo" rows="3" required></textarea>
+    <button class="btn btn-primary" type="submit">Enviar</button>
+  </div>
+</form>
+{% for item in hilos %}
+<a class="d-block card shadow-sm mb-2 text-decoration-none text-reset" href="{% url 'sii_hilo' item.hilo.pk %}">
+  <div class="card-body">
+    <strong>{{ item.hilo.asunto }}</strong>
+    <span class="small text-muted">{{ item.hilo.creado_en|date:"d/m/Y H:i" }}</span>
+    {% if not item.leido %}<span class="badge text-bg-primary">Nuevo</span>{% endif %}
+  </div>
+</a>
+{% empty %}
+<p>No hay hilos.</p>
+{% endfor %}
+{% endblock %}

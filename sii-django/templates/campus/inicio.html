@@ -4,6 +4,12 @@
 <section class="campus-page">
   <h1 class="campus-page-title">Inicio</h1>
   <p class="text-muted">Tu campus en Ingenio.</p>
+  {% if campus_ludico %}
+  <p class="small">Progreso Ingenio: nivel {{ campus_ludico.nivel }} · {{ campus_ludico.xp }} XP · {{ campus_ludico.monedas }} monedas (motivacional, no afecta kardex ni saldo). <a href="{% url 'campus_ludico' %}">Ver ranking e insignias</a></p>
+  {% endif %}
+  {% if campus_pref.ayuda_guiada %}
+  <div class="alert alert-info">Ayuda guiada: los recorridos paso a paso estarán disponibles más adelante. Tu preferencia ya está guardada.</div>
+  {% endif %}
 
   {% if cuenta.hay_deuda %}
   <div class="alert alert-warning">
@@ -52,6 +58,24 @@
       {% endif %}
     </div>
   </article>
+
+  {% if retos %}
+  <section aria-labelledby="retos-titulo" class="mb-3">
+    <h2 class="h5" id="retos-titulo">Retos de la semana</h2>
+    <p class="small text-muted">Entrega 1 actividad esta semana (zona Ciudad de México). Completar suma XP una sola vez.</p>
+    {% for reto in retos %}
+    <article class="card shadow-sm mb-2">
+      <div class="card-body">
+        <p class="fw-semibold mb-1">{{ reto.inscripcion.curso.nombre }}</p>
+        <div class="progress mb-1" role="progressbar" aria-valuenow="{{ reto.porcentaje }}">
+          <div class="progress-bar" style="width: {{ reto.porcentaje }}%"></div>
+        </div>
+        <p class="small mb-0">{{ reto.progreso }} de {{ reto.meta }} entregas · {{ reto.porcentaje }} %{% if reto.completado_en %} · Completado{% endif %}</p>
+      </div>
+    </article>
+    {% endfor %}
+  </section>
+  {% endif %}
 
   <section aria-labelledby="cursos-titulo">
     <h2 class="h5 mb-2" id="cursos-titulo">Cursos de este periodo</h2>

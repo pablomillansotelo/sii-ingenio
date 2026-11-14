@@ -2,12 +2,34 @@
 {% block title %}Mensajes · Campus Ingenio{% endblock %}
 {% block content %}
 <section class="campus-page">
-  <h1 class="campus-page-title">Mensajes</h1>
-  <div class="campus-placeholder card shadow-sm">
+  <h1 class="campus-page-title">Bandeja de mensajes</h1>
+  <p class="text-muted">Conversación interna con control escolar o tu docente. No es un correo @ingenio ni un chat en tiempo real.</p>
+
+  <form method="post" enctype="multipart/form-data" class="card shadow-sm mb-3">
+    {% csrf_token %}
     <div class="card-body">
-      <p class="mb-1 fw-semibold">Próximamente</p>
-      <p class="text-muted mb-0">La bandeja de mensajes del campus todavía no está disponible. No hay un módulo fingido: cuando exista, este espacio será tu correo interno con control escolar y tu docente.</p>
+      <label class="form-label" for="id_destino">Para</label>
+      <select class="form-select mb-2" name="destino" id="id_destino" required>
+        {% for dest in destinos %}
+        <option value="{{ dest.clave }}">{{ dest.label }}</option>
+        {% endfor %}
+      </select>
+      <input class="form-control mb-2" name="asunto" placeholder="Asunto" required>
+      <textarea class="form-control mb-2" name="cuerpo" rows="3" placeholder="Mensaje" required></textarea>
+      <input class="form-control form-control-sm mb-2" type="file" name="archivo" accept=".pdf,.jpg,.jpeg,.png,.webp">
+      <button class="btn btn-primary" type="submit">Enviar</button>
     </div>
-  </div>
+  </form>
+
+  {% for item in hilos %}
+  <a class="card shadow-sm mb-2 text-decoration-none text-reset d-block" href="{% url 'campus_hilo' item.hilo.pk %}">
+    <div class="card-body">
+      <p class="fw-semibold mb-1">{% if not item.leido %}<span class="badge text-bg-primary me-1">Nuevo</span>{% endif %}{{ item.hilo.asunto }}</p>
+      <p class="small text-muted mb-0">{{ item.hilo.creado_en|date:"d/m/Y H:i" }}</p>
+    </div>
+  </a>
+  {% empty %}
+  <p class="text-muted">Aún no hay hilos.</p>
+  {% endfor %}
 </section>
 {% endblock %}

@@ -1,0 +1,40 @@
+{% extends "campus/base.html" %}
+{% block title %}Solicitud de baja · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Solicitud de baja</h1>
+  <p class="text-muted">Control escolar debe aprobar la baja. Hasta entonces tu inscripción sigue activa y el cupo no se libera.</p>
+
+  {% if activas %}
+  <form method="post" class="card shadow-sm mb-3">
+    {% csrf_token %}
+    <div class="card-body">
+      <label class="form-label" for="id_inscripcion">Inscripción</label>
+      <select class="form-select mb-2" name="inscripcion_id" id="id_inscripcion" required>
+        {% for ins in activas %}
+        <option value="{{ ins.pk }}">{{ ins.curso.nombre }} · {{ ins.periodo.nombre }}</option>
+        {% endfor %}
+      </select>
+      <label class="form-label" for="id_motivo">Motivo</label>
+      <textarea class="form-control mb-3" name="motivo" id="id_motivo" rows="3" required></textarea>
+      <button class="btn btn-primary" type="submit" name="confirmar" value="1">Enviar solicitud</button>
+    </div>
+  </form>
+  {% else %}
+  <p>No tienes inscripciones activas para dar de baja.</p>
+  {% endif %}
+
+  <h2 class="h6">Tus solicitudes</h2>
+  {% for sol in solicitudes %}
+  <article class="card shadow-sm mb-2">
+    <div class="card-body">
+      <p class="mb-1 fw-semibold">{{ sol.inscripcion.curso.nombre }}</p>
+      <p class="small text-muted mb-1">{{ sol.get_estado_display }} · {{ sol.creada_en|date:"d/m/Y H:i" }}</p>
+      <p class="small mb-0">{{ sol.motivo }}</p>
+    </div>
+  </article>
+  {% empty %}
+  <p class="text-muted">Aún no has enviado solicitudes.</p>
+  {% endfor %}
+</section>
+{% endblock %}

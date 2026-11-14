@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ hilo.asunto }} · Mensajes{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title=hilo.asunto subtitle="" %}
+<p><a href="{% url 'sii_mensajes' %}">← Bandeja</a></p>
+{% for msg in hilo.mensajes.all %}
+<div class="card shadow-sm mb-2"><div class="card-body">
+  <p class="small text-muted">{{ msg.creado_en|date:"d/m/Y H:i" }}</p>
+  <p>{{ msg.cuerpo }}</p>
+</div></div>
+{% endfor %}
+<form method="post" class="mt-3">
+  {% csrf_token %}
+  <textarea class="form-control mb-2" name="cuerpo" rows="3" required></textarea>
+  <button class="btn btn-primary" type="submit">Responder</button>
+</form>
+{% endblock %}

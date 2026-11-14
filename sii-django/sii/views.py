@@ -2,7 +2,10 @@ from functools import wraps
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from sii.forms import (
@@ -36,6 +39,8 @@ from sii.models import (
     HorarioSlot,
     Inscripcion,
     Periodo,
+    SolicitudBaja,
+    DocumentoExpediente,
 )
 
 
@@ -365,6 +370,156 @@ def inscripcion_baja(request):
 
 
 @login_required
+def solicitudes_baja(request):
+    solicitudes = SolicitudBaja.objects.select_related(
+        "alumno", "inscripcion__curso", "inscripcion__periodo"
+    )
+    return render(request, "sii/solicitudes_baja.html", {"solicitudes": solicitudes})
+
+
+@login_required
+@require_POST
+def solicitud_baja_resolver(request, pk):
+    sol = get_object_or_404(
+        SolicitudBaja.objects.select_related("inscripcion"), pk=pk
+    )
+    if sol.estado != SolicitudBaja.ESTADO_ENVIADA:
+        messages.error(request, "Esa solicitud ya fue resuelta.")
+        return redirect("sii_solicitudes_baja")
+    decision = request.POST.get("decision")
+    sol.resuelta_en = timezone.now()
+    sol.resuelta_por_id = request.user.pk
+    sol.comentario_staff = (request.POST.get("comentario") or "").strip()
+    if decision == "aprobar":
+        try:
+            sol.inscripcion.dar_baja()
+        except ValueError as exc:
+            messages.error(request, str(exc))
+            return redirect("sii_solicitudes_baja")
+        sol.estado = SolicitudBaja.ESTADO_APROBADA
+        sol.save()
+        messages.success(request, "Baja aplicada. El cupo se liberó. El folio de Ventas no se cancela.")
+    elif decision == "rechazar":
+        sol.estado = SolicitudBaja.ESTADO_RECHAZADA
+        sol.save()
+        messages.success(request, "Solicitud rechazada. La inscripción sigue activa.")
+    else:
+        messages.error(request, "Indica si apruebas o rechazas.")
+        return redirect("sii_solicitudes_baja")
+    return redirect("sii_solicitudes_baja")
+
+
+@login_required
+def expediente_staff(request):
+    documentos = DocumentoExpediente.objects.select_related("alumno")
+    return render(request, "sii/expediente.html", {"documentos": documentos})
+
+
+@login_required
+def expediente_archivo(request, pk):
+    doc = get_object_or_404(DocumentoExpediente, pk=pk)
+    if not doc.archivo:
+        raise Http404()
+    return FileResponse(doc.archivo.open("rb"), as_attachment=True, filename=doc.archivo.name.split("/")[-1])
+
+
+@login_required
+@require_POST
+def expediente_revisar(request, pk):
+    doc = get_object_or_404(DocumentoExpediente, pk=pk)
+    if doc.estado != DocumentoExpediente.ESTADO_REVISION:
+        messages.error(request, "Ese documento ya fue revisado.")
+        return redirect("sii_expediente")
+    decision = request.POST.get("decision")
+    doc.revisado_en = timezone.now()
+    doc.revisado_por_id = request.user.pk
+    doc.comentario_staff = (request.POST.get("comentario") or "").strip()
+    if decision == "aceptar":
+        doc.estado = DocumentoExpediente.ESTADO_ACEPTADO
+        doc.save()
+        messages.success(request, "Documento aceptado.")
+    elif decision == "rechazar":
+        doc.estado = DocumentoExpediente.ESTADO_RECHAZADO
+        doc.save()
+        messages.success(request, "Documento rechazado.")
+    else:
+        messages.error(request, "Indica si aceptas o rechazas.")
+    return redirect("sii_expediente")
+
+
+@login_required
+def aceptaciones(request):
+    inscripciones = (
+        Inscripcion.objects.filter(estado="activo")
+        .select_related("alumno", "curso", "periodo", "aceptacion")
+        .order_by("periodo__fecha_inicio", "alumno__apellido")
+    )
+    return render(request, "sii/aceptaciones.html", {"inscripciones": inscripciones})
+
+
+@login_required
+def mensajes(request):
+    from campus.services.mensajes import abrir_hilo, alumnos_contacto, resumen_hilos
+
+    if request.method == "POST":
+        try:
+            hilo_obj = abrir_hilo(
+                request.user,
+                request.POST.get("asunto"),
+                request.POST.get("cuerpo"),
+                request.POST.get("destino"),
+                request.FILES.get("archivo"),
+            )
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+        else:
+            return redirect("sii_hilo", pk=hilo_obj.pk)
+    return render(
+        request,
+        "sii/mensajes.html",
+        {"hilos": resumen_hilos(request.user), "alumnos": alumnos_contacto(request.user)},
+    )
+
+
+@login_required
+def hilo(request, pk):
+    from campus.models import Hilo
+    from campus.services.mensajes import marcar_hilo_leido, puede_ver, responder
+
+    hilo_obj = get_object_or_404(Hilo, pk=pk)
+    if not puede_ver(request.user, hilo_obj):
+        raise Http404()
+    if request.method == "POST":
+        try:
+            responder(request.user, hilo_obj, request.POST.get("cuerpo"), request.FILES.get("archivo"))
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+        else:
+            return redirect("sii_hilo", pk=hilo_obj.pk)
+    marcar_hilo_leido(request.user, hilo_obj)
+    return render(request, "sii/hilo.html", {"hilo": hilo_obj})
+
+
+@login_required
+def ludico(request):
+    from campus.models import PerfilLudico
+
+    perfiles = PerfilLudico.objects.select_related("alumno").order_by("-xp")
+    return render(request, "sii/ludico.html", {"perfiles": perfiles})
+
+
+@login_required
+@require_POST
+def ludico_reset(request, alumno_id):
+    from campus.services.ludico import resetear
+
+    alumno = get_object_or_404(Alumno, pk=alumno_id)
+    resetear(alumno, request.user.pk)
+    messages.success(request, f"Progreso Ingenio de {alumno} reiniciado. Kardex y saldo no cambian.")
+    return redirect("sii_ludico")
+
+
+@login_required
 @_solo_admin
 @require_POST
 def inscripcion_reintento(request):
@@ -432,6 +587,26 @@ def alumno_ficha(request, alumno_id):
             "puede_operar": es_administrador(request.user),
         },
     )
+
+
+@login_required
+def constancia_pdf(request, alumno_id):
+    from campus.services.constancia import construir_constancia
+
+    alumno = _alumno_o_404(request, alumno_id)
+    tipo = request.GET.get("tipo") or "historial"
+    pdf_bytes, tipo_real = construir_constancia(alumno, tipo)
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="constancia-{tipo_real}-{alumno.pk}.pdf"'
+    return response
+
+
+@login_required
+def credencial(request, alumno_id):
+    from campus.services.credencial import ficha_credencial
+
+    alumno = _alumno_o_404(request, alumno_id)
+    return render(request, "sii/credencial.html", {"alumno": alumno, "ficha": ficha_credencial(alumno)})
 
 
 @login_required

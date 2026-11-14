@@ -1,0 +1,36 @@
+{% extends "campus/base.html" %}
+{% block title %}Aceptación de materias · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Aceptación de materias</h1>
+  <p class="text-muted">Confirmas la carga ya inscrita o vendida. No es un carrito para darte de alta. El acceso al aula sigue dependiendo del pago; aceptar no habilita el curso si hay saldo pendiente.</p>
+
+  {% if not periodo %}
+  <p>No hay un periodo de referencia.</p>
+  {% elif not ventana %}
+  <div class="alert alert-info">La ventana de aceptación no está abierta. Control escolar la configura en el periodo.</div>
+  {% else %}
+  <p class="small">Ventana: {{ periodo.ventana_aceptacion_inicio|date:"d/m/Y" }} – {{ periodo.ventana_aceptacion_fin|date:"d/m/Y" }} · {{ periodo.nombre }}</p>
+  {% for ins in inscripciones %}
+  <article class="card shadow-sm mb-2">
+    <div class="card-body">
+      <p class="fw-semibold mb-1">{{ ins.curso.nombre }}{% if ins.id_edicion %} · {{ ins.id_edicion.codigo_edicion }}{% endif %}</p>
+      {% if ins.aceptacion %}
+      <p class="small mb-0">{{ ins.aceptacion.get_estado_display }} · {{ ins.aceptacion.acuse_en|date:"d/m/Y H:i" }}</p>
+      {% else %}
+      <form method="post" class="d-flex flex-wrap gap-2">
+        {% csrf_token %}
+        <input type="hidden" name="inscripcion_id" value="{{ ins.pk }}">
+        <button class="btn btn-sm btn-primary" name="decision" value="aceptada" type="submit">Aceptar</button>
+        <input class="form-control form-control-sm" name="comentario" placeholder="Motivo de cambio (opcional)" style="max-width:16rem">
+        <button class="btn btn-sm btn-outline-secondary" name="decision" value="cambio" type="submit">Solicitar cambio</button>
+      </form>
+      {% endif %}
+    </div>
+  </article>
+  {% empty %}
+  <p>No tienes inscripciones activas en este periodo.</p>
+  {% endfor %}
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Expediente digital · Ingenio{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Expediente digital" subtitle="Aceptar o rechazar documentos. Prefijo expediente/ en Object Storage." %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Alumno</th><th>Tipo</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        {% for doc in documentos %}
+        <tr>
+          <td>{{ doc.alumno }}</td>
+          <td>{{ doc.get_tipo_display }}</td>
+          <td>{{ doc.get_estado_display }}</td>
+          <td>
+            <a href="{% url 'sii_expediente_archivo' doc.pk %}">Archivo</a>
+            {% if doc.estado == "en_revision" %}
+            <form method="post" action="{% url 'sii_expediente_revisar' doc.pk %}" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="decision" value="aceptar">
+              <button class="btn btn-sm btn-primary" type="submit">Aceptar</button>
+            </form>
+            <form method="post" action="{% url 'sii_expediente_revisar' doc.pk %}" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="decision" value="rechazar">
+              <input name="comentario" class="form-control form-control-sm d-inline-block" style="width:12rem" placeholder="Motivo">
+              <button class="btn btn-sm btn-outline-secondary" type="submit">Rechazar</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">No hay documentos.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -77,6 +77,8 @@ class Periodo(models.Model):
         null=True,
         help_text="Fecha oficial de publicación de calificaciones. Si está vacía se usa el fin de periodo.",
     )
+    ventana_aceptacion_inicio = models.DateField(blank=True, null=True)
+    ventana_aceptacion_fin = models.DateField(blank=True, null=True)
 
     class Meta:
         managed = True
@@ -169,6 +171,92 @@ class Inscripcion(models.Model):
             .order_by("-periodo__fecha_inicio", "-id")
             .first()
         )
+
+
+class SolicitudBaja(models.Model):
+    ESTADO_ENVIADA = "enviada"
+    ESTADO_APROBADA = "aprobada"
+    ESTADO_RECHAZADA = "rechazada"
+    ESTADO_CHOICES = [
+        (ESTADO_ENVIADA, "Enviada"),
+        (ESTADO_APROBADA, "Aprobada"),
+        (ESTADO_RECHAZADA, "Rechazada"),
+    ]
+
+    inscripcion = models.ForeignKey(Inscripcion, on_delete=models.CASCADE, related_name="solicitudes_baja")
+    alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name="solicitudes_baja")
+    motivo = models.TextField()
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_ENVIADA)
+    creada_en = models.DateTimeField(auto_now_add=True)
+    creada_por_id = models.PositiveIntegerField()
+    resuelta_en = models.DateTimeField(blank=True, null=True)
+    resuelta_por_id = models.PositiveIntegerField(blank=True, null=True)
+    comentario_staff = models.CharField(max_length=240, blank=True, default="")
+
+    class Meta:
+        db_table = "tra_solicitud_baja"
+        ordering = ["-creada_en"]
+
+    def __str__(self):
+        return f"Baja {self.inscripcion_id} ({self.estado})"
+
+
+class DocumentoExpediente(models.Model):
+    TIPO_IDENTIFICACION = "identificacion"
+    TIPO_DOMICILIO = "domicilio"
+    TIPO_CERTIFICADO = "certificado"
+    TIPO_OTRO = "otro"
+    TIPO_CHOICES = [
+        (TIPO_IDENTIFICACION, "Identificación oficial"),
+        (TIPO_DOMICILIO, "Comprobante de domicilio"),
+        (TIPO_CERTIFICADO, "Certificado previo"),
+        (TIPO_OTRO, "Otro"),
+    ]
+    ESTADO_REVISION = "en_revision"
+    ESTADO_ACEPTADO = "aceptado"
+    ESTADO_RECHAZADO = "rechazado"
+    ESTADO_CHOICES = [
+        (ESTADO_REVISION, "En revisión"),
+        (ESTADO_ACEPTADO, "Aceptado"),
+        (ESTADO_RECHAZADO, "Rechazado"),
+    ]
+
+    alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name="documentos")
+    tipo = models.CharField(max_length=30, choices=TIPO_CHOICES)
+    archivo = models.FileField(upload_to="expediente/%Y/%m/")
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_REVISION)
+    comentario_staff = models.CharField(max_length=240, blank=True, default="")
+    subido_en = models.DateTimeField(auto_now_add=True)
+    subido_por_id = models.PositiveIntegerField()
+    revisado_en = models.DateTimeField(blank=True, null=True)
+    revisado_por_id = models.PositiveIntegerField(blank=True, null=True)
+
+    class Meta:
+        db_table = "tra_documento_expediente"
+        ordering = ["-subido_en"]
+
+    def __str__(self):
+        return f"{self.alumno} {self.tipo} ({self.estado})"
+
+
+class AceptacionCarga(models.Model):
+    ESTADO_ACEPTADA = "aceptada"
+    ESTADO_CAMBIO = "cambio"
+    ESTADO_CHOICES = [
+        (ESTADO_ACEPTADA, "Aceptada"),
+        (ESTADO_CAMBIO, "Solicitud de cambio"),
+    ]
+
+    inscripcion = models.OneToOneField(Inscripcion, on_delete=models.CASCADE, related_name="aceptacion")
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES)
+    acuse_en = models.DateTimeField(auto_now_add=True)
+    comentario = models.CharField(max_length=240, blank=True, default="")
+
+    class Meta:
+        db_table = "tra_aceptacion_carga"
+
+    def __str__(self):
+        return f"{self.inscripcion_id} {self.estado}"
 
 
 class ActaFinal(models.Model):
