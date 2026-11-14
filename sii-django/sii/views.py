@@ -2,7 +2,7 @@ from functools import wraps
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -39,6 +39,7 @@ from sii.models import (
     Inscripcion,
     Periodo,
     SolicitudBaja,
+    DocumentoExpediente,
 )
 
 
@@ -405,6 +406,44 @@ def solicitud_baja_resolver(request, pk):
         messages.error(request, "Indica si apruebas o rechazas.")
         return redirect("sii_solicitudes_baja")
     return redirect("sii_solicitudes_baja")
+
+
+@login_required
+def expediente_staff(request):
+    documentos = DocumentoExpediente.objects.select_related("alumno")
+    return render(request, "sii/expediente.html", {"documentos": documentos})
+
+
+@login_required
+def expediente_archivo(request, pk):
+    doc = get_object_or_404(DocumentoExpediente, pk=pk)
+    if not doc.archivo:
+        raise Http404()
+    return FileResponse(doc.archivo.open("rb"), as_attachment=True, filename=doc.archivo.name.split("/")[-1])
+
+
+@login_required
+@require_POST
+def expediente_revisar(request, pk):
+    doc = get_object_or_404(DocumentoExpediente, pk=pk)
+    if doc.estado != DocumentoExpediente.ESTADO_REVISION:
+        messages.error(request, "Ese documento ya fue revisado.")
+        return redirect("sii_expediente")
+    decision = request.POST.get("decision")
+    doc.revisado_en = timezone.now()
+    doc.revisado_por_id = request.user.pk
+    doc.comentario_staff = (request.POST.get("comentario") or "").strip()
+    if decision == "aceptar":
+        doc.estado = DocumentoExpediente.ESTADO_ACEPTADO
+        doc.save()
+        messages.success(request, "Documento aceptado.")
+    elif decision == "rechazar":
+        doc.estado = DocumentoExpediente.ESTADO_RECHAZADO
+        doc.save()
+        messages.success(request, "Documento rechazado.")
+    else:
+        messages.error(request, "Indica si aceptas o rechazas.")
+    return redirect("sii_expediente")
 
 
 @login_required

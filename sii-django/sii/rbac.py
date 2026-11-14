@@ -106,6 +106,8 @@ FEATURES = {
     "sii.constancias": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
     "campus.bajas": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "sii.bajas": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
+    "campus.expediente": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "sii.expediente": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
 }
 
 URL_FEATURES = {
@@ -209,6 +211,11 @@ URL_FEATURES = {
     "campus_bajas": "campus.bajas",
     "sii_solicitudes_baja": "sii.bajas",
     "sii_solicitud_baja_resolver": "sii.bajas",
+    "campus_expediente": "campus.expediente",
+    "campus_expediente_archivo": "campus.expediente",
+    "sii_expediente": "sii.expediente",
+    "sii_expediente_archivo": "sii.expediente",
+    "sii_expediente_revisar": "sii.expediente",
 }
 
 NAV = {
@@ -244,6 +251,7 @@ NAV = {
         },
         {"label": "Inscripciones", "url_name": "sii_inscripciones", "icon": "bi-clipboard-check", "feature": "sii.inscripciones", "hide_if_own": True},
         {"label": "Bajas", "url_name": "sii_solicitudes_baja", "icon": "bi-x-circle", "feature": "sii.bajas"},
+        {"label": "Expediente", "url_name": "sii_expediente", "icon": "bi-folder", "feature": "sii.expediente"},
         {"label": "Docentes", "url_name": "sii_docentes", "icon": "bi-person-video3", "feature": "sii.docentes", "hide_if_own": True},
         {"label": "Actas", "url_name": "sii_actas", "icon": "bi-file-earmark-check", "feature": "sii.actas"},
         {"label": "Horario", "url_name": "sii_horario", "icon": "bi-clock", "feature": "sii.horario"},

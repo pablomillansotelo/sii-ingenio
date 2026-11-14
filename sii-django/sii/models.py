@@ -199,6 +199,44 @@ class SolicitudBaja(models.Model):
         return f"Baja {self.inscripcion_id} ({self.estado})"
 
 
+class DocumentoExpediente(models.Model):
+    TIPO_IDENTIFICACION = "identificacion"
+    TIPO_DOMICILIO = "domicilio"
+    TIPO_CERTIFICADO = "certificado"
+    TIPO_OTRO = "otro"
+    TIPO_CHOICES = [
+        (TIPO_IDENTIFICACION, "Identificación oficial"),
+        (TIPO_DOMICILIO, "Comprobante de domicilio"),
+        (TIPO_CERTIFICADO, "Certificado previo"),
+        (TIPO_OTRO, "Otro"),
+    ]
+    ESTADO_REVISION = "en_revision"
+    ESTADO_ACEPTADO = "aceptado"
+    ESTADO_RECHAZADO = "rechazado"
+    ESTADO_CHOICES = [
+        (ESTADO_REVISION, "En revisión"),
+        (ESTADO_ACEPTADO, "Aceptado"),
+        (ESTADO_RECHAZADO, "Rechazado"),
+    ]
+
+    alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name="documentos")
+    tipo = models.CharField(max_length=30, choices=TIPO_CHOICES)
+    archivo = models.FileField(upload_to="expediente/%Y/%m/")
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_REVISION)
+    comentario_staff = models.CharField(max_length=240, blank=True, default="")
+    subido_en = models.DateTimeField(auto_now_add=True)
+    subido_por_id = models.PositiveIntegerField()
+    revisado_en = models.DateTimeField(blank=True, null=True)
+    revisado_por_id = models.PositiveIntegerField(blank=True, null=True)
+
+    class Meta:
+        db_table = "tra_documento_expediente"
+        ordering = ["-subido_en"]
+
+    def __str__(self):
+        return f"{self.alumno} {self.tipo} ({self.estado})"
+
+
 class ActaFinal(models.Model):
     ESTADO_BORRADOR = "borrador"
     ESTADO_PUBLICADA = "publicada"

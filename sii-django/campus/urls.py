@@ -19,4 +19,6 @@ urlpatterns = [
     path("constancias/", views.constancias, name="campus_constancias"),
     path("constancias/pdf/", views.constancia_pdf, name="campus_constancia_pdf"),
     path("bajas/", views.bajas, name="campus_bajas"),
+    path("expediente/", views.expediente, name="campus_expediente"),
+    path("expediente/<int:pk>/archivo/", views.expediente_archivo, name="campus_expediente_archivo"),
 ]

@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.core.exceptions import ValidationError
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -18,7 +19,8 @@ from campus.services.noticias import noticias_publicadas, noticias_publicadas_qs
 from campus.services.preferencias import preferencia_de
 from campus.services.constancia import construir_constancia, tipos_disponibles
 from sii.identity import alumno_para_usuario
-from sii.models import Inscripcion, SolicitudBaja
+from sii.models import DocumentoExpediente, Inscripcion, SolicitudBaja
+from sii.services.expediente import resumen_tipos, validar_archivo
 from sii.rbac import requiere_feature
 from sii.services.avance import avance_academico
 
@@ -287,3 +289,51 @@ def bajas(request):
         "campus/bajas.html",
         _ctx(request, "control", {"activas": activas, "solicitudes": solicitudes}),
     )
+
+
+@login_required
+@requiere_feature("campus.expediente")
+def expediente(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    if request.method == "POST":
+        tipo = request.POST.get("tipo")
+        archivo = request.FILES.get("archivo")
+        tipos_ok = {c[0] for c in DocumentoExpediente.TIPO_CHOICES}
+        if tipo not in tipos_ok or archivo is None:
+            messages.error(request, "Indica el tipo y el archivo.")
+        elif DocumentoExpediente.objects.filter(
+            alumno=alumno, tipo=tipo, estado=DocumentoExpediente.ESTADO_ACEPTADO
+        ).exists():
+            messages.error(request, "Ese documento ya fue aceptado y no se reemplaza desde aquí.")
+        else:
+            try:
+                validar_archivo(archivo)
+            except ValidationError as exc:
+                messages.error(request, " ".join(exc.messages))
+            else:
+                DocumentoExpediente.objects.create(
+                    alumno=alumno,
+                    tipo=tipo,
+                    archivo=archivo,
+                    subido_por_id=request.user.pk,
+                )
+                messages.success(request, "Documento enviado a revisión.")
+                return redirect("campus_expediente")
+    return render(
+        request,
+        "campus/expediente.html",
+        _ctx(request, "control", {"filas": resumen_tipos(alumno)}),
+    )
+
+
+@login_required
+@requiere_feature("campus.expediente")
+def expediente_archivo(request, pk):
+    alumno = alumno_para_usuario(request.user)
+    doc = get_object_or_404(DocumentoExpediente, pk=pk, alumno=alumno)
+    if not doc.archivo:
+        raise Http404()
+    return FileResponse(doc.archivo.open("rb"), as_attachment=True, filename=doc.archivo.name.split("/")[-1])

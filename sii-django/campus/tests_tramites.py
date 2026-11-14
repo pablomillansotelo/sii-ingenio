@@ -4,6 +4,7 @@ from datetime import date
 from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -205,3 +206,75 @@ class CampusBajaTests(TestCase):
         self.assertEqual(sol.estado, SolicitudBaja.ESTADO_APROBADA)
         lista = self.http.get(reverse("campus_bajas"))
         self.assertContains(lista, "Aprobada")
+
+
+class CampusExpedienteTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("exp1", "exp1@example.com", "secret123")
+        self.otro = User.objects.create_user("exp2", "exp2@example.com", "secret123")
+        self.admin = User.objects.create_user("expadm", "expadm@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.otro.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.admin.groups.add(Group.objects.get(name=GRUPO_ADMINISTRADOR))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Eva",
+            apellido="Docs",
+            email="exp1@example.com",
+            curp="DOEV000101MDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        Alumno.objects.create(
+            user_id=self.otro.pk,
+            nombre="Otro",
+            apellido="Docs",
+            email="exp2@example.com",
+            curp="DOOT000101HDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+        self.http_otro = Client()
+        self.http_otro.force_login(self.otro)
+        self.http_admin = Client()
+        self.http_admin.force_login(self.admin)
+
+    def test_subida_permisos_y_revision(self):
+        from sii.models import DocumentoExpediente
+
+        pagina = self.http.get(reverse("campus_expediente"))
+        self.assertContains(pagina, "Identificación oficial")
+        self.assertContains(pagina, "Faltante")
+        hub = self.http.get(reverse("campus_control_escolar"))
+        self.assertContains(hub, reverse("campus_expediente"))
+        malo = self.http.post(
+            reverse("campus_expediente"),
+            {"tipo": "identificacion", "archivo": SimpleUploadedFile("clave.exe", b"MZ", content_type="application/octet-stream")},
+        )
+        self.assertContains(malo, "Solo se aceptan PDF o imagen")
+        self.assertFalse(DocumentoExpediente.objects.exists())
+        pdf = SimpleUploadedFile("ine.pdf", b"%PDF-1.4 test", content_type="application/pdf")
+        self.http.post(reverse("campus_expediente"), {"tipo": "identificacion", "archivo": pdf})
+        doc = DocumentoExpediente.objects.get()
+        self.assertTrue(doc.archivo.name.startswith("expediente/"))
+        self.assertEqual(doc.estado, DocumentoExpediente.ESTADO_REVISION)
+        ajeno = self.http_otro.get(reverse("campus_expediente_archivo", args=[doc.pk]))
+        self.assertEqual(ajeno.status_code, 404)
+        propio = self.http.get(reverse("campus_expediente_archivo", args=[doc.pk]))
+        self.assertEqual(propio.status_code, 200)
+        self.http_admin.post(
+            reverse("sii_expediente_revisar", args=[doc.pk]),
+            {"decision": "aceptar"},
+        )
+        doc.refresh_from_db()
+        self.assertEqual(doc.estado, DocumentoExpediente.ESTADO_ACEPTADO)
+        otra = SimpleUploadedFile("ine2.pdf", b"%PDF-1.4 otro", content_type="application/pdf")
+        bloqueado = self.http.post(
+            reverse("campus_expediente"),
+            {"tipo": "identificacion", "archivo": otra},
+        )
+        self.assertContains(bloqueado, "ya fue aceptado")
+        self.assertEqual(DocumentoExpediente.objects.count(), 1)
