@@ -184,6 +184,7 @@ URL_FEATURES = {
     "campus_calendario": "campus.calendario",
     "campus_mensajes": "campus.inicio",
     "campus_mas": "campus.inicio",
+    "campus_ficha": "campus.inicio",
 }
 
 NAV = {

@@ -1,5 +1,8 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+
+from campus.forms import FichaAlumnoForm
 
 from campus.nav import MAS_PROXIMAMENTE, MAS_REALES
 from campus.services.calendario import hitos_calendario
@@ -71,3 +74,20 @@ def mensajes(request):
 @requiere_feature("campus.inicio")
 def mas(request):
     return render(request, "campus/mas.html", _ctx(request, "mas"))
+
+
+@login_required
+@requiere_feature("campus.inicio")
+def ficha(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    form = FichaAlumnoForm(request.POST or None, instance=alumno)
+    if request.method == "POST":
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Tus datos de contacto se guardaron en el expediente.")
+            return redirect("campus_ficha")
+        messages.error(request, "Revisa el teléfono y el código postal.")
+    return render(request, "campus/ficha.html", _ctx(request, "mas", {"form": form, "alumno": alumno}))

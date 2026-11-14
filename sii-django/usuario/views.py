@@ -66,10 +66,15 @@ def usuario(request):
     )
     if request.method == "POST" and request.POST.get("accion") == "perfil":
         if perfil.is_valid():
+            if alumno:
+                nombre, apellido = alumno.nombre, alumno.apellido
+            else:
+                nombre = perfil.cleaned_data["first_name"]
+                apellido = perfil.cleaned_data.get("last_name") or ""
             _guardar_perfil(
                 request.user,
-                perfil.cleaned_data["first_name"],
-                perfil.cleaned_data.get("last_name") or "",
+                nombre,
+                apellido,
                 perfil.cleaned_data.get("telefono") or "",
             )
             messages.success(request, "Perfil actualizado.")
@@ -89,5 +94,6 @@ def usuario(request):
             "perfil_form": perfil,
             "password_form": password_form,
             "ver_kardex": has_feature(request.user, "sii.kardex"),
+            "es_alumno": alumno is not None,
         },
     )

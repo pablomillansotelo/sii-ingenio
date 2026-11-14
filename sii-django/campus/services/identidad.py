@@ -29,6 +29,6 @@ def identidad_campus(user, alumno):
         "identificador": identificador,
         "identificador_etiqueta": etiqueta,
         "correos": correos,
-        "ficha_url": reverse("sii_mi_ficha"),
+        "ficha_url": reverse("campus_ficha"),
         "cuenta_url": reverse("usuario"),
     }

@@ -26,6 +26,17 @@ class Alumno(models.Model):
         null=True,
         help_text="Identificador interno de Ingenio. No es una matrícula de otra institución.",
     )
+    email_personal = models.EmailField(blank=True, default="")
+    direccion_calle = models.CharField(max_length=160, blank=True, default="")
+    colonia = models.CharField(max_length=80, blank=True, default="")
+    codigo_postal = models.CharField(max_length=5, blank=True, default="")
+    ciudad = models.CharField(max_length=80, blank=True, default="")
+    estado_domicilio = models.CharField(max_length=80, blank=True, default="")
+    empresa = models.CharField(max_length=120, blank=True, default="")
+    puesto = models.CharField(max_length=80, blank=True, default="")
+    telefono_laboral = models.CharField(max_length=15, blank=True, default="")
+    contacto_emergencia_nombre = models.CharField(max_length=120, blank=True, default="")
+    contacto_emergencia_telefono = models.CharField(max_length=15, blank=True, default="")
 
     class Meta:
         managed = True

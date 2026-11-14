@@ -1,0 +1,29 @@
+{% extends "campus/base.html" %}
+{% block title %}Actualizar datos · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Actualizar datos</h1>
+  <p class="text-muted">El nombre legal, la CURP, la fecha de nacimiento y el correo del expediente los cambia control escolar.</p>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <h2 class="h6">Identificación (solo lectura)</h2>
+      <p class="mb-1"><strong>{{ alumno.nombre }} {{ alumno.apellido }}</strong></p>
+      <p class="small mb-1">CURP: {{ alumno.curp }}</p>
+      <p class="small mb-1">Nacimiento: {{ alumno.fecha_nacimiento }}</p>
+      <p class="small mb-0">Correo del expediente: {{ alumno.email }}</p>
+    </div>
+  </div>
+
+  <form method="post" class="card shadow-sm">
+    <div class="card-body">
+      {% csrf_token %}
+      <h2 class="h6">Contacto y domicilio</h2>
+      <p class="small text-muted">El teléfono es el mismo de Mi cuenta. El domicilio vive en SII; no se copia al cliente de Ventas.</p>
+      {% include "includes/form_fields.html" with form=form %}
+      <button class="btn btn-primary" type="submit">Guardar</button>
+      <a class="btn btn-outline-secondary" href="{% url 'sii_mi_ficha' %}">Ver expediente</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
