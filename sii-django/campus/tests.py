@@ -14,7 +14,7 @@ from campus.services.calendario import hitos_calendario
 from campus.services.cursos import tarjetas_curso_actual
 from campus.services.identidad import identidad_campus, iniciales_de
 from sii.services.avance import avance_academico
-from ventas.models import EdicionCurso, Producto, Vendedor
+from ventas.models import Cliente, EdicionCurso, Pago, Producto, Venta, VentaDetalle, Vendedor
 
 
 class CampusShellTests(TestCase):
@@ -82,7 +82,7 @@ class CampusShellTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("usuario"))
         self.assertContains(response, reverse("campus_kardex"))
-        self.assertContains(response, reverse("mis_compras"))
+        self.assertContains(response, reverse("campus_estado_cuenta"))
         self.assertContains(response, reverse("aula_dashboard"))
         self.assertContains(response, "Próximamente")
 
@@ -576,7 +576,7 @@ class CampusHubTests(TestCase):
         response = self.http.get(reverse("campus_control_escolar"))
         self.assertContains(response, "Kardex")
         self.assertContains(response, reverse("campus_kardex"))
-        self.assertContains(response, reverse("mis_compras"))
+        self.assertContains(response, reverse("campus_estado_cuenta"))
         self.assertContains(response, reverse("campus_ficha"))
         self.assertContains(response, reverse("sii_horario"))
         self.assertContains(response, "Próximamente")
@@ -671,3 +671,74 @@ class CampusKardexTests(TestCase):
         http_vend = Client()
         http_vend.force_login(vend)
         self.assertEqual(http_vend.get(reverse("campus_kardex")).status_code, 403)
+
+
+class CampusEstadoCuentaTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("cta1", "cta1@example.com", "secret123")
+        self.otro = User.objects.create_user("cta2", "cta2@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.otro.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Cuen",
+            apellido="Ta",
+            email="cta1@example.com",
+            curp="TACU000101MDFXXX11",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        Alumno.objects.create(
+            user_id=self.otro.pk,
+            nombre="Otra",
+            apellido="Cuen",
+            email="cta2@example.com",
+            curp="CUOT000101HDFXXX11",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.cliente = Cliente.objects.create(
+            nombre="Cuen",
+            apellidos="Ta",
+            direccion="Calle",
+            email="cta1@example.com",
+            id_alumno_sii=self.alumno,
+        )
+        ajeno = Cliente.objects.create(
+            nombre="Otra", apellidos="Cuen", direccion="Calle", email="cta2@example.com"
+        )
+        producto = Producto.objects.create(producto="Curso", precio_unitario=Decimal("1000"))
+        self.venta = Venta.objects.create(id_cliente=self.cliente, fecha=date.today(), estado_pago="parcial")
+        VentaDetalle.objects.create(
+            id_venta=self.venta, id_producto=producto, cantidad=1, precio_unitario=Decimal("1000")
+        )
+        Pago.objects.create(id_venta=self.venta, monto=Decimal("400"))
+        self.venta_ajena = Venta.objects.create(id_cliente=ajeno, fecha=date.today(), estado_pago="pagado")
+        VentaDetalle.objects.create(
+            id_venta=self.venta_ajena, id_producto=producto, cantidad=1, precio_unitario=Decimal("500")
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+        self.http_otro = Client()
+        self.http_otro.force_login(self.otro)
+
+    def test_saldo_y_autorizacion(self):
+        from campus.services.cuenta import estado_cuenta
+
+        data = estado_cuenta(self.user)
+        self.assertEqual(data["total_cargos"], Decimal("1000"))
+        self.assertEqual(data["total_abonos"], Decimal("400"))
+        self.assertEqual(data["saldo"], Decimal("600"))
+        self.assertTrue(data["hay_deuda"])
+        response = self.http.get(reverse("campus_estado_cuenta"))
+        self.assertContains(response, "1000")
+        self.assertContains(response, "400")
+        self.assertContains(response, "600")
+        self.assertContains(response, "no es CFDI")
+        self.assertContains(response, reverse("recibo_pdf", args=[self.venta.pk]))
+        self.assertNotContains(response, self.venta_ajena.folio or str(self.venta_ajena.pk))
+        inicio = self.http.get(reverse("campus_inicio"))
+        self.assertContains(inicio, "saldo pendiente")
+        ajeno = self.http_otro.get(reverse("campus_estado_cuenta"))
+        self.assertNotContains(ajeno, self.venta.folio or str(self.venta.pk))

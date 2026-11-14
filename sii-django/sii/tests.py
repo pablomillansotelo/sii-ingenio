@@ -314,7 +314,7 @@ class RbacFase0Tests(TestCase):
         self.assertNotContains(response, "Punto de venta")
         self.assertNotContains(response, "Registrar pago")
         self.assertNotContains(response, "por cobrar")
-        self.assertContains(response, "Mis compras")
+        self.assertContains(response, "Estado de cuenta")
         self.assertContains(response, "Kardex")
 
     def test_vendedor_403_en_calificar(self):

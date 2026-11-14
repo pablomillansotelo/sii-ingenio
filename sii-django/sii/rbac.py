@@ -98,6 +98,7 @@ FEATURES = {
     "campus.avisos": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "campus.avisos.write": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
     "campus.kardex": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "campus.estado_cuenta": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
 }
 
 URL_FEATURES = {
@@ -192,6 +193,7 @@ URL_FEATURES = {
     "campus_aviso_leer": "campus.avisos",
     "campus_favorito": "campus.control_escolar",
     "campus_kardex": "campus.kardex",
+    "campus_estado_cuenta": "campus.estado_cuenta",
 }
 
 NAV = {

@@ -1,0 +1,39 @@
+{% extends "campus/base.html" %}
+{% block title %}Estado de cuenta · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Estado de cuenta</h1>
+  <p class="text-muted">Cargos y abonos de Ventas. El PDF es un recibo interno, no una factura CFDI.</p>
+  {% if cuenta.hay_deuda %}
+  <div class="alert alert-warning">Tienes un saldo pendiente de ${{ cuenta.saldo|floatformat:2 }}. El cobro en línea aún no está disponible; acude a control escolar o al call center.</div>
+  {% endif %}
+  <div class="campus-avance-grid mb-3">
+    <div>
+      <p class="campus-metric-label">Cargos</p>
+      <p class="campus-metric-value">${{ cuenta.total_cargos|floatformat:2 }}</p>
+    </div>
+    <div>
+      <p class="campus-metric-label">Abonos</p>
+      <p class="campus-metric-value">${{ cuenta.total_abonos|floatformat:2 }}</p>
+    </div>
+    <div>
+      <p class="campus-metric-label">Saldo</p>
+      <p class="campus-metric-value">${{ cuenta.saldo|floatformat:2 }}</p>
+    </div>
+  </div>
+  {% for fila in cuenta.filas %}
+  <article class="card shadow-sm mb-2">
+    <div class="card-body">
+      <p class="fw-semibold mb-1">Folio {{ fila.venta.folio|default:fila.venta.pk }}</p>
+      <p class="small text-muted mb-2">{{ fila.venta.fecha|date:"d/m/Y"|default:"—" }} · {{ fila.venta.get_estado_pago_display }}</p>
+      <p class="small mb-1">Cargo ${{ fila.cargo|floatformat:2 }} · Abonos ${{ fila.abonos|floatformat:2 }} · Saldo ${{ fila.saldo|floatformat:2 }}</p>
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'recibo' fila.venta.pk %}">Ver recibo</a>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'recibo_pdf' fila.venta.pk %}">PDF (no es CFDI)</a>
+    </div>
+  </article>
+  {% empty %}
+  <p class="text-muted">Aún no hay folios ligados a tu cuenta.</p>
+  {% endfor %}
+  <p class="small mt-3"><a href="{% url 'mis_compras' %}">Ver listado de mis compras</a></p>
+</section>
+{% endblock %}

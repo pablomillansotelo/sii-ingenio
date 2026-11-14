@@ -5,6 +5,13 @@
   <h1 class="campus-page-title">Inicio</h1>
   <p class="text-muted">Tu campus en Ingenio.</p>
 
+  {% if cuenta.hay_deuda %}
+  <div class="alert alert-warning">
+    Tienes un saldo pendiente de ${{ cuenta.saldo|floatformat:2 }}.
+    <a href="{% url 'campus_estado_cuenta' %}">Ver estado de cuenta</a>
+  </div>
+  {% endif %}
+
   {% for aviso in avisos_importantes %}
   <div class="alert alert-danger" role="alertdialog" aria-labelledby="aviso-{{ aviso.pk }}">
     <p class="fw-semibold mb-1" id="aviso-{{ aviso.pk }}">Aviso importante: {{ aviso.titulo }}</p>
