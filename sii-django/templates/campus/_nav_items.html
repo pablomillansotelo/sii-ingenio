@@ -1,0 +1,15 @@
+<a class="campus-nav-item{% if campus_tab == 'inicio' %} is-active{% endif %}" href="{% url 'campus_inicio' %}">
+  <i class="bi bi-house"></i><span>Inicio</span>
+</a>
+<a class="campus-nav-item{% if campus_tab == 'control' %} is-active{% endif %}" href="{% url 'campus_control_escolar' %}">
+  <i class="bi bi-building"></i><span>Control Escolar</span>
+</a>
+<a class="campus-nav-item{% if campus_tab == 'mensajes' %} is-active{% endif %}" href="{% url 'campus_mensajes' %}">
+  <i class="bi bi-chat-dots"></i><span>Mensajes</span>
+</a>
+<a class="campus-nav-item{% if campus_tab == 'calendario' %} is-active{% endif %}" href="{% url 'campus_calendario' %}">
+  <i class="bi bi-calendar3"></i><span>Calendario</span>
+</a>
+<button class="campus-nav-item{% if campus_tab == 'mas' %} is-active{% endif %}" type="button" data-campus-mas-open aria-haspopup="dialog" aria-controls="campus-mas-panel">
+  <i class="bi bi-grid"></i><span>Más</span>
+</button>

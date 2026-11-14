@@ -21,6 +21,9 @@ def ingenio_shell(request):
     elif path.startswith("/aula"):
         module = "aula"
         title = "Aula"
+    elif path.startswith("/campus"):
+        module = "campus"
+        title = "Campus"
     elif path.startswith("/sii") or path.startswith("/dashboard"):
         module = "sii"
         title = "SII"

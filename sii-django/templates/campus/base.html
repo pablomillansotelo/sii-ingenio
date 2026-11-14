@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es-MX">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{% block title %}Campus · Ingenio{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    {% include "includes/brand_colors.html" %}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/campus.css' %}">
+    <link rel="icon" href="{% static 'img/logo.ico' %}">
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body class="campus-shell">
+    <header class="campus-topbar">
+      <a class="campus-brand" href="{% url 'campus_inicio' %}">
+        <img src="{% static 'img/logo-blanco.png' %}" alt="Ingenio" height="26">
+        <span class="campus-brand-text">Campus</span>
+      </a>
+      {% block campus_header_actions %}
+      <button
+        class="campus-avatar"
+        type="button"
+        id="campus-perfil-btn"
+        aria-label="Perfil"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-controls="campus-perfil-panel"
+      >
+        <span class="campus-avatar-hole" aria-hidden="true">{% block campus_iniciales %}{% endblock %}</span>
+      </button>
+      {% endblock %}
+    </header>
+
+    {% if messages %}
+    <div class="campus-messages">
+      {% for message in messages %}
+      <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% else %}secondary{% endif %} alert-dismissible fade show mb-0" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="campus-layout">
+      <nav class="campus-sidenav" aria-label="Campus">
+        {% include "campus/_nav_items.html" %}
+      </nav>
+      <main class="campus-main">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+
+    <nav class="campus-bottom-nav" aria-label="Campus">
+      {% include "campus/_nav_items.html" %}
+    </nav>
+
+    <div class="campus-mas-panel" id="campus-mas-panel" hidden>
+      <div class="campus-mas-backdrop" data-campus-mas-close></div>
+      <div class="campus-mas-sheet" role="dialog" aria-labelledby="campus-mas-title" aria-modal="true">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h5 mb-0" id="campus-mas-title">Más</h2>
+          <button type="button" class="btn-close" data-campus-mas-close aria-label="Cerrar"></button>
+        </div>
+        <ul class="list-unstyled campus-mas-list">
+          {% for item in mas_reales %}
+          <li>
+            <a class="campus-mas-link" href="{% url item.url_name %}">
+              <i class="bi {{ item.icon }}"></i>{{ item.label }}
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% if mas_proximamente %}
+        <p class="text-muted small mt-3 mb-2">Próximamente</p>
+        <ul class="list-unstyled campus-mas-soon">
+          {% for label in mas_proximamente %}
+          <li class="text-muted">{{ label }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="campus-perfil-panel" id="campus-perfil-panel" hidden role="dialog" aria-labelledby="campus-perfil-title" aria-modal="true">
+      {% block campus_perfil %}
+      <p class="text-muted small mb-0" id="campus-perfil-title">Perfil</p>
+      {% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/campus.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>
