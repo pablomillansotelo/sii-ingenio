@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from campus.nav import MAS_PROXIMAMENTE, MAS_REALES
+from campus.services.calendario import hitos_calendario
 from campus.services.cursos import tarjetas_curso_actual
 from campus.services.identidad import identidad_campus
 from sii.identity import alumno_para_usuario
@@ -52,7 +53,12 @@ def control_escolar(request):
 @login_required
 @requiere_feature("campus.calendario")
 def calendario(request):
-    return render(request, "campus/calendario.html", _ctx(request, "calendario"))
+    alumno = alumno_para_usuario(request.user)
+    return render(
+        request,
+        "campus/calendario.html",
+        _ctx(request, "calendario", hitos_calendario(alumno)),
+    )
 
 
 @login_required

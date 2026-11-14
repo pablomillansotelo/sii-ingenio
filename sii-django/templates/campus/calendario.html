@@ -3,6 +3,32 @@
 {% block content %}
 <section class="campus-page">
   <h1 class="campus-page-title">Calendario</h1>
-  <p class="text-muted">Pronto verás aquí las fechas clave de tu periodo y las entregas de tus grupos.</p>
+  {% if periodo %}
+  <p class="text-muted">Hitos de {{ periodo.nombre }}. El horario semanal es otra vista.</p>
+  <ol class="campus-hitos list-unstyled">
+    {% for hito in hitos %}
+    <li class="campus-hito campus-hito-{{ hito.estado }} card shadow-sm mb-2">
+      <div class="card-body py-3">
+        <p class="small text-muted mb-1">{{ hito.fecha|date:"d/m/Y" }}</p>
+        {% if hito.url %}
+        <a href="{{ hito.url }}" class="stretched-link text-decoration-none">{{ hito.titulo }}</a>
+        {% else %}
+        <p class="mb-0 fw-semibold">{{ hito.titulo }}</p>
+        {% endif %}
+        {% if hito.curso %}<p class="small text-muted mb-0">{{ hito.curso }}</p>{% endif %}
+        {% if hito.estado == "vencida" %}<span class="badge text-bg-danger">Vencida</span>{% endif %}
+        {% if hito.estado == "proximo" %}<span class="badge text-bg-primary">Próxima</span>{% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+  <p class="small mt-3"><a href="{% url 'sii_horario' %}">Ver horario semanal</a></p>
+  {% else %}
+  <div class="campus-placeholder card shadow-sm">
+    <div class="card-body">
+      <p class="mb-0">No hay un periodo ni inscripciones para armar tu calendario. No mostramos el calendario de toda la escuela.</p>
+    </div>
+  </div>
+  {% endif %}
 </section>
 {% endblock %}

@@ -9,6 +9,7 @@ from sii.identity import destino_post_login
 from sii.models import Alumno, Curso, Inscripcion, Periodo
 from sii.permissions import GRUPO_ALUMNO, GRUPO_VENDEDOR, crear_grupos
 from aula.models import Actividad, CalificacionActividad
+from campus.services.calendario import hitos_calendario
 from campus.services.cursos import tarjetas_curso_actual
 from campus.services.identidad import identidad_campus, iniciales_de
 from sii.services.avance import avance_academico
@@ -325,3 +326,77 @@ class CampusPerfilTests(TestCase):
         self.assertNotContains(response, self.alumno.curp)
         self.assertNotContains(response, "5512345678")
         self.assertEqual(self.http.get(reverse("logout")).status_code, 302)
+
+
+class CampusCalendarioTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("alum6", "alum6@example.com", "secret123")
+        self.otro = User.objects.create_user("alum6b", "alum6b@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.otro.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Cal",
+            apellido="Endario",
+            email="alum6@example.com",
+            curp="ENCA000101MDFXXX06",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.ajeno = Alumno.objects.create(
+            user_id=self.otro.pk,
+            nombre="Otro",
+            apellido="Cal",
+            email="alum6b@example.com",
+            curp="OTCA000101HDFXXX06",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        hoy = date.today()
+        self.periodo = Periodo.objects.create(
+            nombre="Actual",
+            fecha_inicio=hoy.replace(day=1),
+            fecha_fin=hoy.replace(year=hoy.year + 1),
+            fecha_publicacion_calificaciones=hoy.replace(year=hoy.year + 1),
+        )
+        self.siguiente = Periodo.objects.create(
+            nombre="Siguiente",
+            fecha_inicio=date(self.periodo.fecha_fin.year + 1, 1, 15),
+            fecha_fin=date(self.periodo.fecha_fin.year + 1, 6, 30),
+        )
+        self.curso = Curso.objects.create(nombre="Cálculo")
+        self.curso_ajeno = Curso.objects.create(nombre="Ajeno")
+        self.ins = Inscripcion.objects.create(
+            alumno=self.alumno, curso=self.curso, periodo=self.periodo, estado="activo"
+        )
+        Inscripcion.objects.create(
+            alumno=self.ajeno, curso=self.curso_ajeno, periodo=self.periodo, estado="activo"
+        )
+        self.propia = Actividad.objects.create(
+            curso=self.curso, nombre="Tarea mía", fecha_limite=date.today(), valor=Decimal("10")
+        )
+        self.ajena = Actividad.objects.create(
+            curso=self.curso_ajeno, nombre="Tarea ajena", fecha_limite=date.today(), valor=Decimal("10")
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+
+    def test_hitos_y_filtro_de_grupo(self):
+        response = self.http.get(reverse("campus_calendario"))
+        self.assertContains(response, "Inicio del periodo")
+        self.assertContains(response, "Fin del periodo")
+        self.assertContains(response, "Publicación de calificaciones")
+        self.assertContains(response, "Próximo periodo: Siguiente")
+        self.assertContains(response, "Tarea mía")
+        self.assertContains(response, reverse("aula_entregar", args=[self.propia.pk]))
+        self.assertNotContains(response, "Tarea ajena")
+        titulos = [h["titulo"] for h in hitos_calendario(self.alumno)["hitos"]]
+        self.assertTrue(any("Tarea mía" in t for t in titulos))
+        self.assertFalse(any("Tarea ajena" in t for t in titulos))
+
+    def test_vacio_sin_inscripcion(self):
+        self.ins.delete()
+        response = self.http.get(reverse("campus_calendario"))
+        self.assertContains(response, "No hay un periodo ni inscripciones")
+        self.assertNotContains(response, "Inicio del periodo")

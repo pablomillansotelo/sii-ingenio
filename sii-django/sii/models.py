@@ -61,6 +61,11 @@ class Periodo(models.Model):
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
     cerrado = models.BooleanField(default=False)
+    fecha_publicacion_calificaciones = models.DateField(
+        blank=True,
+        null=True,
+        help_text="Fecha oficial de publicación de calificaciones. Si está vacía se usa el fin de periodo.",
+    )
 
     class Meta:
         managed = True

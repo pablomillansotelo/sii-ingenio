@@ -102,6 +102,14 @@
   margin: 0;
 }
 
+.campus-hito-vencida {
+  border-left: 4px solid #b42318;
+}
+
+.campus-hito-proximo {
+  border-left: 4px solid var(--ingenio-red, #ce0e2d);
+}
+
 .campus-bottom-nav {
   position: fixed;
   left: 0;
