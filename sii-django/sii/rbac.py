@@ -112,6 +112,8 @@ FEATURES = {
     "sii.credencial": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
     "campus.aceptacion": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "sii.aceptacion": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
+    "campus.mensajes": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "sii.mensajes": {"roles": {ADMIN, DOCENTE}, "scopes": {ADMIN: "all", DOCENTE: "assigned"}},
 }
 
 URL_FEATURES = {
@@ -199,7 +201,10 @@ URL_FEATURES = {
     "campus_inicio": "campus.inicio",
     "campus_control_escolar": "campus.control_escolar",
     "campus_calendario": "campus.calendario",
-    "campus_mensajes": "campus.inicio",
+    "campus_mensajes": "campus.mensajes",
+    "campus_hilo": "campus.mensajes",
+    "sii_mensajes": "sii.mensajes",
+    "sii_hilo": "sii.mensajes",
     "campus_mas": "campus.inicio",
     "campus_ficha": "campus.inicio",
     "campus_avisos": "campus.avisos",
@@ -264,6 +269,7 @@ NAV = {
         {"label": "Docentes", "url_name": "sii_docentes", "icon": "bi-person-video3", "feature": "sii.docentes", "hide_if_own": True},
         {"label": "Actas", "url_name": "sii_actas", "icon": "bi-file-earmark-check", "feature": "sii.actas"},
         {"label": "Horario", "url_name": "sii_horario", "icon": "bi-clock", "feature": "sii.horario"},
+        {"label": "Mensajes", "url_name": "sii_mensajes", "icon": "bi-chat-dots", "feature": "sii.mensajes"},
     ],
     "campus": [
         {"label": "Inicio", "url_name": "campus_inicio", "icon": "bi-house", "feature": "campus.inicio"},

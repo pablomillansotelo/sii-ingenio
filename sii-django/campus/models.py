@@ -135,3 +135,48 @@ class Noticia(models.Model):
             return self.extracto
         texto = (self.cuerpo or "").strip()
         return texto[:160] + ("…" if len(texto) > 160 else "")
+
+
+class Hilo(models.Model):
+    asunto = models.CharField(max_length=160)
+    para_control = models.BooleanField(default=False)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    creado_por_id = models.PositiveIntegerField()
+
+    class Meta:
+        db_table = "campus_hilo"
+        ordering = ["-creado_en"]
+
+    def __str__(self):
+        return self.asunto
+
+
+class HiloParticipante(models.Model):
+    hilo = models.ForeignKey(Hilo, on_delete=models.CASCADE, related_name="participantes")
+    user_id = models.PositiveIntegerField()
+
+    class Meta:
+        db_table = "campus_hilo_participante"
+        unique_together = ("hilo", "user_id")
+
+
+class MensajeCampus(models.Model):
+    hilo = models.ForeignKey(Hilo, on_delete=models.CASCADE, related_name="mensajes")
+    autor_id = models.PositiveIntegerField()
+    cuerpo = models.TextField()
+    archivo = models.FileField(upload_to="mensajes/%Y/%m/", blank=True, null=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "campus_mensaje"
+        ordering = ["creado_en"]
+
+
+class MensajeLectura(models.Model):
+    mensaje = models.ForeignKey(MensajeCampus, on_delete=models.CASCADE, related_name="lecturas")
+    user_id = models.PositiveIntegerField()
+    leido_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "campus_mensaje_lectura"
+        unique_together = ("mensaje", "user_id")

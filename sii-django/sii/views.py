@@ -2,6 +2,7 @@ from functools import wraps
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -454,6 +455,49 @@ def aceptaciones(request):
         .order_by("periodo__fecha_inicio", "alumno__apellido")
     )
     return render(request, "sii/aceptaciones.html", {"inscripciones": inscripciones})
+
+
+@login_required
+def mensajes(request):
+    from campus.services.mensajes import abrir_hilo, alumnos_contacto, resumen_hilos
+
+    if request.method == "POST":
+        try:
+            hilo_obj = abrir_hilo(
+                request.user,
+                request.POST.get("asunto"),
+                request.POST.get("cuerpo"),
+                request.POST.get("destino"),
+                request.FILES.get("archivo"),
+            )
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+        else:
+            return redirect("sii_hilo", pk=hilo_obj.pk)
+    return render(
+        request,
+        "sii/mensajes.html",
+        {"hilos": resumen_hilos(request.user), "alumnos": alumnos_contacto(request.user)},
+    )
+
+
+@login_required
+def hilo(request, pk):
+    from campus.models import Hilo
+    from campus.services.mensajes import marcar_hilo_leido, puede_ver, responder
+
+    hilo_obj = get_object_or_404(Hilo, pk=pk)
+    if not puede_ver(request.user, hilo_obj):
+        raise Http404()
+    if request.method == "POST":
+        try:
+            responder(request.user, hilo_obj, request.POST.get("cuerpo"), request.FILES.get("archivo"))
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+        else:
+            return redirect("sii_hilo", pk=hilo_obj.pk)
+    marcar_hilo_leido(request.user, hilo_obj)
+    return render(request, "sii/hilo.html", {"hilo": hilo_obj})
 
 
 @login_required

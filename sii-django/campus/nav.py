@@ -15,10 +15,10 @@ MAS_REALES = (
     {"label": "Mi expediente", "url_name": "sii_mi_ficha", "icon": "bi-person-vcard"},
     {"label": "Horario", "url_name": "sii_horario", "icon": "bi-clock"},
     {"label": "Avisos", "url_name": "campus_avisos", "icon": "bi-megaphone"},
+    {"label": "Mensajes", "url_name": "campus_mensajes", "icon": "bi-chat-dots"},
 )
 
 MAS_PROXIMAMENTE = (
-    "Mensajes",
     "Notificaciones",
     "Mesa de ayuda",
 )

@@ -1,13 +1,13 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from campus.forms import AparienciaForm, FichaAlumnoForm
 from campus.hub import CLAVES_VALIDAS, HUB_ACCESOS
-from campus.models import CampusFavorito, Noticia
+from campus.models import CampusFavorito, Hilo, Noticia
 from campus.services.avisos import bandeja_avisos, marcar_leido
 
 from campus.nav import MAS_PROXIMAMENTE, MAS_REALES
@@ -17,6 +17,7 @@ from campus.services.cursos import tarjetas_curso_actual
 from campus.services.identidad import identidad_campus
 from campus.services.noticias import noticias_publicadas, noticias_publicadas_qs
 from campus.services.preferencias import preferencia_de
+from campus.services.mensajes import destinos_alumno, marcar_hilo_leido, no_leidos, abrir_hilo, puede_ver, responder, resumen_hilos
 from campus.services.constancia import construir_constancia, tipos_disponibles
 from campus.services.aceptacion import carga_del_periodo, ventana_abierta
 from campus.services.credencial import ficha_credencial
@@ -36,6 +37,7 @@ def _ctx(request, tab, extra=None):
         "mas_reales": MAS_REALES,
         "mas_proximamente": MAS_PROXIMAMENTE,
         "campus_pref": preferencia_de(request.user),
+        "campus_mensajes_nuevos": no_leidos(request.user),
     }
     if extra:
         ctx.update(extra)
@@ -93,7 +95,47 @@ def calendario(request):
 @login_required
 @requiere_feature("campus.inicio")
 def mensajes(request):
-    return render(request, "campus/mensajes.html", _ctx(request, "mensajes"))
+    alumno = alumno_para_usuario(request.user)
+    if request.method == "POST":
+        try:
+            hilo = abrir_hilo(
+                request.user,
+                request.POST.get("asunto"),
+                request.POST.get("cuerpo"),
+                request.POST.get("destino"),
+                request.FILES.get("archivo"),
+            )
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+        else:
+            messages.success(request, "Mensaje enviado.")
+            return redirect("campus_hilo", pk=hilo.pk)
+    return render(
+        request,
+        "campus/mensajes.html",
+        _ctx(
+            request,
+            "mensajes",
+            {"hilos": resumen_hilos(request.user), "destinos": destinos_alumno(alumno)},
+        ),
+    )
+
+
+@login_required
+@requiere_feature("campus.mensajes")
+def hilo(request, pk):
+    hilo = get_object_or_404(Hilo, pk=pk)
+    if not puede_ver(request.user, hilo):
+        raise PermissionDenied()
+    if request.method == "POST":
+        try:
+            responder(request.user, hilo, request.POST.get("cuerpo"), request.FILES.get("archivo"))
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+        else:
+            return redirect("campus_hilo", pk=hilo.pk)
+    marcar_hilo_leido(request.user, hilo)
+    return render(request, "campus/hilo.html", _ctx(request, "mensajes", {"hilo": hilo}))
 
 
 @login_required

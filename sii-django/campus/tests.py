@@ -71,11 +71,11 @@ class CampusShellTests(TestCase):
         self.assertEqual(cal.status_code, 200)
         self.assertContains(cal, "Calendario")
 
-    def test_mensajes_es_proximamente(self):
+    def test_mensajes_abre_bandeja(self):
         response = self.http_alum.get(reverse("campus_mensajes"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Próximamente")
-        self.assertNotContains(response, "Bandeja de entrada")
+        self.assertContains(response, "Bandeja de mensajes")
+        self.assertNotContains(response, "todavía no está disponible")
 
     def test_mas_lista_accesos_reales(self):
         response = self.http_alum.get(reverse("campus_mas"))

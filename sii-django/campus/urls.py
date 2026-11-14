@@ -7,6 +7,7 @@ urlpatterns = [
     path("control-escolar/", views.control_escolar, name="campus_control_escolar"),
     path("calendario/", views.calendario, name="campus_calendario"),
     path("mensajes/", views.mensajes, name="campus_mensajes"),
+    path("mensajes/<int:pk>/", views.hilo, name="campus_hilo"),
     path("mas/", views.mas, name="campus_mas"),
     path("datos/", views.ficha, name="campus_ficha"),
     path("avisos/", views.avisos, name="campus_avisos"),
