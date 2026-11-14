@@ -1,0 +1,12 @@
+{% extends "campus/base.html" %}
+{% block title %}{{ noticia.titulo }} · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <p class="small"><a href="{% url 'campus_inicio' %}">← Inicio</a></p>
+  <h1 class="campus-page-title">{{ noticia.titulo }}</h1>
+  <p class="text-muted">{{ noticia.creada_en|date:"d/m/Y" }}</p>
+  <div class="card shadow-sm">
+    <div class="card-body">{{ noticia.cuerpo|linebreaks }}</div>
+  </div>
+</section>
+{% endblock %}

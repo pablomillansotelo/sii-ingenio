@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
@@ -742,3 +742,45 @@ class CampusEstadoCuentaTests(TestCase):
         self.assertContains(inicio, "saldo pendiente")
         ajeno = self.http_otro.get(reverse("campus_estado_cuenta"))
         self.assertNotContains(ajeno, self.venta.folio or str(self.venta.pk))
+
+
+class CampusNoticiasTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("news1", "news1@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="News",
+            apellido="Uno",
+            email="news1@example.com",
+            curp="UNNE000101MDFXXX12",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+
+    def test_publicada_vs_borrador_y_vencida(self):
+        from campus.models import Noticia
+
+        viva = Noticia.objects.create(
+            titulo="Bienvenida Ingenio",
+            cuerpo="Cuerpo completo de la noticia institucional.",
+            publicada=True,
+        )
+        Noticia.objects.create(titulo="Borrador", cuerpo="No", publicada=False)
+        Noticia.objects.create(
+            titulo="Vencida",
+            cuerpo="No",
+            publicada=True,
+            vigencia_fin=date.today() - timedelta(days=1),
+        )
+        inicio = self.http.get(reverse("campus_inicio"))
+        self.assertContains(inicio, "Bienvenida Ingenio")
+        self.assertNotContains(inicio, "Borrador")
+        self.assertNotContains(inicio, "Vencida")
+        detalle = self.http.get(reverse("campus_noticia", args=[viva.pk]))
+        self.assertContains(detalle, "Cuerpo completo")
+        self.assertEqual(self.http.get(reverse("campus_noticia", args=[999])).status_code, 404)

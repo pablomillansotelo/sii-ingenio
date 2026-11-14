@@ -418,9 +418,9 @@ class IdentidadActasHorarioTests(TestCase):
         self.assertRedirects(response, reverse("usuario"))
         self.alum_user.refresh_from_db()
         self.alumno.refresh_from_db()
-        self.assertEqual(self.alum_user.first_name, "Anita")
         self.assertEqual(self.alumno.telefono, "5512345678")
-        self.assertEqual(self.alumno.nombre, "Anita")
+        self.assertEqual(self.alumno.nombre, "Ana")
+        self.assertEqual(self.alum_user.first_name, "Ana")
 
     def test_password_reset_publico(self):
         response = self.client.get(reverse("password_reset"))

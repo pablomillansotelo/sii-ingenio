@@ -177,6 +177,10 @@ No es un cuarto dominio de datos. Es el **shell móvil** del alumno (`/campus/`)
 | `campus.inicio` | Alumno (`own`) | Inicio, Más, Mensajes (próximamente) |
 | `campus.control_escolar` | Alumno (`own`) | Hub de trámites |
 | `campus.calendario` | Alumno (`own`) | Hitos del periodo |
+| `campus.avisos` / `campus.avisos.write` | Alumno lee; admin escribe | Avisos institucionales |
+| `campus.kardex` | Alumno (`own`) | Kardex mobile |
+| `campus.estado_cuenta` | Alumno (`own`) | Folios de Ventas |
+| `campus.noticias` / `campus.noticias.write` | Alumno lee; admin escribe | Noticias del inicio |
 
 Vendedor, docente y administrador conservan el chrome de escritorio. Tras el login, un usuario que **solo** es alumno aterriza en `/campus/`.
 

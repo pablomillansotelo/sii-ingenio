@@ -69,3 +69,27 @@ class CampusFavorito(models.Model):
 
     def __str__(self):
         return f"{self.user_id}:{self.clave}"
+
+
+class Noticia(models.Model):
+    titulo = models.CharField(max_length=200)
+    cuerpo = models.TextField()
+    extracto = models.CharField(max_length=280, blank=True, default="")
+    publicada = models.BooleanField(default=False)
+    vigencia_inicio = models.DateField(blank=True, null=True)
+    vigencia_fin = models.DateField(blank=True, null=True)
+    autor_id = models.PositiveIntegerField(null=True, blank=True)
+    creada_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "campus_noticia"
+        ordering = ["-creada_en"]
+
+    def __str__(self):
+        return self.titulo
+
+    def recorte(self):
+        if self.extracto:
+            return self.extracto
+        texto = (self.cuerpo or "").strip()
+        return texto[:160] + ("…" if len(texto) > 160 else "")
