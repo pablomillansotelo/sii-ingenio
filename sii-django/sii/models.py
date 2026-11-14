@@ -171,6 +171,34 @@ class Inscripcion(models.Model):
         )
 
 
+class SolicitudBaja(models.Model):
+    ESTADO_ENVIADA = "enviada"
+    ESTADO_APROBADA = "aprobada"
+    ESTADO_RECHAZADA = "rechazada"
+    ESTADO_CHOICES = [
+        (ESTADO_ENVIADA, "Enviada"),
+        (ESTADO_APROBADA, "Aprobada"),
+        (ESTADO_RECHAZADA, "Rechazada"),
+    ]
+
+    inscripcion = models.ForeignKey(Inscripcion, on_delete=models.CASCADE, related_name="solicitudes_baja")
+    alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name="solicitudes_baja")
+    motivo = models.TextField()
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_ENVIADA)
+    creada_en = models.DateTimeField(auto_now_add=True)
+    creada_por_id = models.PositiveIntegerField()
+    resuelta_en = models.DateTimeField(blank=True, null=True)
+    resuelta_por_id = models.PositiveIntegerField(blank=True, null=True)
+    comentario_staff = models.CharField(max_length=240, blank=True, default="")
+
+    class Meta:
+        db_table = "tra_solicitud_baja"
+        ordering = ["-creada_en"]
+
+    def __str__(self):
+        return f"Baja {self.inscripcion_id} ({self.estado})"
+
+
 class ActaFinal(models.Model):
     ESTADO_BORRADOR = "borrador"
     ESTADO_PUBLICADA = "publicada"

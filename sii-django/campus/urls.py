@@ -18,4 +18,5 @@ urlpatterns = [
     path("configuracion/", views.configuracion, name="campus_configuracion"),
     path("constancias/", views.constancias, name="campus_constancias"),
     path("constancias/pdf/", views.constancia_pdf, name="campus_constancia_pdf"),
+    path("bajas/", views.bajas, name="campus_bajas"),
 ]

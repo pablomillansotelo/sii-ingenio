@@ -104,6 +104,8 @@ FEATURES = {
     "campus.configuracion": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "campus.constancias": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "sii.constancias": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
+    "campus.bajas": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "sii.bajas": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
 }
 
 URL_FEATURES = {
@@ -204,6 +206,9 @@ URL_FEATURES = {
     "campus_constancias": "campus.constancias",
     "campus_constancia_pdf": "campus.constancias",
     "sii_constancia_pdf": "sii.constancias",
+    "campus_bajas": "campus.bajas",
+    "sii_solicitudes_baja": "sii.bajas",
+    "sii_solicitud_baja_resolver": "sii.bajas",
 }
 
 NAV = {
@@ -238,6 +243,7 @@ NAV = {
             "nav_roles": {ADMIN, DOCENTE},
         },
         {"label": "Inscripciones", "url_name": "sii_inscripciones", "icon": "bi-clipboard-check", "feature": "sii.inscripciones", "hide_if_own": True},
+        {"label": "Bajas", "url_name": "sii_solicitudes_baja", "icon": "bi-x-circle", "feature": "sii.bajas"},
         {"label": "Docentes", "url_name": "sii_docentes", "icon": "bi-person-video3", "feature": "sii.docentes", "hide_if_own": True},
         {"label": "Actas", "url_name": "sii_actas", "icon": "bi-file-earmark-check", "feature": "sii.actas"},
         {"label": "Horario", "url_name": "sii_horario", "icon": "bi-clock", "feature": "sii.horario"},

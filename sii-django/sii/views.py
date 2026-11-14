@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from sii.forms import (
@@ -37,6 +38,7 @@ from sii.models import (
     HorarioSlot,
     Inscripcion,
     Periodo,
+    SolicitudBaja,
 )
 
 
@@ -363,6 +365,46 @@ def inscripcion_baja(request):
     except ValueError as exc:
         messages.error(request, str(exc))
     return redirect("sii_inscripciones")
+
+
+@login_required
+def solicitudes_baja(request):
+    solicitudes = SolicitudBaja.objects.select_related(
+        "alumno", "inscripcion__curso", "inscripcion__periodo"
+    )
+    return render(request, "sii/solicitudes_baja.html", {"solicitudes": solicitudes})
+
+
+@login_required
+@require_POST
+def solicitud_baja_resolver(request, pk):
+    sol = get_object_or_404(
+        SolicitudBaja.objects.select_related("inscripcion"), pk=pk
+    )
+    if sol.estado != SolicitudBaja.ESTADO_ENVIADA:
+        messages.error(request, "Esa solicitud ya fue resuelta.")
+        return redirect("sii_solicitudes_baja")
+    decision = request.POST.get("decision")
+    sol.resuelta_en = timezone.now()
+    sol.resuelta_por_id = request.user.pk
+    sol.comentario_staff = (request.POST.get("comentario") or "").strip()
+    if decision == "aprobar":
+        try:
+            sol.inscripcion.dar_baja()
+        except ValueError as exc:
+            messages.error(request, str(exc))
+            return redirect("sii_solicitudes_baja")
+        sol.estado = SolicitudBaja.ESTADO_APROBADA
+        sol.save()
+        messages.success(request, "Baja aplicada. El cupo se liberó. El folio de Ventas no se cancela.")
+    elif decision == "rechazar":
+        sol.estado = SolicitudBaja.ESTADO_RECHAZADA
+        sol.save()
+        messages.success(request, "Solicitud rechazada. La inscripción sigue activa.")
+    else:
+        messages.error(request, "Indica si apruebas o rechazas.")
+        return redirect("sii_solicitudes_baja")
+    return redirect("sii_solicitudes_baja")
 
 
 @login_required

@@ -108,3 +108,100 @@ class CampusConstanciaTests(TestCase):
         plano = pdf_texto(pdf.content)
         self.assertIn(b"Luz", plano)
         self.assertIn(b"COLU000101MDFXXX12", plano)
+
+
+class CampusBajaTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        from ventas.models import EdicionCurso, Producto
+
+        crear_grupos()
+        self.user = User.objects.create_user("baja1", "baja1@example.com", "secret123")
+        self.otro = User.objects.create_user("baja2", "baja2@example.com", "secret123")
+        self.admin = User.objects.create_user("bajaadm", "bajaadm@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.otro.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.admin.groups.add(Group.objects.get(name=GRUPO_ADMINISTRADOR))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Beto",
+            apellido="Baja",
+            email="baja1@example.com",
+            curp="BAJA000101HDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.ajeno = Alumno.objects.create(
+            user_id=self.otro.pk,
+            nombre="Otra",
+            apellido="Baja",
+            email="baja2@example.com",
+            curp="BAOT000101MDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.periodo = Periodo.objects.create(
+            nombre="2026-B", fecha_inicio=date(2026, 7, 1), fecha_fin=date(2026, 12, 15)
+        )
+        self.curso = Curso.objects.create(nombre="Cálculo")
+        producto = Producto.objects.create(
+            producto="Cálculo", precio_unitario=Decimal("1000"), id_curso=self.curso
+        )
+        self.edicion = EdicionCurso.objects.create(
+            id_curso=producto,
+            codigo_edicion="CAL-A",
+            fecha_inicio=self.periodo.fecha_inicio,
+            fecha_fin=self.periodo.fecha_fin,
+            cupo_maximo=20,
+            cupo_ocupado=1,
+        )
+        self.ins = Inscripcion.objects.create(
+            alumno=self.alumno,
+            curso=self.curso,
+            periodo=self.periodo,
+            estado="activo",
+            id_edicion=self.edicion,
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+        self.http_otro = Client()
+        self.http_otro.force_login(self.otro)
+        self.http_admin = Client()
+        self.http_admin.force_login(self.admin)
+
+    def test_solicitud_no_aplica_baja_hasta_aprobar(self):
+        from sii.models import SolicitudBaja
+
+        pagina = self.http.get(reverse("campus_bajas"))
+        self.assertContains(pagina, "Cálculo")
+        self.assertContains(pagina, reverse("campus_bajas"))
+        hub = self.http.get(reverse("campus_control_escolar"))
+        self.assertContains(hub, reverse("campus_bajas"))
+        self.http.post(
+            reverse("campus_bajas"),
+            {"inscripcion_id": self.ins.pk, "motivo": "Cambio de horario"},
+        )
+        self.ins.refresh_from_db()
+        self.edicion.refresh_from_db()
+        self.assertEqual(self.ins.estado, "activo")
+        self.assertEqual(self.edicion.cupo_ocupado, 1)
+        sol = SolicitudBaja.objects.get(inscripcion=self.ins)
+        self.assertEqual(sol.estado, SolicitudBaja.ESTADO_ENVIADA)
+        self.assertEqual(sol.creada_por_id, self.user.pk)
+        ajeno = self.http_otro.post(
+            reverse("campus_bajas"),
+            {"inscripcion_id": self.ins.pk, "motivo": "No es mía"},
+        )
+        self.assertEqual(ajeno.status_code, 404)
+        self.http_admin.post(
+            reverse("sii_solicitud_baja_resolver", args=[sol.pk]),
+            {"decision": "aprobar"},
+        )
+        self.ins.refresh_from_db()
+        self.edicion.refresh_from_db()
+        sol.refresh_from_db()
+        self.assertEqual(self.ins.estado, "cancelado")
+        self.assertFalse(self.ins.puede_cursar)
+        self.assertEqual(self.edicion.cupo_ocupado, 0)
+        self.assertEqual(sol.estado, SolicitudBaja.ESTADO_APROBADA)
+        lista = self.http.get(reverse("campus_bajas"))
+        self.assertContains(lista, "Aprobada")

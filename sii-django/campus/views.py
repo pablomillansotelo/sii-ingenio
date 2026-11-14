@@ -18,6 +18,7 @@ from campus.services.noticias import noticias_publicadas, noticias_publicadas_qs
 from campus.services.preferencias import preferencia_de
 from campus.services.constancia import construir_constancia, tipos_disponibles
 from sii.identity import alumno_para_usuario
+from sii.models import Inscripcion, SolicitudBaja
 from sii.rbac import requiere_feature
 from sii.services.avance import avance_academico
 
@@ -245,3 +246,44 @@ def constancia_pdf(request):
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="constancia-{tipo_real}-{alumno.pk}.pdf"'
     return response
+
+
+@login_required
+@requiere_feature("campus.bajas")
+def bajas(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    activas = (
+        Inscripcion.objects.filter(alumno=alumno, estado="activo")
+        .select_related("curso", "periodo")
+        .order_by("curso__nombre")
+    )
+    if request.method == "POST":
+        motivo = (request.POST.get("motivo") or "").strip()
+        ins = get_object_or_404(
+            Inscripcion, pk=request.POST.get("inscripcion_id"), alumno=alumno, estado="activo"
+        )
+        if not motivo:
+            messages.error(request, "El motivo es obligatorio.")
+        elif SolicitudBaja.objects.filter(inscripcion=ins, estado=SolicitudBaja.ESTADO_ENVIADA).exists():
+            messages.error(request, "Ya hay una solicitud pendiente para esa inscripción.")
+        else:
+            SolicitudBaja.objects.create(
+                inscripcion=ins,
+                alumno=alumno,
+                motivo=motivo,
+                creada_por_id=request.user.pk,
+            )
+            messages.success(request, "Solicitud enviada. Control escolar debe aprobarla para aplicar la baja.")
+            return redirect("campus_bajas")
+    solicitudes = (
+        SolicitudBaja.objects.filter(alumno=alumno)
+        .select_related("inscripcion__curso", "inscripcion__periodo")
+    )
+    return render(
+        request,
+        "campus/bajas.html",
+        _ctx(request, "control", {"activas": activas, "solicitudes": solicitudes}),
+    )
