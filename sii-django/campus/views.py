@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from campus.forms import FichaAlumnoForm
+from campus.forms import AparienciaForm, FichaAlumnoForm
 from campus.hub import CLAVES_VALIDAS, HUB_ACCESOS
 from campus.models import CampusFavorito, Noticia
 from campus.services.avisos import bandeja_avisos, marcar_leido
@@ -14,6 +14,7 @@ from campus.services.cuenta import estado_cuenta
 from campus.services.cursos import tarjetas_curso_actual
 from campus.services.identidad import identidad_campus
 from campus.services.noticias import noticias_publicadas, noticias_publicadas_qs
+from campus.services.preferencias import preferencia_de
 from sii.identity import alumno_para_usuario
 from sii.rbac import requiere_feature
 from sii.services.avance import avance_academico
@@ -27,6 +28,7 @@ def _ctx(request, tab, extra=None):
         "campus_identidad": identidad_campus(request.user, alumno),
         "mas_reales": MAS_REALES,
         "mas_proximamente": MAS_PROXIMAMENTE,
+        "campus_pref": preferencia_de(request.user),
     }
     if extra:
         ctx.update(extra)
@@ -91,6 +93,26 @@ def mensajes(request):
 @requiere_feature("campus.inicio")
 def mas(request):
     return render(request, "campus/mas.html", _ctx(request, "mas"))
+
+
+@login_required
+@requiere_feature("campus.configuracion")
+def configuracion(request):
+    pref = preferencia_de(request.user)
+    form = AparienciaForm(request.POST or None, instance=pref)
+    if request.method == "POST":
+        if form.is_valid():
+            guardada = form.save(commit=False)
+            guardada.user_id = request.user.pk
+            guardada.save()
+            messages.success(request, "Tus preferencias de apariencia se guardaron.")
+            return redirect("campus_configuracion")
+        messages.error(request, "Revisa las opciones de apariencia.")
+    return render(
+        request,
+        "campus/configuracion.html",
+        _ctx(request, "mas", {"form": form, "campus_pref": preferencia_de(request.user)}),
+    )
 
 
 @login_required

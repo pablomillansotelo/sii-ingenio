@@ -1,7 +1,80 @@
+:root,
+[data-campus-acento="rojo"] {
+  --campus-accent: #ce0e2d;
+  --campus-accent-dark: #a40c24;
+}
+[data-campus-acento="vino"] {
+  --campus-accent: #8a1538;
+  --campus-accent-dark: #5c0e26;
+}
+[data-campus-acento="carbon"] {
+  --campus-accent: #1d2939;
+  --campus-accent-dark: #101828;
+}
+[data-campus-acento="arena"] {
+  --campus-accent: #9a3412;
+  --campus-accent-dark: #7c2d12;
+}
+
 .campus-shell {
   min-height: 100vh;
   background: #f3f5f7;
+  color: #101828;
   padding-bottom: 4.75rem;
+}
+
+.campus-shell.campus-tema-oscuro {
+  background: #101828;
+  color: #f2f4f7;
+}
+
+.campus-tema-oscuro .card,
+.campus-tema-oscuro .campus-mas-sheet,
+.campus-tema-oscuro .campus-perfil-panel,
+.campus-tema-oscuro .campus-bottom-nav,
+.campus-tema-oscuro .campus-sidenav {
+  background: #1d2939;
+  color: #f2f4f7;
+  border-color: #344054;
+}
+
+.campus-tema-oscuro .text-muted,
+.campus-tema-oscuro .campus-metric-label {
+  color: #98a2b3 !important;
+}
+
+.campus-tema-oscuro .campus-mas-link,
+.campus-tema-oscuro .campus-nav-item {
+  color: #d0d5dd;
+}
+
+.campus-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 24, 40, 0.35);
+}
+
+.campus-loader[hidden] {
+  display: none !important;
+}
+
+.campus-loader-dot {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  border-top-color: var(--campus-accent, #ce0e2d);
+  animation: campus-spin 0.7s linear infinite;
+}
+
+@keyframes campus-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .campus-topbar {
@@ -14,7 +87,7 @@
   gap: 0.75rem;
   min-height: 3.5rem;
   padding: 0 1rem;
-  background: var(--ingenio-red, #ce0e2d);
+  background: var(--campus-accent, var(--ingenio-red, #ce0e2d));
   color: #fff;
 }
 
@@ -107,7 +180,7 @@
 }
 
 .campus-hito-proximo {
-  border-left: 4px solid var(--ingenio-red, #ce0e2d);
+  border-left: 4px solid var(--campus-accent, var(--ingenio-red, #ce0e2d));
 }
 
 .campus-hub {
@@ -166,7 +239,7 @@
 }
 
 .campus-nav-item.is-active {
-  color: var(--ingenio-red, #ce0e2d);
+  color: var(--campus-accent, var(--ingenio-red, #ce0e2d));
   font-weight: 600;
 }
 
@@ -210,7 +283,7 @@
 }
 
 .campus-mas-link i {
-  color: var(--ingenio-red, #ce0e2d);
+  color: var(--campus-accent, var(--ingenio-red, #ce0e2d));
 }
 
 .campus-perfil-panel:not([hidden]) {
@@ -258,7 +331,7 @@
   }
 
   .campus-sidenav .campus-nav-item.is-active {
-    background: rgba(206, 14, 45, 0.1);
+    background: color-mix(in srgb, var(--campus-accent, #ce0e2d) 12%, transparent);
   }
 
   .campus-page {

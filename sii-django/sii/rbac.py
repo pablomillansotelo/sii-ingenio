@@ -101,6 +101,7 @@ FEATURES = {
     "campus.estado_cuenta": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "campus.noticias": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "campus.noticias.write": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
+    "campus.configuracion": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
 }
 
 URL_FEATURES = {
@@ -197,6 +198,7 @@ URL_FEATURES = {
     "campus_kardex": "campus.kardex",
     "campus_estado_cuenta": "campus.estado_cuenta",
     "campus_noticia": "campus.noticias",
+    "campus_configuracion": "campus.configuracion",
 }
 
 NAV = {

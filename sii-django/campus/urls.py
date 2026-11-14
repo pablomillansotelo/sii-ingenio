@@ -15,4 +15,5 @@ urlpatterns = [
     path("kardex/", views.kardex, name="campus_kardex"),
     path("estado-cuenta/", views.estado_cuenta_view, name="campus_estado_cuenta"),
     path("noticias/<int:noticia_id>/", views.noticia_detalle, name="campus_noticia"),
+    path("configuracion/", views.configuracion, name="campus_configuracion"),
 ]
