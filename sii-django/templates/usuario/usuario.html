@@ -2,17 +2,29 @@
 {% block title %}Mi cuenta · Ingenio{% endblock %}
 {% block page_heading %}Mi cuenta{% endblock %}
 {% block content %}
-{% include "includes/page_header.html" with title="Mi cuenta" subtitle="Nombre para mostrar, teléfono y contraseña. CURP y estado académico se editan en SII." %}
+{% include "includes/page_header.html" with title="Mi cuenta" subtitle="Teléfono y contraseña. El nombre legal, CURP y domicilio del expediente se atienden en SII o en Actualizar datos del campus." %}
 <div class="row g-4">
   <div class="col-lg-6">
     <div class="card shadow-sm">
       <div class="card-body">
         <h2 class="h5 mb-3">Perfil</h2>
         <p class="text-muted small">{{ user.email|default:"Sin correo" }} · {{ user.username }}</p>
+        {% if es_alumno %}
+        <p class="small text-muted">Nombre legal: {{ perfil_form.first_name.value }} {{ perfil_form.last_name.value }}. Para cambiarlo pide apoyo a control escolar.</p>
+        {% endif %}
         <form method="post">
           {% csrf_token %}
           <input type="hidden" name="accion" value="perfil">
+          {% if es_alumno %}
+          <input type="hidden" name="first_name" value="{{ perfil_form.first_name.value }}">
+          <input type="hidden" name="last_name" value="{{ perfil_form.last_name.value }}">
+          <div class="mb-3">
+            <label class="form-label" for="{{ perfil_form.telefono.id_for_label }}">{{ perfil_form.telefono.label }}</label>
+            {{ perfil_form.telefono }}
+          </div>
+          {% else %}
           {% include "includes/form_fields.html" with form=perfil_form %}
+          {% endif %}
           <button class="btn btn-primary" type="submit">Guardar perfil</button>
         </form>
       </div>
@@ -33,6 +45,7 @@
   </div>
 </div>
 <p class="mt-4 d-flex flex-wrap gap-2">
+  {% if es_alumno %}<a class="btn btn-outline-primary" href="{% url 'campus_ficha' %}">Actualizar datos</a>{% endif %}
   {% if ver_kardex %}<a class="btn btn-outline-primary" href="{% url 'sii_kardex' %}">Ver kardex</a>{% endif %}
   <a class="btn btn-outline-secondary" href="{% url 'logout' %}">Cerrar sesión</a>
 </p>

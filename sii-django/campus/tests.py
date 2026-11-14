@@ -318,7 +318,7 @@ class CampusPerfilTests(TestCase):
         self.assertContains(response, "MN")
         self.assertContains(response, "Mario Nava")
         self.assertContains(response, "Código Ingenio")
-        self.assertContains(response, reverse("sii_mi_ficha"))
+        self.assertContains(response, reverse("campus_ficha"))
         self.assertContains(response, reverse("usuario"))
         self.assertContains(response, reverse("logout"))
         self.assertContains(response, "Cerrar sesión")
@@ -400,3 +400,70 @@ class CampusCalendarioTests(TestCase):
         response = self.http.get(reverse("campus_calendario"))
         self.assertContains(response, "No hay un periodo ni inscripciones")
         self.assertNotContains(response, "Inicio del periodo")
+
+
+class CampusFichaTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("alum7", "alum7@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Nora",
+            apellido="Gil",
+            email="alum7@example.com",
+            curp="GINO000101MDFXXX07",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+
+    def test_guarda_contacto_y_no_curp(self):
+        response = self.http.post(
+            reverse("campus_ficha"),
+            {
+                "telefono": "5511223344",
+                "email_personal": "nora.personal@example.com",
+                "direccion_calle": "Calle 10",
+                "colonia": "Centro",
+                "codigo_postal": "01000",
+                "ciudad": "CDMX",
+                "estado_domicilio": "Ciudad de México",
+                "empresa": "ACME",
+                "puesto": "Becaria",
+                "telefono_laboral": "",
+                "contacto_emergencia_nombre": "Luis",
+                "contacto_emergencia_telefono": "5599887766",
+            },
+        )
+        self.assertRedirects(response, reverse("campus_ficha"))
+        self.alumno.refresh_from_db()
+        self.assertEqual(self.alumno.telefono, "5511223344")
+        self.assertEqual(self.alumno.codigo_postal, "01000")
+        self.assertEqual(self.alumno.curp, "GINO000101MDFXXX07")
+        self.assertEqual(self.alumno.email, "alum7@example.com")
+        self.assertEqual(self.alumno.nombre, "Nora")
+
+    def test_cp_invalido(self):
+        response = self.http.post(
+            reverse("campus_ficha"),
+            {"telefono": "5511223344", "codigo_postal": "abc", "email_personal": ""},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "5 dígitos")
+
+    def test_solo_lectura_en_plantilla(self):
+        response = self.http.get(reverse("campus_ficha"))
+        self.assertContains(response, "solo lectura")
+        self.assertContains(response, self.alumno.curp)
+        self.assertNotContains(response, 'name="curp"')
+        self.assertNotContains(response, 'name="nombre"')
+
+    def test_vendedor_no_edita_ficha_campus(self):
+        vend = User.objects.create_user("vend7", "vend7@example.com", "secret123")
+        vend.groups.add(Group.objects.get(name=GRUPO_VENDEDOR))
+        http = Client()
+        http.force_login(vend)
+        self.assertEqual(http.get(reverse("campus_ficha")).status_code, 403)

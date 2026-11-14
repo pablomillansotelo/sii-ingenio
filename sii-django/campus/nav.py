@@ -2,6 +2,7 @@
 
 MAS_REALES = (
     {"label": "Mi cuenta", "url_name": "usuario", "icon": "bi-person"},
+    {"label": "Actualizar datos", "url_name": "campus_ficha", "icon": "bi-pencil-square"},
     {"label": "Kardex", "url_name": "sii_kardex", "icon": "bi-table"},
     {"label": "Mis compras", "url_name": "mis_compras", "icon": "bi-wallet2"},
     {"label": "Aula", "url_name": "aula_dashboard", "icon": "bi-journal-bookmark"},
