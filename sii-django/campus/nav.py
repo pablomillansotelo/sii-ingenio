@@ -17,6 +17,7 @@ MAS_REALES = (
     {"label": "Avisos", "url_name": "campus_avisos", "icon": "bi-megaphone"},
     {"label": "Mensajes", "url_name": "campus_mensajes", "icon": "bi-chat-dots"},
     {"label": "Notificaciones", "url_name": "campus_notificaciones", "icon": "bi-bell"},
+    {"label": "Progreso Ingenio", "url_name": "campus_ludico", "icon": "bi-trophy"},
 )
 
 MAS_PROXIMAMENTE = (

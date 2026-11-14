@@ -4,6 +4,9 @@
 <section class="campus-page">
   <h1 class="campus-page-title">Inicio</h1>
   <p class="text-muted">Tu campus en Ingenio.</p>
+  {% if campus_ludico %}
+  <p class="small">Progreso Ingenio: nivel {{ campus_ludico.nivel }} · {{ campus_ludico.xp }} XP · {{ campus_ludico.monedas }} monedas (motivacional, no afecta kardex ni saldo). <a href="{% url 'campus_ludico' %}">Ver ranking e insignias</a></p>
+  {% endif %}
   {% if campus_pref.ayuda_guiada %}
   <div class="alert alert-info">Ayuda guiada: los recorridos paso a paso estarán disponibles más adelante. Tu preferencia ya está guardada.</div>
   {% endif %}

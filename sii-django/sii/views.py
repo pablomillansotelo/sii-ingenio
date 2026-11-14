@@ -501,6 +501,25 @@ def hilo(request, pk):
 
 
 @login_required
+def ludico(request):
+    from campus.models import PerfilLudico
+
+    perfiles = PerfilLudico.objects.select_related("alumno").order_by("-xp")
+    return render(request, "sii/ludico.html", {"perfiles": perfiles})
+
+
+@login_required
+@require_POST
+def ludico_reset(request, alumno_id):
+    from campus.services.ludico import resetear
+
+    alumno = get_object_or_404(Alumno, pk=alumno_id)
+    resetear(alumno, request.user.pk)
+    messages.success(request, f"Progreso Ingenio de {alumno} reiniciado. Kardex y saldo no cambian.")
+    return redirect("sii_ludico")
+
+
+@login_required
 @_solo_admin
 @require_POST
 def inscripcion_reintento(request):

@@ -27,4 +27,5 @@ urlpatterns = [
     path("notificaciones/", views.notificaciones, name="campus_notificaciones"),
     path("notificaciones/<int:pk>/leer/", views.notificacion_leer, name="campus_notificacion_leer"),
     path("notificaciones/leer-todas/", views.notificaciones_leer_todas, name="campus_notificaciones_leer_todas"),
+    path("progreso/", views.ludico, name="campus_ludico"),
 ]

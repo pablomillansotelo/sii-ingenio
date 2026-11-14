@@ -19,6 +19,7 @@ from campus.services.noticias import noticias_publicadas, noticias_publicadas_qs
 from campus.services.preferencias import preferencia_de
 from campus.services.mensajes import destinos_alumno, marcar_hilo_leido, no_leidos, abrir_hilo, puede_ver, responder, resumen_hilos
 from campus.services.notificaciones import lista as lista_notif, marcar_todas, marcar_una, no_leidas as notif_no_leidas, sincronizar as sync_notif
+from campus.services.ludico import perfil_de, ranking as ranking_ludico
 from campus.services.constancia import construir_constancia, tipos_disponibles
 from campus.services.aceptacion import carga_del_periodo, ventana_abierta
 from campus.services.credencial import ficha_credencial
@@ -40,6 +41,7 @@ def _ctx(request, tab, extra=None):
         "campus_pref": preferencia_de(request.user),
         "campus_mensajes_nuevos": no_leidos(request.user),
         "campus_notif_nuevas": notif_no_leidas(request.user),
+        "campus_ludico": perfil_de(alumno),
     }
     if extra:
         ctx.update(extra)
@@ -167,6 +169,34 @@ def notificacion_leer(request, pk):
 def notificaciones_leer_todas(request):
     marcar_todas(request.user)
     return redirect("campus_notificaciones")
+
+
+@login_required
+@requiere_feature("campus.ludico")
+def ludico(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    perfil = perfil_de(alumno)
+    if request.method == "POST":
+        perfil.ranking_publico = bool(request.POST.get("ranking_publico"))
+        perfil.save(update_fields=["ranking_publico"])
+        messages.success(request, "Preferencia de ranking guardada.")
+        return redirect("campus_ludico")
+    return render(
+        request,
+        "campus/ludico.html",
+        _ctx(
+            request,
+            "inicio",
+            {
+                "perfil": perfil,
+                "insignias": perfil.insignias.select_related("insignia"),
+                "ranking": ranking_ludico(),
+            },
+        ),
+    )
 
 
 @login_required

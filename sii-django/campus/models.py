@@ -210,3 +210,59 @@ class Notificacion(models.Model):
 
     def __str__(self):
         return self.titulo
+
+
+class PerfilLudico(models.Model):
+    alumno = models.OneToOneField("sii.Alumno", on_delete=models.CASCADE, related_name="perfil_ludico")
+    xp = models.PositiveIntegerField(default=0)
+    monedas = models.PositiveIntegerField(default=0)
+    ranking_publico = models.BooleanField(default=False)
+    actualizado_en = models.DateTimeField(auto_now=True)
+    reset_en = models.DateTimeField(blank=True, null=True)
+    reset_por_id = models.PositiveIntegerField(blank=True, null=True)
+
+    class Meta:
+        db_table = "campus_perfil_ludico"
+
+    def __str__(self):
+        return f"Ludico {self.alumno_id}"
+
+    @property
+    def nivel(self):
+        return 1 + int(self.xp) // 100
+
+
+class Insignia(models.Model):
+    clave = models.CharField(max_length=40, unique=True)
+    nombre = models.CharField(max_length=80)
+    descripcion = models.CharField(max_length=200, blank=True, default="")
+
+    class Meta:
+        db_table = "campus_insignia"
+
+    def __str__(self):
+        return self.nombre
+
+
+class InsigniaAlumno(models.Model):
+    perfil = models.ForeignKey(PerfilLudico, on_delete=models.CASCADE, related_name="insignias")
+    insignia = models.ForeignKey(Insignia, on_delete=models.CASCADE)
+    obtenida_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "campus_insignia_alumno"
+        unique_together = ("perfil", "insignia")
+
+
+class MovimientoXP(models.Model):
+    perfil = models.ForeignKey(PerfilLudico, on_delete=models.CASCADE, related_name="movimientos")
+    cantidad = models.IntegerField()
+    motivo = models.CharField(max_length=160)
+    clave = models.CharField(max_length=80)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    creado_por_id = models.PositiveIntegerField(blank=True, null=True)
+
+    class Meta:
+        db_table = "campus_movimiento_xp"
+        unique_together = ("perfil", "clave")
+        ordering = ["-creado_en"]

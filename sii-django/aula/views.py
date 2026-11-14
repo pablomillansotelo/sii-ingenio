@@ -296,6 +296,18 @@ def actividad_entregar(request, pk):
         registro.entregado = True
         registro.fecha_entrega = timezone.localdate()
         registro.save()
+        try:
+            from campus.services.ludico import XP_ENTREGA, acreditar
+
+            acreditar(
+                alumno,
+                XP_ENTREGA,
+                f"Entrega: {actividad.nombre}",
+                f"entrega-{actividad.pk}",
+                request.user.pk,
+            )
+        except Exception:
+            pass
         messages.success(request, "Entrega registrada.")
         return _redir_grupo(actividad.curso, actividad.edicion)
     return render(

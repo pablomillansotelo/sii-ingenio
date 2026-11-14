@@ -115,6 +115,8 @@ FEATURES = {
     "campus.mensajes": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "sii.mensajes": {"roles": {ADMIN, DOCENTE}, "scopes": {ADMIN: "all", DOCENTE: "assigned"}},
     "campus.notificaciones": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "campus.ludico": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "sii.ludico": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
 }
 
 URL_FEATURES = {
@@ -232,6 +234,9 @@ URL_FEATURES = {
     "campus_notificaciones": "campus.notificaciones",
     "campus_notificacion_leer": "campus.notificaciones",
     "campus_notificaciones_leer_todas": "campus.notificaciones",
+    "campus_ludico": "campus.ludico",
+    "sii_ludico": "sii.ludico",
+    "sii_ludico_reset": "sii.ludico",
     "sii_aceptaciones": "sii.aceptacion",
 }
 
@@ -274,6 +279,7 @@ NAV = {
         {"label": "Actas", "url_name": "sii_actas", "icon": "bi-file-earmark-check", "feature": "sii.actas"},
         {"label": "Horario", "url_name": "sii_horario", "icon": "bi-clock", "feature": "sii.horario"},
         {"label": "Mensajes", "url_name": "sii_mensajes", "icon": "bi-chat-dots", "feature": "sii.mensajes"},
+        {"label": "Progreso Ingenio", "url_name": "sii_ludico", "icon": "bi-trophy", "feature": "sii.ludico"},
     ],
     "campus": [
         {"label": "Inicio", "url_name": "campus_inicio", "icon": "bi-house", "feature": "campus.inicio"},

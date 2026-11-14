@@ -1,0 +1,38 @@
+{% extends "campus/base.html" %}
+{% block title %}Progreso Ingenio · Campus{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Progreso Ingenio</h1>
+  <p class="text-muted">Puntos y monedas motivacionales. No son calificación, créditos ni dinero, y no mueven tu kardex ni tu saldo.</p>
+  {% if perfil %}
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <p class="h4 mb-1">Nivel {{ perfil.nivel }}</p>
+      <p>XP: {{ perfil.xp }} · Monedas Ingenio: {{ perfil.monedas }}</p>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="ranking_publico" id="id_rank" {% if perfil.ranking_publico %}checked{% endif %}>
+          <label class="form-check-label" for="id_rank">Mostrarme en el ranking (opt-in)</label>
+        </div>
+        <button class="btn btn-sm btn-outline-primary mt-2" type="submit">Guardar</button>
+      </form>
+    </div>
+  </div>
+  <h2 class="h6">Insignias</h2>
+  {% for item in insignias %}
+  <p class="mb-1">{{ item.insignia.nombre }} — {{ item.insignia.descripcion }}</p>
+  {% empty %}
+  <p class="text-muted">Aún no hay insignias.</p>
+  {% endfor %}
+  {% endif %}
+  <h2 class="h6 mt-3">Ranking (solo quien aceptó aparecer)</h2>
+  <ol>
+    {% for fila in ranking %}
+    <li>{{ fila.alumno.nombre }} {{ fila.alumno.apellido }} · nivel {{ fila.nivel }} · {{ fila.xp }} XP</li>
+    {% empty %}
+    <li class="text-muted">Nadie ha activado el ranking.</li>
+    {% endfor %}
+  </ol>
+</section>
+{% endblock %}

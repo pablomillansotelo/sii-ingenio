@@ -92,6 +92,10 @@
     <div class="campus-perfil-panel" id="campus-perfil-panel" hidden role="dialog" aria-labelledby="campus-perfil-title" aria-modal="true">
       <p class="fw-semibold mb-1" id="campus-perfil-title">{{ campus_identidad.nombre }}</p>
       <p class="small text-muted mb-2">{{ campus_identidad.identificador_etiqueta }}: {{ campus_identidad.identificador }}</p>
+      {% if campus_ludico %}
+      <p class="small mb-2">Nivel {{ campus_ludico.nivel }} · {{ campus_ludico.xp }} XP · {{ campus_ludico.monedas }} monedas Ingenio</p>
+      <p class="small text-muted mb-2">No son créditos ni dinero.</p>
+      {% endif %}
       {% for correo in campus_identidad.correos %}
       <p class="small mb-1">{{ correo.label }}: {{ correo.valor }}</p>
       {% endfor %}
