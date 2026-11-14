@@ -24,4 +24,7 @@ urlpatterns = [
     path("expediente/<int:pk>/archivo/", views.expediente_archivo, name="campus_expediente_archivo"),
     path("credencial/", views.credencial, name="campus_credencial"),
     path("aceptacion/", views.aceptacion, name="campus_aceptacion"),
+    path("notificaciones/", views.notificaciones, name="campus_notificaciones"),
+    path("notificaciones/<int:pk>/leer/", views.notificacion_leer, name="campus_notificacion_leer"),
+    path("notificaciones/leer-todas/", views.notificaciones_leer_todas, name="campus_notificaciones_leer_todas"),
 ]

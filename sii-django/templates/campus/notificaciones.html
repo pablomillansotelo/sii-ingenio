@@ -1,0 +1,30 @@
+{% extends "campus/base.html" %}
+{% block title %}Notificaciones · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Notificaciones</h1>
+  <p class="text-muted">Avisos in-app de tu expediente. No hay push ni correo en este corte.</p>
+  <form method="post" action="{% url 'campus_notificaciones_leer_todas' %}" class="mb-3">
+    {% csrf_token %}
+    <button class="btn btn-sm btn-outline-primary" type="submit">Marcar todas como leídas</button>
+  </form>
+  {% for n in items %}
+  <article class="card shadow-sm mb-2">
+    <div class="card-body">
+      <p class="fw-semibold mb-1">{% if not n.leida_en %}<span class="badge text-bg-primary me-1">Nueva</span>{% endif %}{{ n.titulo }}</p>
+      <p class="small text-muted mb-1">{{ n.creada_en|date:"d/m/Y H:i" }} · {{ n.get_tipo_display }}</p>
+      {% if n.cuerpo %}<p class="small mb-2">{{ n.cuerpo }}</p>{% endif %}
+      {% if n.url %}<a class="btn btn-sm btn-outline-primary" href="{{ n.url }}">Abrir</a>{% endif %}
+      {% if not n.leida_en %}
+      <form method="post" action="{% url 'campus_notificacion_leer' n.pk %}" class="d-inline">
+        {% csrf_token %}
+        <button class="btn btn-sm btn-link" type="submit">Marcar leída</button>
+      </form>
+      {% endif %}
+    </div>
+  </article>
+  {% empty %}
+  <p class="text-muted">No hay notificaciones.</p>
+  {% endfor %}
+</section>
+{% endblock %}

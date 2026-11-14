@@ -114,6 +114,7 @@ FEATURES = {
     "sii.aceptacion": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
     "campus.mensajes": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "sii.mensajes": {"roles": {ADMIN, DOCENTE}, "scopes": {ADMIN: "all", DOCENTE: "assigned"}},
+    "campus.notificaciones": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
 }
 
 URL_FEATURES = {
@@ -228,6 +229,9 @@ URL_FEATURES = {
     "campus_credencial": "campus.credencial",
     "sii_credencial": "sii.credencial",
     "campus_aceptacion": "campus.aceptacion",
+    "campus_notificaciones": "campus.notificaciones",
+    "campus_notificacion_leer": "campus.notificaciones",
+    "campus_notificaciones_leer_todas": "campus.notificaciones",
     "sii_aceptaciones": "sii.aceptacion",
 }
 

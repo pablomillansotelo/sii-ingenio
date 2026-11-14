@@ -16,9 +16,9 @@ MAS_REALES = (
     {"label": "Horario", "url_name": "sii_horario", "icon": "bi-clock"},
     {"label": "Avisos", "url_name": "campus_avisos", "icon": "bi-megaphone"},
     {"label": "Mensajes", "url_name": "campus_mensajes", "icon": "bi-chat-dots"},
+    {"label": "Notificaciones", "url_name": "campus_notificaciones", "icon": "bi-bell"},
 )
 
 MAS_PROXIMAMENTE = (
-    "Notificaciones",
     "Mesa de ayuda",
 )

@@ -180,3 +180,33 @@ class MensajeLectura(models.Model):
     class Meta:
         db_table = "campus_mensaje_lectura"
         unique_together = ("mensaje", "user_id")
+
+
+class Notificacion(models.Model):
+    TIPO_ACTIVIDAD = "actividad"
+    TIPO_CALIFICACION = "calificacion"
+    TIPO_AVISO = "aviso"
+    TIPO_DEUDA = "deuda"
+    TIPO_CHOICES = [
+        (TIPO_ACTIVIDAD, "Actividad"),
+        (TIPO_CALIFICACION, "Calificación"),
+        (TIPO_AVISO, "Aviso"),
+        (TIPO_DEUDA, "Saldo pendiente"),
+    ]
+
+    user_id = models.PositiveIntegerField()
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    clave = models.CharField(max_length=80)
+    titulo = models.CharField(max_length=200)
+    cuerpo = models.CharField(max_length=280, blank=True, default="")
+    url = models.CharField(max_length=200, blank=True, default="")
+    creada_en = models.DateTimeField(auto_now_add=True)
+    leida_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        db_table = "campus_notificacion"
+        unique_together = ("user_id", "tipo", "clave")
+        ordering = ["-creada_en"]
+
+    def __str__(self):
+        return self.titulo

@@ -18,6 +18,7 @@ from campus.services.identidad import identidad_campus
 from campus.services.noticias import noticias_publicadas, noticias_publicadas_qs
 from campus.services.preferencias import preferencia_de
 from campus.services.mensajes import destinos_alumno, marcar_hilo_leido, no_leidos, abrir_hilo, puede_ver, responder, resumen_hilos
+from campus.services.notificaciones import lista as lista_notif, marcar_todas, marcar_una, no_leidas as notif_no_leidas, sincronizar as sync_notif
 from campus.services.constancia import construir_constancia, tipos_disponibles
 from campus.services.aceptacion import carga_del_periodo, ventana_abierta
 from campus.services.credencial import ficha_credencial
@@ -38,6 +39,7 @@ def _ctx(request, tab, extra=None):
         "mas_proximamente": MAS_PROXIMAMENTE,
         "campus_pref": preferencia_de(request.user),
         "campus_mensajes_nuevos": no_leidos(request.user),
+        "campus_notif_nuevas": notif_no_leidas(request.user),
     }
     if extra:
         ctx.update(extra)
@@ -48,6 +50,7 @@ def _ctx(request, tab, extra=None):
 @requiere_feature("campus.inicio")
 def inicio(request):
     alumno = alumno_para_usuario(request.user)
+    sync_notif(request.user, alumno)
     cursos = tarjetas_curso_actual(alumno)
     avisos = bandeja_avisos(alumno, filtro="no_leidos")
     return render(
@@ -136,6 +139,34 @@ def hilo(request, pk):
             return redirect("campus_hilo", pk=hilo.pk)
     marcar_hilo_leido(request.user, hilo)
     return render(request, "campus/hilo.html", _ctx(request, "mensajes", {"hilo": hilo}))
+
+
+@login_required
+@requiere_feature("campus.notificaciones")
+def notificaciones(request):
+    alumno = alumno_para_usuario(request.user)
+    sync_notif(request.user, alumno)
+    return render(
+        request,
+        "campus/notificaciones.html",
+        _ctx(request, "mas", {"items": lista_notif(request.user)}),
+    )
+
+
+@login_required
+@requiere_feature("campus.notificaciones")
+@require_POST
+def notificacion_leer(request, pk):
+    marcar_una(request.user, pk)
+    return redirect("campus_notificaciones")
+
+
+@login_required
+@requiere_feature("campus.notificaciones")
+@require_POST
+def notificaciones_leer_todas(request):
+    marcar_todas(request.user)
+    return redirect("campus_notificaciones")
 
 
 @login_required

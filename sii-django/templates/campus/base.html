@@ -20,6 +20,10 @@
         <span class="campus-brand-text">Campus</span>
       </a>
       {% block campus_header_actions %}
+      <a class="campus-bell" href="{% url 'campus_notificaciones' %}" aria-label="Notificaciones">
+        <i class="bi bi-bell"></i>
+        {% if campus_notif_nuevas %}<span class="campus-nav-badge">{{ campus_notif_nuevas }}</span>{% endif %}
+      </a>
       <button
         class="campus-avatar"
         type="button"
