@@ -342,3 +342,79 @@ class CampusCredencialTests(TestCase):
         self.assertIn(ajeno.status_code, (403, 404))
         hub = self.http.get(reverse("campus_control_escolar"))
         self.assertContains(hub, reverse("campus_credencial"))
+
+
+class CampusAceptacionTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("acep1", "acep1@example.com", "secret123")
+        self.otro = User.objects.create_user("acep2", "acep2@example.com", "secret123")
+        self.admin = User.objects.create_user("acepadm", "acepadm@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.otro.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.admin.groups.add(Group.objects.get(name=GRUPO_ADMINISTRADOR))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Ada",
+            apellido="Carga",
+            email="acep1@example.com",
+            curp="CAAD000101MDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        Alumno.objects.create(
+            user_id=self.otro.pk,
+            nombre="Otra",
+            apellido="Carga",
+            email="acep2@example.com",
+            curp="CAOT000101HDFXXX02",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        hoy = date.today()
+        self.periodo = Periodo.objects.create(
+            nombre="Actual",
+            fecha_inicio=hoy.replace(day=1),
+            fecha_fin=hoy.replace(year=hoy.year + 1),
+        )
+        self.curso = Curso.objects.create(nombre="Historia")
+        self.ins = Inscripcion.objects.create(
+            alumno=self.alumno,
+            curso=self.curso,
+            periodo=self.periodo,
+            estado="activo",
+            puede_cursar=False,
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+        self.http_otro = Client()
+        self.http_otro.force_login(self.otro)
+        self.http_admin = Client()
+        self.http_admin.force_login(self.admin)
+
+    def test_ventana_acuse_y_pago_intacto(self):
+        from sii.models import AceptacionCarga
+
+        cerrado = self.http.get(reverse("campus_aceptacion"))
+        self.assertContains(cerrado, "no está abierta")
+        self.periodo.ventana_aceptacion_inicio = date.today()
+        self.periodo.ventana_aceptacion_fin = date.today()
+        self.periodo.save()
+        abierto = self.http.get(reverse("campus_aceptacion"))
+        self.assertContains(abierto, "Historia")
+        self.assertContains(abierto, "Aceptar")
+        self.http.post(
+            reverse("campus_aceptacion"),
+            {"inscripcion_id": self.ins.pk, "decision": "aceptada"},
+        )
+        self.ins.refresh_from_db()
+        self.assertFalse(self.ins.puede_cursar)
+        self.assertEqual(self.ins.aceptacion.estado, AceptacionCarga.ESTADO_ACEPTADA)
+        ajeno = self.http_otro.post(
+            reverse("campus_aceptacion"),
+            {"inscripcion_id": self.ins.pk, "decision": "cambio"},
+        )
+        self.assertEqual(ajeno.status_code, 404)
+        staff = self.http_admin.get(reverse("sii_aceptaciones"))
+        self.assertContains(staff, "Aceptada")
+        self.assertContains(staff, "Ada")

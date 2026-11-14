@@ -22,4 +22,5 @@ urlpatterns = [
     path("expediente/", views.expediente, name="campus_expediente"),
     path("expediente/<int:pk>/archivo/", views.expediente_archivo, name="campus_expediente_archivo"),
     path("credencial/", views.credencial, name="campus_credencial"),
+    path("aceptacion/", views.aceptacion, name="campus_aceptacion"),
 ]

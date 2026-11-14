@@ -110,6 +110,8 @@ FEATURES = {
     "sii.expediente": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
     "campus.credencial": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "sii.credencial": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
+    "campus.aceptacion": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "sii.aceptacion": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
 }
 
 URL_FEATURES = {
@@ -220,6 +222,8 @@ URL_FEATURES = {
     "sii_expediente_revisar": "sii.expediente",
     "campus_credencial": "campus.credencial",
     "sii_credencial": "sii.credencial",
+    "campus_aceptacion": "campus.aceptacion",
+    "sii_aceptaciones": "sii.aceptacion",
 }
 
 NAV = {
@@ -256,6 +260,7 @@ NAV = {
         {"label": "Inscripciones", "url_name": "sii_inscripciones", "icon": "bi-clipboard-check", "feature": "sii.inscripciones", "hide_if_own": True},
         {"label": "Bajas", "url_name": "sii_solicitudes_baja", "icon": "bi-x-circle", "feature": "sii.bajas"},
         {"label": "Expediente", "url_name": "sii_expediente", "icon": "bi-folder", "feature": "sii.expediente"},
+        {"label": "Aceptaciones", "url_name": "sii_aceptaciones", "icon": "bi-check2-square", "feature": "sii.aceptacion"},
         {"label": "Docentes", "url_name": "sii_docentes", "icon": "bi-person-video3", "feature": "sii.docentes", "hide_if_own": True},
         {"label": "Actas", "url_name": "sii_actas", "icon": "bi-file-earmark-check", "feature": "sii.actas"},
         {"label": "Horario", "url_name": "sii_horario", "icon": "bi-clock", "feature": "sii.horario"},

@@ -9,6 +9,7 @@ MAS_REALES = (
     {"label": "Solicitud de baja", "url_name": "campus_bajas", "icon": "bi-x-circle"},
     {"label": "Expediente digital", "url_name": "campus_expediente", "icon": "bi-folder"},
     {"label": "Credencial", "url_name": "campus_credencial", "icon": "bi-person-badge"},
+    {"label": "Aceptación de materias", "url_name": "campus_aceptacion", "icon": "bi-check2-square"},
     {"label": "Estado de cuenta", "url_name": "campus_estado_cuenta", "icon": "bi-wallet2"},
     {"label": "Aula", "url_name": "aula_dashboard", "icon": "bi-journal-bookmark"},
     {"label": "Mi expediente", "url_name": "sii_mi_ficha", "icon": "bi-person-vcard"},

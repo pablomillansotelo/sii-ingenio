@@ -18,6 +18,7 @@ urlpatterns = [
     path("expediente/", views.expediente_staff, name="sii_expediente"),
     path("expediente/<int:pk>/archivo/", views.expediente_archivo, name="sii_expediente_archivo"),
     path("expediente/<int:pk>/revisar/", views.expediente_revisar, name="sii_expediente_revisar"),
+    path("aceptaciones/", views.aceptaciones, name="sii_aceptaciones"),
     path("inscripciones/reintento/", views.inscripcion_reintento, name="sii_inscripcion_reintento"),
     path("kardex/", views.kardex, name="sii_kardex"),
     path("alumnos/mi-ficha/", views.mi_ficha, name="sii_mi_ficha"),

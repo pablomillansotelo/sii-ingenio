@@ -447,6 +447,16 @@ def expediente_revisar(request, pk):
 
 
 @login_required
+def aceptaciones(request):
+    inscripciones = (
+        Inscripcion.objects.filter(estado="activo")
+        .select_related("alumno", "curso", "periodo", "aceptacion")
+        .order_by("periodo__fecha_inicio", "alumno__apellido")
+    )
+    return render(request, "sii/aceptaciones.html", {"inscripciones": inscripciones})
+
+
+@login_required
 @_solo_admin
 @require_POST
 def inscripcion_reintento(request):

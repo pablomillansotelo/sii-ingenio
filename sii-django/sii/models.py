@@ -77,6 +77,8 @@ class Periodo(models.Model):
         null=True,
         help_text="Fecha oficial de publicación de calificaciones. Si está vacía se usa el fin de periodo.",
     )
+    ventana_aceptacion_inicio = models.DateField(blank=True, null=True)
+    ventana_aceptacion_fin = models.DateField(blank=True, null=True)
 
     class Meta:
         managed = True
@@ -235,6 +237,26 @@ class DocumentoExpediente(models.Model):
 
     def __str__(self):
         return f"{self.alumno} {self.tipo} ({self.estado})"
+
+
+class AceptacionCarga(models.Model):
+    ESTADO_ACEPTADA = "aceptada"
+    ESTADO_CAMBIO = "cambio"
+    ESTADO_CHOICES = [
+        (ESTADO_ACEPTADA, "Aceptada"),
+        (ESTADO_CAMBIO, "Solicitud de cambio"),
+    ]
+
+    inscripcion = models.OneToOneField(Inscripcion, on_delete=models.CASCADE, related_name="aceptacion")
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES)
+    acuse_en = models.DateTimeField(auto_now_add=True)
+    comentario = models.CharField(max_length=240, blank=True, default="")
+
+    class Meta:
+        db_table = "tra_aceptacion_carga"
+
+    def __str__(self):
+        return f"{self.inscripcion_id} {self.estado}"
 
 
 class ActaFinal(models.Model):

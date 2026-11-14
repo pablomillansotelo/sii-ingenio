@@ -18,9 +18,10 @@ from campus.services.identidad import identidad_campus
 from campus.services.noticias import noticias_publicadas, noticias_publicadas_qs
 from campus.services.preferencias import preferencia_de
 from campus.services.constancia import construir_constancia, tipos_disponibles
+from campus.services.aceptacion import carga_del_periodo, ventana_abierta
 from campus.services.credencial import ficha_credencial
 from sii.identity import alumno_para_usuario
-from sii.models import DocumentoExpediente, Inscripcion, SolicitudBaja
+from sii.models import AceptacionCarga, DocumentoExpediente, Inscripcion, SolicitudBaja
 from sii.services.expediente import resumen_tipos, validar_archivo
 from sii.rbac import requiere_feature
 from sii.services.avance import avance_academico
@@ -351,4 +352,55 @@ def credencial(request):
         request,
         "campus/credencial.html",
         _ctx(request, "control", {"ficha": ficha_credencial(alumno)}),
+    )
+
+
+@login_required
+@requiere_feature("campus.aceptacion")
+def aceptacion(request):
+    from campus.services.cursos import periodo_vigente
+
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    periodo = periodo_vigente()
+    abierta = ventana_abierta(periodo)
+    if request.method == "POST":
+        if not abierta:
+            messages.error(request, "La ventana de aceptación no está abierta.")
+            return redirect("campus_aceptacion")
+        ins = get_object_or_404(
+            Inscripcion, pk=request.POST.get("inscripcion_id"), alumno=alumno, periodo=periodo, estado="activo"
+        )
+        decision = request.POST.get("decision")
+        if decision not in (AceptacionCarga.ESTADO_ACEPTADA, AceptacionCarga.ESTADO_CAMBIO):
+            messages.error(request, "Indica si aceptas o solicitas un cambio.")
+        elif hasattr(ins, "aceptacion"):
+            messages.error(request, "Ya registraste un acuse para esa materia.")
+        else:
+            puede = ins.puede_cursar
+            AceptacionCarga.objects.create(
+                inscripcion=ins,
+                estado=decision,
+                comentario=(request.POST.get("comentario") or "").strip(),
+            )
+            ins.refresh_from_db()
+            if ins.puede_cursar != puede:
+                ins.puede_cursar = puede
+                ins.save(update_fields=["puede_cursar"])
+            messages.success(request, "Acuse guardado. El folio de Ventas no se modifica.")
+            return redirect("campus_aceptacion")
+    return render(
+        request,
+        "campus/aceptacion.html",
+        _ctx(
+            request,
+            "control",
+            {
+                "periodo": periodo,
+                "ventana": abierta,
+                "inscripciones": carga_del_periodo(alumno, periodo),
+            },
+        ),
     )
