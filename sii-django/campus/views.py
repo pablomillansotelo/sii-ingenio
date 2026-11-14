@@ -5,7 +5,7 @@ from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from campus.forms import AparienciaForm, FichaAlumnoForm
+from campus.forms import AparienciaForm, DatosFiscalesForm, FichaAlumnoForm
 from campus.hub import CLAVES_VALIDAS, HUB_ACCESOS
 from campus.models import CampusFavorito, ContactoDirectorio, DocumentoNormativa, Hilo, Noticia, TicketAyuda, TicketRespuesta
 from campus.services.ayuda import puede_transitar
@@ -25,6 +25,7 @@ from campus.services.retos import sincronizar_retos
 from campus.services.constancia import construir_constancia, tipos_disponibles
 from campus.services.aceptacion import carga_del_periodo, ventana_abierta
 from campus.services.credencial import ficha_credencial
+from campus.services.fiscal import cliente_de_alumno
 from sii.identity import alumno_para_usuario
 from sii.models import AceptacionCarga, DocumentoExpediente, Inscripcion, SolicitudBaja
 from sii.services.expediente import resumen_tipos, validar_archivo
@@ -586,3 +587,27 @@ def ayuda_detalle(request, pk):
             TicketRespuesta.objects.create(ticket=ticket, autor_id=request.user.pk, cuerpo=cuerpo, es_staff=False)
             return redirect("campus_ayuda_detalle", pk=ticket.pk)
     return render(request, "campus/ayuda_detalle.html", _ctx(request, "control", {"ticket": ticket}))
+
+
+@login_required
+@requiere_feature("campus.facturacion")
+def facturacion(request):
+    from django.utils import timezone as tz
+
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    cliente = cliente_de_alumno(alumno)
+    form = DatosFiscalesForm(request.POST or None, instance=cliente)
+    if request.method == "POST" and form.is_valid():
+        cliente = form.save(commit=False)
+        cliente.factura_solicitada_en = tz.now()
+        cliente.save()
+        messages.success(request, "Datos fiscales guardados. Aún no hay CFDI para descargar.")
+        return redirect("campus_facturacion")
+    return render(
+        request,
+        "campus/facturacion.html",
+        _ctx(request, "control", {"form": form, "cliente": cliente}),
+    )

@@ -33,4 +33,5 @@ urlpatterns = [
     path("directorio/", views.directorio, name="campus_directorio"),
     path("ayuda/", views.ayuda, name="campus_ayuda"),
     path("ayuda/<int:pk>/", views.ayuda_detalle, name="campus_ayuda_detalle"),
+    path("facturacion/", views.facturacion, name="campus_facturacion"),
 ]

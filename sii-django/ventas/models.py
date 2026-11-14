@@ -50,6 +50,11 @@ class Cliente(models.Model):
     )
     notas = models.TextField(blank=True, default="")
     activo = models.BooleanField(default=True)
+    rfc = models.CharField(max_length=13, blank=True, default="")
+    razon_social = models.CharField(max_length=160, blank=True, default="")
+    codigo_postal_fiscal = models.CharField(max_length=5, blank=True, default="")
+    regimen_fiscal = models.CharField(max_length=10, blank=True, default="")
+    factura_solicitada_en = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = True

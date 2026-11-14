@@ -579,7 +579,7 @@ class CampusHubTests(TestCase):
         self.assertContains(response, reverse("campus_estado_cuenta"))
         self.assertContains(response, reverse("campus_ficha"))
         self.assertContains(response, reverse("sii_horario"))
-        self.assertContains(response, "Próximamente")
+        self.assertContains(response, reverse("campus_facturacion"))
         self.assertNotContains(response, "Punto de venta")
         self.assertNotContains(response, reverse("Carrito"))
         self.assertNotContains(response, reverse("sii_alumno_crear"))

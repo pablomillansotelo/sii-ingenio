@@ -1,0 +1,24 @@
+{% extends "campus/base.html" %}
+{% block title %}Facturación · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Datos fiscales</h1>
+  <div class="alert alert-info">La factura CFDI se habilitará cuando Ingenio emita comprobantes fiscales. El recibo interno de tus compras no es una factura.</div>
+  <form method="post" class="card shadow-sm">
+    {% csrf_token %}
+    <div class="card-body">
+      {% for field in form %}
+      <div class="mb-3">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for err in field.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+      <button class="btn btn-primary" type="submit">Guardar solicitud</button>
+    </div>
+  </form>
+  {% if cliente.factura_solicitada_en %}
+  <p class="small text-muted mt-3">Solicitud registrada el {{ cliente.factura_solicitada_en|date:"d/m/Y H:i" }}. Aún no hay XML ni PDF fiscal para descargar.</p>
+  {% endif %}
+</section>
+{% endblock %}

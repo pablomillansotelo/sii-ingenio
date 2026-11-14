@@ -3,8 +3,10 @@ import re
 from django import forms
 
 from campus.models import CampusPreferencia
+from campus.services.fiscal import REGIMENES
 from sii.bootstrap import BootstrapFormMixin
 from sii.models import Alumno
+from ventas.models import Cliente
 
 _TELEFONO = re.compile(r"^\d{10}$")
 _CP = re.compile(r"^\d{5}$")
@@ -69,6 +71,41 @@ class FichaAlumnoForm(BootstrapFormMixin, forms.ModelForm):
             return ""
         if not _CP.match(valor):
             raise forms.ValidationError("El código postal debe tener 5 dígitos.")
+        return valor
+
+
+_RFC = re.compile(r"^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$")
+
+
+class DatosFiscalesForm(BootstrapFormMixin, forms.ModelForm):
+    regimen_fiscal = forms.ChoiceField(choices=[("", "Selecciona")] + list(REGIMENES), required=True)
+
+    class Meta:
+        model = Cliente
+        fields = ("rfc", "razon_social", "codigo_postal_fiscal", "regimen_fiscal")
+        labels = {
+            "rfc": "RFC",
+            "razon_social": "Razón social o nombre",
+            "codigo_postal_fiscal": "Código postal fiscal",
+            "regimen_fiscal": "Régimen fiscal",
+        }
+
+    def clean_rfc(self):
+        valor = (self.cleaned_data.get("rfc") or "").strip().upper()
+        if not _RFC.match(valor):
+            raise forms.ValidationError("El RFC debe tener 12 o 13 caracteres (formato SAT).")
+        return valor
+
+    def clean_codigo_postal_fiscal(self):
+        valor = (self.cleaned_data.get("codigo_postal_fiscal") or "").strip()
+        if not _CP.match(valor):
+            raise forms.ValidationError("El código postal fiscal debe tener 5 dígitos.")
+        return valor
+
+    def clean_razon_social(self):
+        valor = (self.cleaned_data.get("razon_social") or "").strip()
+        if len(valor) < 3:
+            raise forms.ValidationError("Indica la razón social.")
         return valor
 
 

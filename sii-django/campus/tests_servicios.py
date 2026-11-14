@@ -144,3 +144,61 @@ class CampusAyudaTests(TestCase):
         ticket.refresh_from_db()
         self.assertEqual(ticket.estado, TicketAyuda.ESTADO_CERRADO)
 
+
+class CampusFacturacionTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("fis1", "fis1@example.com", "secret123")
+        self.otro = User.objects.create_user("fis2", "fis2@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.otro.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Fina",
+            apellido="Cal",
+            email="fis1@example.com",
+            curp="CAFI000101MDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        Alumno.objects.create(
+            user_id=self.otro.pk,
+            nombre="Otra",
+            apellido="Cal",
+            email="fis2@example.com",
+            curp="CAOT000101HDFXXX09",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+        self.http_otro = Client()
+        self.http_otro.force_login(self.otro)
+
+    def test_guarda_datos_en_cliente_y_no_es_cfdi(self):
+        from ventas.models import Cliente
+
+        pagina = self.http.get(reverse("campus_facturacion"))
+        self.assertContains(pagina, "cuando Ingenio emita")
+        self.assertContains(pagina, "no es una factura")
+        self.assertNotContains(pagina, "Descargar XML")
+        malo = self.http.post(
+            reverse("campus_facturacion"),
+            {"rfc": "x", "razon_social": "A", "codigo_postal_fiscal": "1", "regimen_fiscal": "612"},
+        )
+        self.assertContains(malo, "RFC")
+        self.http.post(
+            reverse("campus_facturacion"),
+            {
+                "rfc": "XAXX010101000",
+                "razon_social": "Fina Cal",
+                "codigo_postal_fiscal": "06600",
+                "regimen_fiscal": "612",
+            },
+        )
+        cliente = Cliente.objects.get(id_alumno_sii=self.alumno)
+        self.assertEqual(cliente.rfc, "XAXX010101000")
+        self.assertIsNotNone(cliente.factura_solicitada_en)
+        ajeno = self.http_otro.get(reverse("campus_facturacion"))
+        self.assertNotContains(ajeno, "XAXX010101000")
+

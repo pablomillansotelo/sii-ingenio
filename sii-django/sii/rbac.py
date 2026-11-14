@@ -122,6 +122,7 @@ FEATURES = {
     "sii.normativa": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
     "campus.ayuda": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "sii.ayuda": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
+    "campus.facturacion": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
 }
 
 URL_FEATURES = {
@@ -251,6 +252,7 @@ URL_FEATURES = {
     "campus_ayuda_detalle": "campus.ayuda",
     "sii_ayuda": "sii.ayuda",
     "sii_ayuda_detalle": "sii.ayuda",
+    "campus_facturacion": "campus.facturacion",
 }
 
 NAV = {
