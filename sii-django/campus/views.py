@@ -10,6 +10,7 @@ from campus.services.avisos import bandeja_avisos, marcar_leido
 
 from campus.nav import MAS_PROXIMAMENTE, MAS_REALES
 from campus.services.calendario import hitos_calendario
+from campus.services.cuenta import estado_cuenta
 from campus.services.cursos import tarjetas_curso_actual
 from campus.services.identidad import identidad_campus
 from sii.identity import alumno_para_usuario
@@ -48,6 +49,7 @@ def inicio(request):
                 "cursos_actuales": cursos["tarjetas"],
                 "periodo_actual": cursos["periodo"],
                 "avisos_importantes": avisos["importantes_pendientes"],
+                "cuenta": estado_cuenta(request.user),
             },
         ),
     )
@@ -167,4 +169,14 @@ def kardex(request):
         request,
         "campus/kardex.html",
         _ctx(request, "control", {"kardex": _kardex_rows(inscripciones)}),
+    )
+
+
+@login_required
+@requiere_feature("campus.estado_cuenta")
+def estado_cuenta_view(request):
+    return render(
+        request,
+        "campus/estado_cuenta.html",
+        _ctx(request, "control", {"cuenta": estado_cuenta(request.user)}),
     )
