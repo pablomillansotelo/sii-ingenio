@@ -173,6 +173,12 @@ def curso_detail(request, curso_id, edicion_id=None):
         for actividad in actividades_del_grupo(curso, edicion)
     ]
     bloques, sueltas = _secciones_ui(curso, edicion, actividades_ui)
+    try:
+        from campus.services.secciones_reto import anotar_bloques
+
+        anotar_bloques(bloques, inscripcion, edicion, alumno)
+    except Exception:
+        pass
     grupos_docente = DocenteCurso.objects.filter(curso=curso).select_related("docente")
     horarios = (
         HorarioSlot.objects.filter(curso=curso).select_related("periodo").order_by("dia", "hora_inicio")
@@ -196,6 +202,7 @@ def curso_detail(request, curso_id, edicion_id=None):
             "horarios": horarios,
             "roster": roster,
             "es_admin": es_administrador(request.user),
+            "candado_academico": bool(edicion and getattr(edicion, "candado_academico", False)),
             "aula_volver": url_aula_grupo(curso, edicion),
         },
     )
@@ -279,6 +286,13 @@ def actividad_entregar(request, pk):
     if not inscripcion.puede_cursar or inscripcion.estado != "activo":
         messages.error(request, "Tu inscripción está pendiente de pago. No puedes entregar todavía.")
         return _redir_grupo(actividad.curso, actividad.edicion)
+    edicion_act = actividad.edicion
+    if edicion_act and edicion_act.candado_academico:
+        from campus.services.secciones_reto import seccion_bloqueada_para
+
+        if seccion_bloqueada_para(actividad, inscripcion):
+            messages.error(request, "Esta sección sigue bloqueada por el docente.")
+            return _redir_grupo(actividad.curso, actividad.edicion)
     motivo = actividad.motivo_cierre_entrega()
     if motivo:
         messages.error(request, motivo)
