@@ -3,15 +3,18 @@ from django.shortcuts import render
 
 from campus.nav import MAS_PROXIMAMENTE, MAS_REALES
 from campus.services.cursos import tarjetas_curso_actual
+from campus.services.identidad import identidad_campus
 from sii.identity import alumno_para_usuario
 from sii.rbac import requiere_feature
 from sii.services.avance import avance_academico
 
 
 def _ctx(request, tab, extra=None):
+    alumno = alumno_para_usuario(request.user)
     ctx = {
         "campus_tab": tab,
-        "campus_alumno": alumno_para_usuario(request.user),
+        "campus_alumno": alumno,
+        "campus_identidad": identidad_campus(request.user, alumno),
         "mas_reales": MAS_REALES,
         "mas_proximamente": MAS_PROXIMAMENTE,
     }

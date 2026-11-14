@@ -29,7 +29,7 @@
         aria-expanded="false"
         aria-controls="campus-perfil-panel"
       >
-        <span class="campus-avatar-hole" aria-hidden="true">{% block campus_iniciales %}{% endblock %}</span>
+        <span class="campus-avatar-hole" aria-hidden="true">{{ campus_identidad.iniciales }}</span>
       </button>
       {% endblock %}
     </header>
@@ -86,9 +86,16 @@
     </div>
 
     <div class="campus-perfil-panel" id="campus-perfil-panel" hidden role="dialog" aria-labelledby="campus-perfil-title" aria-modal="true">
-      {% block campus_perfil %}
-      <p class="text-muted small mb-0" id="campus-perfil-title">Perfil</p>
-      {% endblock %}
+      <p class="fw-semibold mb-1" id="campus-perfil-title">{{ campus_identidad.nombre }}</p>
+      <p class="small text-muted mb-2">{{ campus_identidad.identificador_etiqueta }}: {{ campus_identidad.identificador }}</p>
+      {% for correo in campus_identidad.correos %}
+      <p class="small mb-1">{{ correo.label }}: {{ correo.valor }}</p>
+      {% endfor %}
+      <div class="d-grid gap-2 mt-3">
+        <a class="btn btn-outline-primary btn-sm" href="{{ campus_identidad.ficha_url }}">Mi perfil</a>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ campus_identidad.cuenta_url }}">Mi cuenta</a>
+        <a class="btn btn-outline-danger btn-sm" href="{% url 'logout' %}">Cerrar sesión</a>
+      </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
