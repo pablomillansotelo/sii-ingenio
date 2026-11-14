@@ -7,7 +7,8 @@ from django.views.decorators.http import require_POST
 
 from campus.forms import AparienciaForm, FichaAlumnoForm
 from campus.hub import CLAVES_VALIDAS, HUB_ACCESOS
-from campus.models import CampusFavorito, ContactoDirectorio, DocumentoNormativa, Hilo, Noticia
+from campus.models import CampusFavorito, ContactoDirectorio, DocumentoNormativa, Hilo, Noticia, TicketAyuda, TicketRespuesta
+from campus.services.ayuda import puede_transitar
 from campus.services.avisos import bandeja_avisos, marcar_leido
 
 from campus.nav import MAS_PROXIMAMENTE, MAS_REALES
@@ -533,3 +534,55 @@ def normativa_archivo(request, pk):
 def directorio(request):
     contactos = ContactoDirectorio.objects.filter(publicado=True)
     return render(request, "campus/directorio.html", _ctx(request, "control", {"contactos": contactos}))
+
+
+@login_required
+@requiere_feature("campus.ayuda")
+def ayuda(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    if request.method == "POST":
+        asunto = (request.POST.get("asunto") or "").strip()
+        descripcion = (request.POST.get("descripcion") or "").strip()
+        categoria = request.POST.get("categoria")
+        adjunto = request.FILES.get("adjunto")
+        if adjunto:
+            try:
+                validar_archivo(adjunto)
+            except ValidationError as exc:
+                messages.error(request, " ".join(exc.messages))
+                adjunto = None
+                asunto = ""
+        if asunto and descripcion and categoria in dict(TicketAyuda.CATEGORIA_CHOICES):
+            ticket = TicketAyuda.objects.create(
+                alumno=alumno,
+                categoria=categoria,
+                asunto=asunto,
+                descripcion=descripcion,
+                adjunto=adjunto,
+            )
+            messages.success(request, f"Ticket {ticket.folio} abierto.")
+            return redirect("campus_ayuda_detalle", pk=ticket.pk)
+        if asunto or descripcion:
+            messages.error(request, "Completa categoría, asunto y descripción.")
+    tickets = TicketAyuda.objects.filter(alumno=alumno)
+    return render(
+        request,
+        "campus/ayuda.html",
+        _ctx(request, "control", {"tickets": tickets, "categorias": TicketAyuda.CATEGORIA_CHOICES}),
+    )
+
+
+@login_required
+@requiere_feature("campus.ayuda")
+def ayuda_detalle(request, pk):
+    alumno = alumno_para_usuario(request.user)
+    ticket = get_object_or_404(TicketAyuda, pk=pk, alumno=alumno)
+    if request.method == "POST" and ticket.estado != TicketAyuda.ESTADO_CERRADO:
+        cuerpo = (request.POST.get("cuerpo") or "").strip()
+        if cuerpo:
+            TicketRespuesta.objects.create(ticket=ticket, autor_id=request.user.pk, cuerpo=cuerpo, es_staff=False)
+            return redirect("campus_ayuda_detalle", pk=ticket.pk)
+    return render(request, "campus/ayuda_detalle.html", _ctx(request, "control", {"ticket": ticket}))

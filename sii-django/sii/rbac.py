@@ -120,6 +120,8 @@ FEATURES = {
     "campus.normativa": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "campus.directorio": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "sii.normativa": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
+    "campus.ayuda": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "sii.ayuda": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
 }
 
 URL_FEATURES = {
@@ -245,6 +247,10 @@ URL_FEATURES = {
     "campus_normativa_archivo": "campus.normativa",
     "campus_directorio": "campus.directorio",
     "sii_normativa": "sii.normativa",
+    "campus_ayuda": "campus.ayuda",
+    "campus_ayuda_detalle": "campus.ayuda",
+    "sii_ayuda": "sii.ayuda",
+    "sii_ayuda_detalle": "sii.ayuda",
 }
 
 NAV = {
@@ -288,6 +294,7 @@ NAV = {
         {"label": "Mensajes", "url_name": "sii_mensajes", "icon": "bi-chat-dots", "feature": "sii.mensajes"},
         {"label": "Progreso Ingenio", "url_name": "sii_ludico", "icon": "bi-trophy", "feature": "sii.ludico"},
         {"label": "Normativa", "url_name": "sii_normativa", "icon": "bi-book", "feature": "sii.normativa"},
+        {"label": "Mesa de ayuda", "url_name": "sii_ayuda", "icon": "bi-life-preserver", "feature": "sii.ayuda"},
     ],
     "campus": [
         {"label": "Inicio", "url_name": "campus_inicio", "icon": "bi-house", "feature": "campus.inicio"},

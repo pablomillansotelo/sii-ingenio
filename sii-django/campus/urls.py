@@ -31,4 +31,6 @@ urlpatterns = [
     path("normativa/", views.normativa, name="campus_normativa"),
     path("normativa/<int:pk>/archivo/", views.normativa_archivo, name="campus_normativa_archivo"),
     path("directorio/", views.directorio, name="campus_directorio"),
+    path("ayuda/", views.ayuda, name="campus_ayuda"),
+    path("ayuda/<int:pk>/", views.ayuda_detalle, name="campus_ayuda_detalle"),
 ]

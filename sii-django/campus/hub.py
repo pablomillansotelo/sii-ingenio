@@ -12,7 +12,7 @@ HUB_ACCESOS = [
     {"clave": "aceptacion", "label": "Aceptación de materias", "url_name": "campus_aceptacion", "icon": "bi-check2-square", "estado": "listo"},
     {"clave": "normativa", "label": "Normativa", "url_name": "campus_normativa", "icon": "bi-book", "estado": "listo"},
     {"clave": "directorio", "label": "Directorio", "url_name": "campus_directorio", "icon": "bi-telephone", "estado": "listo"},
-    {"clave": "mesa", "label": "Mesa de ayuda", "url_name": None, "icon": "bi-life-preserver", "estado": "proximamente"},
+    {"clave": "mesa", "label": "Mesa de ayuda", "url_name": "campus_ayuda", "icon": "bi-life-preserver", "estado": "listo"},
     {"clave": "facturacion", "label": "Facturación", "url_name": None, "icon": "bi-receipt", "estado": "proximamente"},
 ]
 

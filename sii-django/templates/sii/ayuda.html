@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Mesa de ayuda · Ingenio{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Mesa de ayuda" subtitle="Tickets con folio. Distinto de la bandeja de mensajes." %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Folio</th><th>Alumno</th><th>Asunto</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        {% for t in tickets %}
+        <tr>
+          <td>{{ t.folio }}</td>
+          <td>{{ t.alumno }}</td>
+          <td>{{ t.asunto }}</td>
+          <td>{{ t.get_estado_display }}</td>
+          <td><a href="{% url 'sii_ayuda_detalle' t.pk %}">Abrir</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No hay tickets.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

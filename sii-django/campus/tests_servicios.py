@@ -66,3 +66,81 @@ class CampusNormativaTests(TestCase):
             {"accion": "directorio", "area": "Caja", "nombre": "Luis", "medio": "caja@ingenio.example", "publicado": "on"},
         )
         self.assertTrue(ContactoDirectorio.objects.filter(nombre="Luis", publicado=True).exists())
+
+
+class CampusAyudaTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("ayu1", "ayu1@example.com", "secret123")
+        self.otro = User.objects.create_user("ayu2", "ayu2@example.com", "secret123")
+        self.admin = User.objects.create_user("ayuadm", "ayuadm@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.otro.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.admin.groups.add(Group.objects.get(name=GRUPO_ADMINISTRADOR))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Aya",
+            apellido="Mesa",
+            email="ayu1@example.com",
+            curp="MEAY000101MDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        Alumno.objects.create(
+            user_id=self.otro.pk,
+            nombre="Otra",
+            apellido="Mesa",
+            email="ayu2@example.com",
+            curp="MEOT000101HDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+        self.http_otro = Client()
+        self.http_otro.force_login(self.otro)
+        self.http_admin = Client()
+        self.http_admin.force_login(self.admin)
+
+    def test_folio_aislamiento_y_transiciones(self):
+        from campus.models import TicketAyuda
+        from campus.services.ayuda import puede_transitar
+
+        self.http.post(
+            reverse("campus_ayuda"),
+            {"categoria": "academico", "asunto": "Kardex", "descripcion": "No veo una materia"},
+        )
+        ticket = TicketAyuda.objects.get()
+        self.assertTrue(ticket.folio.startswith("AYU-"))
+        propio = self.http.get(reverse("campus_ayuda_detalle", args=[ticket.pk]))
+        self.assertContains(propio, ticket.folio)
+        ajeno = self.http_otro.get(reverse("campus_ayuda_detalle", args=[ticket.pk]))
+        self.assertEqual(ajeno.status_code, 404)
+        self.assertTrue(puede_transitar(TicketAyuda.ESTADO_ABIERTO, TicketAyuda.ESTADO_ATENCION))
+        self.assertFalse(puede_transitar(TicketAyuda.ESTADO_CERRADO, TicketAyuda.ESTADO_ABIERTO))
+        self.http_admin.post(
+            reverse("sii_ayuda_detalle", args=[ticket.pk]),
+            {"cuerpo": "Lo revisamos", "estado": "en_atencion"},
+        )
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.estado, TicketAyuda.ESTADO_ATENCION)
+        self.assertEqual(ticket.respuestas.count(), 1)
+        self.http_admin.post(
+            reverse("sii_ayuda_detalle", args=[ticket.pk]),
+            {"estado": "abierto"},
+        )
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.estado, TicketAyuda.ESTADO_ABIERTO)
+        self.http_admin.post(
+            reverse("sii_ayuda_detalle", args=[ticket.pk]),
+            {"estado": "cerrado"},
+        )
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.estado, TicketAyuda.ESTADO_CERRADO)
+        self.http_admin.post(
+            reverse("sii_ayuda_detalle", args=[ticket.pk]),
+            {"estado": "en_atencion"},
+        )
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.estado, TicketAyuda.ESTADO_CERRADO)
+

@@ -556,6 +556,42 @@ def normativa_staff(request):
 
 
 @login_required
+def ayuda_staff(request):
+    from campus.models import TicketAyuda
+
+    tickets = TicketAyuda.objects.select_related("alumno")
+    return render(request, "sii/ayuda.html", {"tickets": tickets})
+
+
+@login_required
+def ayuda_detalle(request, pk):
+    from campus.models import TicketAyuda, TicketRespuesta
+    from campus.services.ayuda import puede_transitar
+
+    ticket = get_object_or_404(TicketAyuda.objects.select_related("alumno"), pk=pk)
+    if request.method == "POST":
+        cuerpo = (request.POST.get("cuerpo") or "").strip()
+        nuevo = request.POST.get("estado") or ticket.estado
+        if not puede_transitar(ticket.estado, nuevo):
+            messages.error(request, "Esa transición de estado no está permitida.")
+        else:
+            if cuerpo:
+                TicketRespuesta.objects.create(
+                    ticket=ticket, autor_id=request.user.pk, cuerpo=cuerpo, es_staff=True
+                )
+            if nuevo != ticket.estado:
+                ticket.estado = nuevo
+                ticket.save(update_fields=["estado", "actualizado_en"])
+            messages.success(request, "Ticket actualizado.")
+            return redirect("sii_ayuda_detalle", pk=ticket.pk)
+    return render(
+        request,
+        "sii/ayuda_detalle.html",
+        {"ticket": ticket, "estados": TicketAyuda.ESTADO_CHOICES},
+    )
+
+
+@login_required
 @_solo_admin
 @require_POST
 def inscripcion_reintento(request):
