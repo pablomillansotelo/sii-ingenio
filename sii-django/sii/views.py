@@ -2,6 +2,7 @@ from functools import wraps
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -432,6 +433,18 @@ def alumno_ficha(request, alumno_id):
             "puede_operar": es_administrador(request.user),
         },
     )
+
+
+@login_required
+def constancia_pdf(request, alumno_id):
+    from campus.services.constancia import construir_constancia
+
+    alumno = _alumno_o_404(request, alumno_id)
+    tipo = request.GET.get("tipo") or "historial"
+    pdf_bytes, tipo_real = construir_constancia(alumno, tipo)
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="constancia-{tipo_real}-{alumno.pk}.pdf"'
+    return response
 
 
 @login_required

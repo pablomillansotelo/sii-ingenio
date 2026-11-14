@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -15,6 +16,7 @@ from campus.services.cursos import tarjetas_curso_actual
 from campus.services.identidad import identidad_campus
 from campus.services.noticias import noticias_publicadas, noticias_publicadas_qs
 from campus.services.preferencias import preferencia_de
+from campus.services.constancia import construir_constancia, tipos_disponibles
 from sii.identity import alumno_para_usuario
 from sii.rbac import requiere_feature
 from sii.services.avance import avance_academico
@@ -211,3 +213,35 @@ def estado_cuenta_view(request):
 def noticia_detalle(request, noticia_id):
     noticia = get_object_or_404(noticias_publicadas_qs(), pk=noticia_id)
     return render(request, "campus/noticia.html", _ctx(request, "inicio", {"noticia": noticia}))
+
+
+@login_required
+@requiere_feature("campus.constancias")
+def constancias(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    return render(
+        request,
+        "campus/constancias.html",
+        _ctx(
+            request,
+            "control",
+            {"alumno": alumno, "tipos": tipos_disponibles(alumno)},
+        ),
+    )
+
+
+@login_required
+@requiere_feature("campus.constancias")
+def constancia_pdf(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    tipo = request.GET.get("tipo") or "historial"
+    pdf_bytes, tipo_real = construir_constancia(alumno, tipo)
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="constancia-{tipo_real}-{alumno.pk}.pdf"'
+    return response

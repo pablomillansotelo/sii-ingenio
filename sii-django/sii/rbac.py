@@ -102,6 +102,8 @@ FEATURES = {
     "campus.noticias": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "campus.noticias.write": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
     "campus.configuracion": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "campus.constancias": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "sii.constancias": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
 }
 
 URL_FEATURES = {
@@ -199,6 +201,9 @@ URL_FEATURES = {
     "campus_estado_cuenta": "campus.estado_cuenta",
     "campus_noticia": "campus.noticias",
     "campus_configuracion": "campus.configuracion",
+    "campus_constancias": "campus.constancias",
+    "campus_constancia_pdf": "campus.constancias",
+    "sii_constancia_pdf": "sii.constancias",
 }
 
 NAV = {

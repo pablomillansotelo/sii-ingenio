@@ -1,0 +1,22 @@
+{% extends "campus/base.html" %}
+{% block title %}Constancias · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Constancias</h1>
+  <p class="text-muted">Documento interno de Ingenio. No es certificado de terminación ni título.</p>
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <p class="mb-2"><strong>{{ alumno.nombre }} {{ alumno.apellido }}</strong></p>
+      <p class="small text-muted">{{ alumno.codigo_ingenio }} · CURP {{ alumno.curp }}</p>
+      {% for tipo in tipos %}
+      <a class="btn btn-primary btn-sm me-2 mb-2" href="{% url 'campus_constancia_pdf' %}?tipo={{ tipo }}">
+        {% if tipo == "inscripcion" %}Descargar constancia de inscripción{% else %}Descargar historial académico{% endif %}
+      </a>
+      {% endfor %}
+      {% if "inscripcion" not in tipos %}
+      <p class="small text-muted mb-0">No hay inscripción activa: solo se emite historial, no una constancia de alumno regular.</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

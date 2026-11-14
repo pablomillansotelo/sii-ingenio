@@ -17,6 +17,7 @@ urlpatterns = [
     path("kardex/", views.kardex, name="sii_kardex"),
     path("alumnos/mi-ficha/", views.mi_ficha, name="sii_mi_ficha"),
     path("alumnos/<int:alumno_id>/", views.alumno_ficha, name="sii_alumno_ficha"),
+    path("alumnos/<int:alumno_id>/constancia/", views.constancia_pdf, name="sii_constancia_pdf"),
     path("alumnos/<int:alumno_id>/cuenta/", views.alumno_reset_cuenta, name="sii_alumno_reset_cuenta"),
     path("actas/", views.actas_list, name="sii_actas"),
     path("actas/<int:acta_id>/", views.acta_detalle, name="sii_acta_detalle"),
