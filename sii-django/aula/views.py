@@ -306,6 +306,9 @@ def actividad_entregar(request, pk):
                 f"entrega-{actividad.pk}",
                 request.user.pk,
             )
+            from campus.services.retos import sincronizar_retos
+
+            sincronizar_retos(alumno)
         except Exception:
             pass
         messages.success(request, "Entrega registrada.")

@@ -266,3 +266,24 @@ class MovimientoXP(models.Model):
         db_table = "campus_movimiento_xp"
         unique_together = ("perfil", "clave")
         ordering = ["-creado_en"]
+
+
+class RetoSemanal(models.Model):
+    alumno = models.ForeignKey("sii.Alumno", on_delete=models.CASCADE, related_name="retos_semanales")
+    inscripcion = models.ForeignKey("sii.Inscripcion", on_delete=models.CASCADE, related_name="retos_semanales")
+    semana = models.DateField()
+    meta = models.PositiveIntegerField(default=1)
+    progreso = models.PositiveIntegerField(default=0)
+    completado_en = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        db_table = "campus_reto_semanal"
+        unique_together = ("inscripcion", "semana")
+        ordering = ["semana", "id"]
+
+    @property
+    def porcentaje(self):
+        if not self.meta:
+            return 0
+        return min(100, int(round(100 * self.progreso / self.meta)))
+

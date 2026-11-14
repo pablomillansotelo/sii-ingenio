@@ -20,6 +20,7 @@ from campus.services.preferencias import preferencia_de
 from campus.services.mensajes import destinos_alumno, marcar_hilo_leido, no_leidos, abrir_hilo, puede_ver, responder, resumen_hilos
 from campus.services.notificaciones import lista as lista_notif, marcar_todas, marcar_una, no_leidas as notif_no_leidas, sincronizar as sync_notif
 from campus.services.ludico import perfil_de, ranking as ranking_ludico
+from campus.services.retos import sincronizar_retos
 from campus.services.constancia import construir_constancia, tipos_disponibles
 from campus.services.aceptacion import carga_del_periodo, ventana_abierta
 from campus.services.credencial import ficha_credencial
@@ -53,6 +54,7 @@ def _ctx(request, tab, extra=None):
 def inicio(request):
     alumno = alumno_para_usuario(request.user)
     sync_notif(request.user, alumno)
+    retos = sincronizar_retos(alumno)
     cursos = tarjetas_curso_actual(alumno)
     avisos = bandeja_avisos(alumno, filtro="no_leidos")
     return render(
@@ -68,6 +70,7 @@ def inicio(request):
                 "avisos_importantes": avisos["importantes_pendientes"],
                 "cuenta": estado_cuenta(request.user),
                 "noticias": list(noticias_publicadas()),
+                "retos": retos,
             },
         ),
     )

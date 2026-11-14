@@ -59,6 +59,24 @@
     </div>
   </article>
 
+  {% if retos %}
+  <section aria-labelledby="retos-titulo" class="mb-3">
+    <h2 class="h5" id="retos-titulo">Retos de la semana</h2>
+    <p class="small text-muted">Entrega 1 actividad esta semana (zona Ciudad de México). Completar suma XP una sola vez.</p>
+    {% for reto in retos %}
+    <article class="card shadow-sm mb-2">
+      <div class="card-body">
+        <p class="fw-semibold mb-1">{{ reto.inscripcion.curso.nombre }}</p>
+        <div class="progress mb-1" role="progressbar" aria-valuenow="{{ reto.porcentaje }}">
+          <div class="progress-bar" style="width: {{ reto.porcentaje }}%"></div>
+        </div>
+        <p class="small mb-0">{{ reto.progreso }} de {{ reto.meta }} entregas · {{ reto.porcentaje }} %{% if reto.completado_en %} · Completado{% endif %}</p>
+      </div>
+    </article>
+    {% endfor %}
+  </section>
+  {% endif %}
+
   <section aria-labelledby="cursos-titulo">
     <h2 class="h5 mb-2" id="cursos-titulo">Cursos de este periodo</h2>
     {% for tarjeta in cursos_actuales %}
