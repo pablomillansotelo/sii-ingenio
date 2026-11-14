@@ -5,6 +5,19 @@
   <h1 class="campus-page-title">Inicio</h1>
   <p class="text-muted">Tu campus en Ingenio.</p>
 
+  {% for aviso in avisos_importantes %}
+  <div class="alert alert-danger" role="alertdialog" aria-labelledby="aviso-{{ aviso.pk }}">
+    <p class="fw-semibold mb-1" id="aviso-{{ aviso.pk }}">Aviso importante: {{ aviso.titulo }}</p>
+    <p class="mb-2">{{ aviso.cuerpo|truncatewords:40 }}</p>
+    <form method="post" action="{% url 'campus_aviso_leer' aviso.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'campus_inicio' %}">
+      <button class="btn btn-sm btn-light" type="submit">Marcar como leído</button>
+      <a class="btn btn-sm btn-outline-light" href="{% url 'campus_avisos' %}">Ver avisos</a>
+    </form>
+  </div>
+  {% endfor %}
+
   <article class="card shadow-sm campus-card mb-3" aria-labelledby="avance-titulo">
     <div class="card-body">
       <h2 class="h5" id="avance-titulo">Avance académico</h2>
