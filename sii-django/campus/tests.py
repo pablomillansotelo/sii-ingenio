@@ -8,7 +8,8 @@ from django.urls import reverse
 from sii.identity import destino_post_login
 from sii.models import Alumno, Curso, Inscripcion, Periodo
 from sii.permissions import GRUPO_ALUMNO, GRUPO_VENDEDOR, crear_grupos
-from aula.models import Actividad, CalificacionActividad
+from aula.models import Actividad, AvisoGrupo, CalificacionActividad
+from campus.models import AvisoInstitucional, AvisoLectura
 from campus.services.calendario import hitos_calendario
 from campus.services.cursos import tarjetas_curso_actual
 from campus.services.identidad import identidad_campus, iniciales_de
@@ -467,3 +468,75 @@ class CampusFichaTests(TestCase):
         http = Client()
         http.force_login(vend)
         self.assertEqual(http.get(reverse("campus_ficha")).status_code, 403)
+
+
+class CampusAvisosTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("alum8", "alum8@example.com", "secret123")
+        self.otro = User.objects.create_user("alum8b", "alum8b@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.otro.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Avi",
+            apellido="So",
+            email="alum8@example.com",
+            curp="SOAV000101MDFXXX08",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.ajeno = Alumno.objects.create(
+            user_id=self.otro.pk,
+            nombre="Otro",
+            apellido="Avi",
+            email="alum8b@example.com",
+            curp="OTAV000101HDFXXX08",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.aviso = AvisoInstitucional.objects.create(
+            titulo="Cierre de caja",
+            cuerpo="Revisa tu saldo",
+            tipo=AvisoInstitucional.TIPO_IMPORTANTE,
+            publicado=True,
+        )
+        self.borrador = AvisoInstitucional.objects.create(
+            titulo="Borrador oculto",
+            cuerpo="No",
+            publicado=False,
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+        self.http_otro = Client()
+        self.http_otro.force_login(self.otro)
+
+    def test_publicado_vs_borrador(self):
+        response = self.http.get(reverse("campus_avisos"))
+        self.assertContains(response, "Cierre de caja")
+        self.assertNotContains(response, "Borrador oculto")
+        inicio = self.http.get(reverse("campus_inicio"))
+        self.assertContains(inicio, "Aviso importante")
+
+    def test_marcar_leido_no_afecta_a_otro(self):
+        leer = self.http.post(reverse("campus_aviso_leer", args=[self.aviso.pk]))
+        self.assertRedirects(leer, reverse("campus_avisos"))
+        self.assertTrue(AvisoLectura.objects.filter(aviso=self.aviso, alumno=self.alumno).exists())
+        self.assertFalse(AvisoLectura.objects.filter(aviso=self.aviso, alumno=self.ajeno).exists())
+        propio = self.http.get(reverse("campus_avisos") + "?estado=leidos")
+        self.assertContains(propio, "Cierre de caja")
+        ajeno = self.http_otro.get(reverse("campus_avisos") + "?estado=leidos")
+        self.assertNotContains(ajeno, "Cierre de caja")
+        inicio = self.http.get(reverse("campus_inicio"))
+        self.assertNotContains(inicio, "Aviso importante: Cierre de caja")
+
+    def test_aviso_de_grupo_agregado(self):
+        periodo = Periodo.objects.create(
+            nombre="A", fecha_inicio=date.today(), fecha_fin=date.today().replace(year=date.today().year + 1)
+        )
+        curso = Curso.objects.create(nombre="Grupo")
+        Inscripcion.objects.create(alumno=self.alumno, curso=curso, periodo=periodo, estado="activo")
+        AvisoGrupo.objects.create(curso=curso, titulo="Aviso del grupo", cuerpo="Hola", publicado=True)
+        response = self.http.get(reverse("campus_avisos"))
+        self.assertContains(response, "Aviso del grupo")
+        self.assertContains(response, "Tu grupo")

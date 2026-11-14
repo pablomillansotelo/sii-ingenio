@@ -1,0 +1,37 @@
+{% extends "campus/base.html" %}
+{% block title %}Avisos · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Avisos</h1>
+  <p class="text-muted">Comunicados de Ingenio. Los avisos de tu grupo del aula se listan aparte y no se editan aquí.</p>
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <a class="btn btn-sm {% if filtro == 'todos' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{% url 'campus_avisos' %}">Todos</a>
+    <a class="btn btn-sm {% if filtro == 'no_leidos' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="?estado=no_leidos">No leídos</a>
+    <a class="btn btn-sm {% if filtro == 'leidos' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="?estado=leidos">Leídos</a>
+  </div>
+  {% for item in bandeja %}
+  <article class="card shadow-sm mb-2 {% if item.aviso.tipo == 'importante' %}border-danger{% endif %}">
+    <div class="card-body">
+      {% if item.fuente == "grupo" %}
+      <span class="badge text-bg-secondary">Tu grupo</span>
+      {% elif item.aviso.tipo == "importante" %}
+      <span class="badge text-bg-danger">Importante</span>
+      {% else %}
+      <span class="badge text-bg-light text-dark">Informativo</span>
+      {% endif %}
+      {% if item.leido %}<span class="badge text-bg-success">Leído</span>{% else %}<span class="badge text-bg-warning">No leído</span>{% endif %}
+      <h2 class="h6 mt-2">{{ item.aviso.titulo }}</h2>
+      <p class="mb-2">{{ item.aviso.cuerpo }}</p>
+      {% if item.fuente == "institucional" and not item.leido %}
+      <form method="post" action="{% url 'campus_aviso_leer' item.aviso.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-sm btn-outline-primary" type="submit">Marcar como leído</button>
+      </form>
+      {% endif %}
+    </div>
+  </article>
+  {% empty %}
+  <p class="text-muted">No hay avisos en este filtro.</p>
+  {% endfor %}
+</section>
+{% endblock %}

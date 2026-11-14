@@ -95,6 +95,8 @@ FEATURES = {
     "campus.inicio": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "campus.control_escolar": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "campus.calendario": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "campus.avisos": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "campus.avisos.write": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
 }
 
 URL_FEATURES = {
@@ -185,6 +187,8 @@ URL_FEATURES = {
     "campus_mensajes": "campus.inicio",
     "campus_mas": "campus.inicio",
     "campus_ficha": "campus.inicio",
+    "campus_avisos": "campus.avisos",
+    "campus_aviso_leer": "campus.avisos",
 }
 
 NAV = {
@@ -232,6 +236,7 @@ NAV = {
             "feature": "campus.control_escolar",
         },
         {"label": "Calendario", "url_name": "campus_calendario", "icon": "bi-calendar3", "feature": "campus.calendario"},
+        {"label": "Avisos", "url_name": "campus_avisos", "icon": "bi-megaphone", "feature": "campus.avisos"},
     ],
     "aula": [
         {"label": "Mis cursos", "url_name": "aula_dashboard", "icon": "bi-grid", "feature": "aula.cursos"},

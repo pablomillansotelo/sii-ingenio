@@ -1,8 +1,11 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from campus.forms import FichaAlumnoForm
+from campus.models import AvisoInstitucional
+from campus.services.avisos import bandeja_avisos, marcar_leido
 
 from campus.nav import MAS_PROXIMAMENTE, MAS_REALES
 from campus.services.calendario import hitos_calendario
@@ -32,6 +35,7 @@ def _ctx(request, tab, extra=None):
 def inicio(request):
     alumno = alumno_para_usuario(request.user)
     cursos = tarjetas_curso_actual(alumno)
+    avisos = bandeja_avisos(alumno, filtro="no_leidos")
     return render(
         request,
         "campus/inicio.html",
@@ -42,6 +46,7 @@ def inicio(request):
                 "avance": avance_academico(alumno),
                 "cursos_actuales": cursos["tarjetas"],
                 "periodo_actual": cursos["periodo"],
+                "avisos_importantes": avisos["importantes_pendientes"],
             },
         ),
     )
@@ -91,3 +96,35 @@ def ficha(request):
             return redirect("campus_ficha")
         messages.error(request, "Revisa el teléfono y el código postal.")
     return render(request, "campus/ficha.html", _ctx(request, "mas", {"form": form, "alumno": alumno}))
+
+
+@login_required
+@requiere_feature("campus.avisos")
+def avisos(request):
+    alumno = alumno_para_usuario(request.user)
+    filtro = request.GET.get("estado") or "todos"
+    if filtro not in ("todos", "leidos", "no_leidos"):
+        filtro = "todos"
+    data = bandeja_avisos(alumno, filtro=None if filtro == "todos" else filtro)
+    return render(
+        request,
+        "campus/avisos.html",
+        _ctx(request, "mas", {"bandeja": data["items"], "filtro": filtro}),
+    )
+
+
+@login_required
+@require_POST
+@requiere_feature("campus.avisos")
+def aviso_leer(request, aviso_id):
+    alumno = alumno_para_usuario(request.user)
+    aviso = get_object_or_404(avisos_vigentes_qs_safe(alumno), pk=aviso_id)
+    marcar_leido(alumno, aviso)
+    messages.success(request, "Aviso marcado como leído.")
+    return redirect(request.POST.get("next") or "campus_avisos")
+
+
+def avisos_vigentes_qs_safe(alumno):
+    from campus.services.avisos import avisos_vigentes_qs
+
+    return avisos_vigentes_qs(alumno)

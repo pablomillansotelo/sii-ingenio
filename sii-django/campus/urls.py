@@ -9,4 +9,6 @@ urlpatterns = [
     path("mensajes/", views.mensajes, name="campus_mensajes"),
     path("mas/", views.mas, name="campus_mas"),
     path("datos/", views.ficha, name="campus_ficha"),
+    path("avisos/", views.avisos, name="campus_avisos"),
+    path("avisos/<int:aviso_id>/leer/", views.aviso_leer, name="campus_aviso_leer"),
 ]

@@ -8,6 +8,7 @@ MAS_REALES = (
     {"label": "Aula", "url_name": "aula_dashboard", "icon": "bi-journal-bookmark"},
     {"label": "Mi expediente", "url_name": "sii_mi_ficha", "icon": "bi-person-vcard"},
     {"label": "Horario", "url_name": "sii_horario", "icon": "bi-clock"},
+    {"label": "Avisos", "url_name": "campus_avisos", "icon": "bi-megaphone"},
 )
 
 MAS_PROXIMAMENTE = (
