@@ -152,3 +152,19 @@ def favorito_toggle(request):
     else:
         CampusFavorito.objects.create(user_id=request.user.pk, clave=clave)
     return redirect("campus_control_escolar")
+
+
+@login_required
+@requiere_feature("campus.kardex")
+def kardex(request):
+    from sii.identity import inscripciones_visibles
+    from sii.views import _kardex_rows
+
+    inscripciones = inscripciones_visibles(request.user).order_by(
+        "-periodo__fecha_inicio", "curso__nombre"
+    )
+    return render(
+        request,
+        "campus/kardex.html",
+        _ctx(request, "control", {"kardex": _kardex_rows(inscripciones)}),
+    )

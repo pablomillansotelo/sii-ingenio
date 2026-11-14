@@ -26,7 +26,17 @@ from sii.identity import (
     es_administrador,
     inscripciones_visibles,
 )
-from sii.models import Alumno, ActaFinal, Curso, Docente, DocenteCurso, HorarioSlot, Inscripcion, Periodo
+from sii.models import (
+    CALIFICACION_MINIMA,
+    Alumno,
+    ActaFinal,
+    Curso,
+    Docente,
+    DocenteCurso,
+    HorarioSlot,
+    Inscripcion,
+    Periodo,
+)
 
 
 def _solo_admin(view_func):
@@ -68,18 +78,29 @@ def home(request):
 
 
 def _kardex_rows(inscripciones):
-    return [
-        {
-            "clave": inscripcion.curso_id,
-            "nombre": inscripcion.curso.nombre,
-            "edicion": inscripcion.id_edicion.codigo_edicion if inscripcion.id_edicion_id else "",
-            "creditos": "",
-            "calificacion": inscripcion.calificacion,
-            "periodo": inscripcion.periodo.nombre if inscripcion.periodo_id else "",
-            "alumno": inscripcion.alumno,
-        }
-        for inscripcion in inscripciones.select_related("alumno", "curso", "periodo", "id_edicion")
-    ]
+    rows = []
+    for inscripcion in inscripciones.select_related("alumno", "curso", "periodo", "id_edicion"):
+        nota = inscripcion.calificacion
+        rows.append(
+            {
+                "clave": inscripcion.curso_id,
+                "nombre": inscripcion.curso.nombre,
+                "edicion": inscripcion.id_edicion.codigo_edicion if inscripcion.id_edicion_id else "",
+                "creditos": "",
+                "calificacion": nota,
+                "periodo": inscripcion.periodo.nombre if inscripcion.periodo_id else "",
+                "alumno": inscripcion.alumno,
+                "intento": inscripcion.intento,
+                "estado": inscripcion.get_estado_display(),
+                "estado_codigo": inscripcion.estado,
+                "acreditado": (
+                    nota is not None
+                    and nota >= CALIFICACION_MINIMA
+                    and inscripcion.estado != "cancelado"
+                ),
+            }
+        )
+    return rows
 
 
 @login_required

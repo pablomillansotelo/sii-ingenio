@@ -1,0 +1,20 @@
+{% extends "campus/base.html" %}
+{% block title %}Kardex · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Kardex</h1>
+  <p class="text-muted">Consulta oficial de SII (inscripciones y calificaciones). No es el kardex legado del aula.</p>
+  {% for materia in kardex %}
+  <article class="card shadow-sm mb-2">
+    <div class="card-body">
+      <h2 class="h6 mb-1">{{ materia.nombre }}</h2>
+      <p class="small text-muted mb-2">{{ materia.periodo }}{% if materia.edicion %} · {{ materia.edicion }}{% endif %} · intento {{ materia.intento }}</p>
+      <p class="mb-1">Calificación: <strong>{% if materia.calificacion is not None %}{{ materia.calificacion }}{% else %}En curso{% endif %}</strong></p>
+      <p class="mb-0 small">{{ materia.estado }}{% if materia.acreditado %} · Acreditada{% endif %}</p>
+    </div>
+  </article>
+  {% empty %}
+  <p class="text-muted">No hay materias en tu expediente.</p>
+  {% endfor %}
+</section>
+{% endblock %}
