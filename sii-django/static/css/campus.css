@@ -83,6 +83,25 @@
   margin-bottom: 0.35rem;
 }
 
+.campus-avance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+}
+
+.campus-metric-label {
+  font-size: 0.75rem;
+  color: #667085;
+  margin-bottom: 0.15rem;
+}
+
+.campus-metric-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+}
+
 .campus-bottom-nav {
   position: fixed;
   left: 0;

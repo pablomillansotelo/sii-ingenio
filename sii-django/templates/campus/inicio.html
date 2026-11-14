@@ -3,11 +3,34 @@
 {% block content %}
 <section class="campus-page">
   <h1 class="campus-page-title">Inicio</h1>
-  <p class="text-muted">Bienvenido a tu campus. Aquí verás tu avance, tus cursos y las noticias de Ingenio.</p>
-  <div class="campus-placeholder card shadow-sm">
+  <p class="text-muted">Tu campus en Ingenio.</p>
+
+  <article class="card shadow-sm campus-card mb-3" aria-labelledby="avance-titulo">
     <div class="card-body">
-      <p class="mb-0">Tu tablero se irá completando con tu expediente. Mientras tanto puedes ir al aula, al kardex o a tus compras desde <strong>Más</strong>.</p>
+      <h2 class="h5" id="avance-titulo">Avance académico</h2>
+      {% if avance.tiene_inscripciones %}
+      <div class="campus-avance-grid">
+        <div>
+          <p class="campus-metric-label">Promedio oficial</p>
+          <p class="campus-metric-value">{% if avance.promedio is not None %}{{ avance.promedio }}{% else %}—{% endif %}</p>
+        </div>
+        <div>
+          <p class="campus-metric-label">Avance</p>
+          <p class="campus-metric-value">{% if avance.porcentaje is not None %}{{ avance.porcentaje }} %{% else %}—{% endif %}</p>
+        </div>
+        <div>
+          <p class="campus-metric-label">Materias cursadas</p>
+          <p class="campus-metric-value">{{ avance.materias_x }} de {{ avance.materias_y }}</p>
+        </div>
+      </div>
+      <p class="small text-muted mb-3">{{ avance.plan_etiqueta }}</p>
+      <a class="btn btn-outline-primary btn-sm" href="{% url 'sii_kardex' %}">Ver kardex</a>
+      {% else %}
+      <p class="mb-2">Aún no tienes inscripciones en tu expediente.</p>
+      <p class="small text-muted mb-3">Cuando control escolar registre tus materias, aquí verás promedio y avance. No hay un plan de estudios formal todavía: el total se calcula con las materias distintas que hayas inscrito.</p>
+      <a class="btn btn-outline-primary btn-sm" href="{% url 'sii_kardex' %}">Ver kardex</a>
+      {% endif %}
     </div>
-  </div>
+  </article>
 </section>
 {% endblock %}

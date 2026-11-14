@@ -4,6 +4,7 @@ from django.shortcuts import render
 from campus.nav import MAS_PROXIMAMENTE, MAS_REALES
 from sii.identity import alumno_para_usuario
 from sii.rbac import requiere_feature
+from sii.services.avance import avance_academico
 
 
 def _ctx(request, tab, extra=None):
@@ -21,7 +22,12 @@ def _ctx(request, tab, extra=None):
 @login_required
 @requiere_feature("campus.inicio")
 def inicio(request):
-    return render(request, "campus/inicio.html", _ctx(request, "inicio"))
+    alumno = alumno_para_usuario(request.user)
+    return render(
+        request,
+        "campus/inicio.html",
+        _ctx(request, "inicio", {"avance": avance_academico(alumno)}),
+    )
 
 
 @login_required

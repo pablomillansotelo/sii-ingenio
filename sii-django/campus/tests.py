@@ -1,12 +1,14 @@
 from datetime import date
+from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
 from django.test import Client, TestCase
 from django.urls import reverse
 
 from sii.identity import destino_post_login
-from sii.models import Alumno
+from sii.models import Alumno, Curso, Inscripcion, Periodo
 from sii.permissions import GRUPO_ALUMNO, GRUPO_VENDEDOR, crear_grupos
+from sii.services.avance import avance_academico
 from ventas.models import Vendedor
 
 
@@ -106,3 +108,73 @@ class CampusShellTests(TestCase):
     def test_hoy_redirige_al_alumno(self):
         response = self.http_alum.get(reverse("inicio"))
         self.assertRedirects(response, reverse("campus_inicio"))
+
+
+class CampusAvanceTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("alum2", "alum2@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Eva",
+            apellido="Ruiz",
+            email="alum2@example.com",
+            curp="RUEV000101MDFXXX08",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.periodo = Periodo.objects.create(
+            nombre="2026-A", fecha_inicio=date(2026, 1, 1), fecha_fin=date(2026, 6, 30)
+        )
+        self.curso_a = Curso.objects.create(nombre="Álgebra")
+        self.curso_b = Curso.objects.create(nombre="Historia")
+        self.http = Client()
+        self.http.force_login(self.user)
+
+    def test_sin_inscripciones_estado_vacio(self):
+        data = avance_academico(self.alumno)
+        self.assertFalse(data["tiene_inscripciones"])
+        response = self.http.get(reverse("campus_inicio"))
+        self.assertContains(response, "Aún no tienes inscripciones")
+        self.assertContains(response, "Ver kardex")
+
+    def test_promedio_ignora_en_curso_y_baja(self):
+        Inscripcion.objects.create(
+            alumno=self.alumno,
+            curso=self.curso_a,
+            periodo=self.periodo,
+            calificacion=Decimal("8.00"),
+            estado="completado",
+        )
+        Inscripcion.objects.create(
+            alumno=self.alumno,
+            curso=self.curso_b,
+            periodo=self.periodo,
+            calificacion=None,
+            estado="activo",
+        )
+        data = avance_academico(self.alumno)
+        self.assertEqual(data["promedio"], Decimal("8.00"))
+        self.assertEqual(data["materias_x"], 1)
+        self.assertEqual(data["materias_y"], 2)
+        self.assertEqual(data["porcentaje"], 50)
+
+        baja_curso = Curso.objects.create(nombre="Baja")
+        Inscripcion.objects.create(
+            alumno=self.alumno,
+            curso=baja_curso,
+            periodo=self.periodo,
+            calificacion=Decimal("9.00"),
+            estado="cancelado",
+        )
+        data = avance_academico(self.alumno)
+        self.assertEqual(data["promedio"], Decimal("8.00"))
+        self.assertEqual(data["materias_x"], 1)
+        self.assertEqual(data["materias_y"], 3)
+        response = self.http.get(reverse("campus_inicio"))
+        self.assertContains(response, "8.00")
+        self.assertContains(response, "1 de 3")
+        self.assertContains(response, reverse("sii_kardex"))
+        self.assertContains(response, "Sin plan de estudios formal")
