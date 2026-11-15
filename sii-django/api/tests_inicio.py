@@ -777,6 +777,29 @@ class InicioDocenteTests(TestCase):
         self.assertContains(response, "Marketing")
         self.assertNotContains(response, "Ajeno")
 
+    def test_admin_con_ficha_grupos_y_sin_aviso_solo_docente_curso(self):
+        from ventas.models import EdicionCurso, Producto
+
+        producto_ajeno = Producto.objects.create(
+            producto="Ajeno", precio_unitario=Decimal("900"), id_curso=self.ajeno
+        )
+        EdicionCurso.objects.create(
+            id_curso=producto_ajeno,
+            codigo_edicion="AJENO-1",
+            fecha_inicio=self.hoy - timedelta(days=5),
+            fecha_fin=self.hoy + timedelta(days=40),
+            estado="en_curso",
+            activo=True,
+        )
+        admin = crear_admin("d91.admin.g")
+        crear_docente(user=admin, cursos=[self.curso], username="d91.admin.g")
+        http = Client()
+        http.force_login(admin)
+        response = http.get(reverse("inicio") + "?ctx=docente")
+        self.assertContains(response, "MKT-A")
+        self.assertNotContains(response, "AJENO-1")
+        self.assertContains(response, "Grupos sin aviso")
+
 
 class InicioDireccionTests(TestCase):
     databases = {"default", "auth"}
@@ -849,6 +872,62 @@ class InicioDireccionTests(TestCase):
         self.assertContains(response, "6 trámites abiertos")
         self.assertContains(response, "?ctx=escolar")
         self.assertNotContains(response, "0 actas atrasadas")
+
+    def test_kpis_booleanos_con_orm(self):
+        import inspect
+
+        from api.inicio import widgets_direccion
+        from campus.models import AvisoInstitucional
+        from sii.models import ActaFinal
+
+        fuente = inspect.getsource(widgets_direccion)
+        self.assertNotIn("cursor.execute", fuente)
+        self.assertNotIn("cerrado = 0", fuente)
+        self.assertNotIn("publicado = 1", fuente)
+        self.assertIn("cerrado=False", fuente)
+        self.assertIn("publicado=True", fuente)
+
+        curso = Curso.objects.create(nombre="ActaDir")
+        abierto = Periodo.objects.create(
+            nombre="Abierto",
+            fecha_inicio=self.hoy - timedelta(days=60),
+            fecha_fin=self.hoy - timedelta(days=1),
+            cerrado=False,
+        )
+        cerrado = Periodo.objects.create(
+            nombre="Cerrado",
+            fecha_inicio=self.hoy - timedelta(days=120),
+            fecha_fin=self.hoy - timedelta(days=30),
+            cerrado=True,
+        )
+        ActaFinal.objects.create(curso=curso, periodo=abierto, estado="borrador")
+        ActaFinal.objects.create(
+            curso=Curso.objects.create(nombre="ActaCerrada"),
+            periodo=cerrado,
+            estado="borrador",
+        )
+        AvisoInstitucional.objects.create(
+            titulo="Urgente",
+            cuerpo="x",
+            tipo=AvisoInstitucional.TIPO_IMPORTANTE,
+            publicado=True,
+            vigencia_inicio=self.hoy - timedelta(days=1),
+            vigencia_fin=self.hoy + timedelta(days=1),
+        )
+        AvisoInstitucional.objects.create(
+            titulo="Borrador",
+            cuerpo="x",
+            tipo=AvisoInstitucional.TIPO_IMPORTANTE,
+            publicado=False,
+        )
+        kpis = widgets_direccion._kpis(self.admin, self.hoy)
+        self.assertEqual(kpis["actas"], 1)
+        self.assertEqual(kpis["avisos"], 1)
+        response = self.http.get(reverse("inicio") + "?ctx=direccion")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "1 actas atrasadas")
+        self.assertContains(response, "1 avisos importantes vigentes")
+        self.assertNotContains(response, "No pudimos cargar esto")
 
     def test_vendedor_sin_direccion(self):
         vend = crear_vendedor(username="dir.vend")

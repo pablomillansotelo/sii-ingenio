@@ -50,10 +50,16 @@ def _conteos(user, contexto):
         if has_feature(user, "sii.docentes"):
             chips.append({"label": "Docentes", "value": docentes, "url_name": "sii_docentes"})
     elif contexto == "docente":
-        from sii.identity import ediciones_visibles
+        from api.inicio.widgets_docente import _curso_ids
+        from ventas.models import EdicionCurso
 
         if has_feature(user, "aula.cursos"):
-            grupos = ediciones_visibles(user).filter(activo=True, estado="en_curso").count()
+            ids = _curso_ids(user)
+            grupos = EdicionCurso.objects.filter(
+                id_curso__id_curso_id__in=ids,
+                activo=True,
+                estado="en_curso",
+            ).count()
             chips.append({"label": "Mis grupos", "value": grupos, "url_name": "aula_dashboard"})
         if has_feature(user, "sii.alumnos"):
             chips.append(
