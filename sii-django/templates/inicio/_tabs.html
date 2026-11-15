@@ -1,0 +1,12 @@
+{% if inicio_tabs|length >= 2 %}
+<nav class="home-tabs nav nav-pills mb-3" aria-label="Contextos de trabajo">
+  {% for tab in inicio_tabs %}
+  <a class="nav-link{% if tab.active %} active{% endif %}" href="?ctx={{ tab.clave }}">
+    <i class="bi {{ tab.icono }} me-1"></i>{{ tab.label }}
+    {% if tab.badge %}
+    <span class="badge text-bg-light text-dark ms-1">{{ tab.badge }}</span>
+    {% endif %}
+  </a>
+  {% endfor %}
+</nav>
+{% endif %}

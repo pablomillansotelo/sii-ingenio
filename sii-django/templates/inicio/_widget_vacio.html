@@ -1,0 +1,7 @@
+<div class="home-widget-empty d-flex align-items-center gap-2 px-3 py-2 rounded bg-white border">
+  <i class="bi bi-check-circle text-success"></i>
+  <div>
+    <span class="fw-semibold">Todo al día</span>
+    <span class="text-muted"> · {{ widget.titulo }}{% if data.mensaje_vacio %} — {{ data.mensaje_vacio }}{% endif %}</span>
+  </div>
+</div>

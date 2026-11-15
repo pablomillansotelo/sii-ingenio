@@ -1,0 +1,11 @@
+<a class="list-group-item list-group-item-action home-item" href="{{ item.url }}">
+  <div class="d-flex justify-content-between align-items-start gap-2">
+    <span class="fw-semibold">{{ item.titulo }}</span>
+    {% if item.badge %}
+    <span class="badge {{ item.badge_tone|default:'text-bg-light' }}">{{ item.badge }}</span>
+    {% endif %}
+  </div>
+  {% if item.meta %}
+  <div class="small text-muted">{{ item.meta }}</div>
+  {% endif %}
+</a>

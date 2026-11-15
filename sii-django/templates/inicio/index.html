@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Hoy{% if inicio_ctx_label %} · {{ inicio_ctx_label }}{% endif %} · Ingenio{% endblock %}
+
+{% block content %}
+{% include "includes/page_header.html" with title="Hoy" subtitle=inicio_subtitle %}
+
+{% include "inicio/_tabs.html" %}
+
+{% if sin_modulo %}
+  {% include "includes/empty_state.html" with message="Tu cuenta no tiene un módulo asignado. Pide a un administrador que te dé de alta en un grupo o escribe a mesa de ayuda." %}
+{% endif %}
+
+{% if todo_al_dia %}
+<div class="home-all-clear card shadow-sm mb-3">
+  <div class="card-body">
+    <p class="mb-2 fw-semibold"><i class="bi bi-check-circle text-success me-1"></i>Todo al día en {{ inicio_ctx_label }}</p>
+    <div class="d-flex flex-wrap gap-2">
+      {% for atajo in atajos_vacios %}
+      <a class="btn btn-outline-primary btn-sm" href="{% url atajo.url_name %}"><i class="bi {{ atajo.icon }} me-1"></i>{{ atajo.label }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-3 home-widgets">
+  {% for widget, data in widgets_pendientes %}
+  <div class="col-12 col-lg-6">
+    {% if data.tipo == "kpi" %}
+      {% include "inicio/_kpi_card.html" %}
+    {% else %}
+      {% include "inicio/_widget.html" %}
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{% if widgets_vacios %}
+<section class="home-al-dia mt-4">
+  <h2 class="h6 text-muted text-uppercase mb-2">Al día</h2>
+  <div class="d-flex flex-column gap-2">
+    {% for widget, data in widgets_vacios %}
+      {% include "inicio/_widget_vacio.html" %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% include "inicio/_franja_conteos.html" %}
+{% include "inicio/_mi_campus.html" %}
+{% endblock %}

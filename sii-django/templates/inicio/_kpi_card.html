@@ -1,0 +1,15 @@
+<article class="home-kpi card shadow-sm h-100">
+  <div class="card-body d-flex flex-column">
+    <h2 class="h6 text-muted text-uppercase mb-2">
+      {% if widget.icono %}<i class="bi {{ widget.icono }} me-1"></i>{% endif %}{{ widget.titulo }}
+    </h2>
+    <p class="fs-3 fw-semibold mb-1">{{ data.kpi }}</p>
+    {% if data.secundario %}<p class="text-muted mb-2">{{ data.secundario }}</p>{% endif %}
+    {% if data.alerta %}
+    <span class="badge {{ data.alerta_tone|default:'text-bg-warning' }} align-self-start mb-3">{{ data.alerta }}</span>
+    {% endif %}
+    {% if data.cta_url and data.cta_label %}
+    <a class="btn btn-outline-primary home-cta mt-auto" href="{{ data.cta_url }}">{{ data.cta_label }}</a>
+    {% endif %}
+  </div>
+</article>
