@@ -343,13 +343,14 @@ MODULE_LANDINGS = {
 }
 
 HOY_SHORTCUTS = [
-    {"label": "Nueva venta", "url_name": "Carrito", "icon": "bi-bag-plus", "feature": "ventas.pos"},
+    {"label": "Nueva venta", "url_name": "Carrito", "icon": "bi-bag-plus", "feature": "ventas.pos", "contexto": "ventas"},
     {
         "label": "Registrar pago",
         "url_name": "Pagos",
         "icon": "bi-credit-card",
         "feature": "ventas.pagos",
         "badge": "pagos",
+        "contexto": "ventas",
     },
     {
         "label": "Mis compras",
@@ -357,6 +358,7 @@ HOY_SHORTCUTS = [
         "icon": "bi-wallet2",
         "feature": "ventas.mis_compras",
         "skip_if": "ventas.pos",
+        "contexto": "ventas",
     },
     {
         "label": "Inscripciones",
@@ -364,12 +366,14 @@ HOY_SHORTCUTS = [
         "icon": "bi-clipboard-check",
         "feature": "sii.inscripciones",
         "hide_if_own": True,
+        "contexto": "escolar",
     },
     {
         "label": "Kardex",
         "url_name": "sii_kardex",
         "icon": "bi-table",
         "feature": "sii.kardex",
+        "contexto": "escolar",
     },
     {
         "label": "Mi expediente",
@@ -384,8 +388,15 @@ HOY_SHORTCUTS = [
         "icon": "bi-pencil-square",
         "feature": "aula.calificar",
         "badge": "calificar",
+        "contexto": "docente",
     },
-    {"label": "Aula", "url_name": "aula_dashboard", "icon": "bi-journal-bookmark", "feature": "aula.cursos"},
+    {
+        "label": "Aula",
+        "url_name": "aula_dashboard",
+        "icon": "bi-journal-bookmark",
+        "feature": "aula.cursos",
+        "contexto": "docente",
+    },
 ]
 
 
