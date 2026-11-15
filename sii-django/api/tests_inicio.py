@@ -945,10 +945,21 @@ class InicioFranjaTests(TestCase):
         crear_grupos()
 
     def test_franja_por_contexto(self):
+        import inspect
+
+        from api.inicio import conteos
+
+        fuente = inspect.getsource(conteos)
+        self.assertNotIn("cursor.execute", fuente)
+        self.assertNotIn("activo = 1", fuente)
+        self.assertNotIn("activo = 0", fuente)
+        self.assertIn("activo=True", fuente)
+
         admin = crear_admin("franja.admin")
         http = Client()
         http.force_login(admin)
         ventas = http.get(reverse("inicio") + "?ctx=ventas")
+        self.assertEqual(ventas.status_code, 200)
         self.assertContains(ventas, "Clientes activos")
         self.assertContains(ventas, "Cursos en venta")
         self.assertContains(ventas, "Ediciones abiertas")

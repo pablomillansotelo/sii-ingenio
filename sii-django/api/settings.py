@@ -7,13 +7,14 @@ from decouple import config
 import os
 import sys
 
+from api.envflags import resolver_debug
 from aula.storage import DEFAULT_BUCKET, DEFAULT_REGION, backend_archivos
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config("SECRET_KEY", default="#%9g2p3)pba4-h0$b5bi5vw$q%lx%#x*odh&xk%$hl6td^kh#2")
 
-DEBUG = config("DEBUG", default=False, cast=bool)
+DEBUG = resolver_debug(os.environ.get("VERCEL_ENV"), config("DEBUG", default="False"))
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
@@ -76,13 +77,29 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "api.wsgi.app"
 
-_skip_postgres = (
+_test_en_postgres = os.environ.get("DJANGO_TEST_POSTGRES") == "1"
+_skip_postgres = not _test_en_postgres and (
     "test" in sys.argv
     or "collectstatic" in sys.argv
     or os.environ.get("DJANGO_TEST") == "1"
     or os.environ.get("COLLECTSTATIC") == "1"
     or os.environ.get("DJANGO_SQLITE") == "1"
 )
+
+
+def _postgres(name_key, user_key, password_key, host_key, port_key, ssl_key):
+    sslmode = config(ssl_key, default=config("DB_SSLMODE", default="require"))
+    return {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": config(name_key),
+        "USER": config(user_key),
+        "PASSWORD": config(password_key, default=""),
+        "HOST": config(host_key),
+        "PORT": config(port_key, default="5432"),
+        "OPTIONS": {"sslmode": sslmode},
+    }
+
+
 if _skip_postgres:
     if os.environ.get("DJANGO_SQLITE") == "1":
         _default_db = str(BASE_DIR / "demo.sqlite3")
@@ -103,25 +120,11 @@ if _skip_postgres:
     MIDDLEWARE = [item for item in MIDDLEWARE if "auto_migrate" not in item]
 else:
     DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": config("DB_NAME"),
-            "USER": config("DB_USER"),
-            "PASSWORD": config("DB_PASSWORD"),
-            "HOST": config("DB_HOST"),
-            "PORT": config("DB_PORT", default="5432"),
-            "OPTIONS": {"sslmode": "require"},
-        },
-        "auth": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": config("AUTH_NAME"),
-            "USER": config("AUTH_USER"),
-            "PASSWORD": config("AUTH_PASSWORD"),
-            "HOST": config("AUTH_HOST"),
-            "PORT": config("AUTH_PORT", default="5432"),
-            "OPTIONS": {"sslmode": "require"},
-        },
+        "default": _postgres("DB_NAME", "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT", "DB_SSLMODE"),
+        "auth": _postgres("AUTH_NAME", "AUTH_USER", "AUTH_PASSWORD", "AUTH_HOST", "AUTH_PORT", "AUTH_SSLMODE"),
     }
+    if _test_en_postgres or "test" in sys.argv:
+        MIDDLEWARE = [item for item in MIDDLEWARE if "auto_migrate" not in item]
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
