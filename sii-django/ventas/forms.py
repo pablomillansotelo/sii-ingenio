@@ -85,6 +85,7 @@ class AddProductoForm(BootstrapFormMixin, forms.ModelForm):
             "duracion_horas",
             "modalidad",
             "activo",
+            "destacado",
         )
         labels = {
             "producto": "Curso",
@@ -94,6 +95,7 @@ class AddProductoForm(BootstrapFormMixin, forms.ModelForm):
             "duracion_horas": "Duración (horas)",
             "modalidad": "Modalidad",
             "activo": "Activo",
+            "destacado": "Destacado en campus",
         }
 
 
@@ -109,6 +111,7 @@ class EditarProductoForm(BootstrapFormMixin, forms.ModelForm):
             "duracion_horas",
             "modalidad",
             "activo",
+            "destacado",
         )
         labels = {
             "id_producto": "ID",
@@ -119,6 +122,7 @@ class EditarProductoForm(BootstrapFormMixin, forms.ModelForm):
             "duracion_horas": "Duración (horas)",
             "modalidad": "Modalidad",
             "activo": "Activo",
+            "destacado": "Destacado en campus",
         }
         widgets = {
             "id_producto": forms.HiddenInput(attrs={"id": "id_producto_editar"}),
@@ -129,6 +133,7 @@ class EditarProductoForm(BootstrapFormMixin, forms.ModelForm):
             "duracion_horas": forms.NumberInput(attrs={"id": "duracion_horas_editar"}),
             "modalidad": forms.Select(attrs={"id": "modalidad_editar"}),
             "activo": forms.CheckboxInput(attrs={"id": "activo_producto_editar"}),
+            "destacado": forms.CheckboxInput(attrs={"id": "destacado_producto_editar"}),
         }
 
 
@@ -264,6 +269,7 @@ class AddEdicionForm(BootstrapFormMixin, forms.ModelForm):
             "precio_edicion",
             "estado",
             "activo",
+            "educacion_continua",
         )
         labels = {
             "id_curso": "Curso",
@@ -274,6 +280,7 @@ class AddEdicionForm(BootstrapFormMixin, forms.ModelForm):
             "precio_edicion": "Precio de edición",
             "estado": "Estado",
             "activo": "Activo",
+            "educacion_continua": "Educación continua",
         }
         widgets = {
             "fecha_inicio": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
@@ -295,6 +302,7 @@ class EditarEdicionForm(BootstrapFormMixin, forms.ModelForm):
             "precio_edicion",
             "estado",
             "activo",
+            "educacion_continua",
         )
         widgets = {
             "id_edicion": forms.HiddenInput(attrs={"id": "id_edicion_editar"}),
@@ -306,6 +314,7 @@ class EditarEdicionForm(BootstrapFormMixin, forms.ModelForm):
             "precio_edicion": forms.NumberInput(attrs={"id": "precio_edicion_editar"}),
             "estado": forms.Select(attrs={"id": "estado_edicion_editar"}),
             "activo": forms.CheckboxInput(attrs={"id": "activo_edicion_editar"}),
+            "educacion_continua": forms.CheckboxInput(attrs={"id": "educacion_continua_edicion_editar"}),
         }
 
 

@@ -18,8 +18,13 @@ MAS_REALES = (
     {"label": "Mensajes", "url_name": "campus_mensajes", "icon": "bi-chat-dots"},
     {"label": "Notificaciones", "url_name": "campus_notificaciones", "icon": "bi-bell"},
     {"label": "Progreso Ingenio", "url_name": "campus_ludico", "icon": "bi-trophy"},
+    {"label": "Normativa", "url_name": "campus_normativa", "icon": "bi-book"},
+    {"label": "Directorio", "url_name": "campus_directorio", "icon": "bi-telephone"},
+    {"label": "Mesa de ayuda", "url_name": "campus_ayuda", "icon": "bi-life-preserver"},
+    {"label": "Facturación", "url_name": "campus_facturacion", "icon": "bi-receipt"},
+    {"label": "Cursos recomendados", "url_name": "campus_ofertas", "icon": "bi-stars"},
+    {"label": "Educación continua", "url_name": "campus_continua", "icon": "bi-mortarboard"},
+    {"label": "Biblioteca", "url_name": "campus_biblioteca", "icon": "bi-bookshelf"},
 )
 
-MAS_PROXIMAMENTE = (
-    "Mesa de ayuda",
-)
+MAS_PROXIMAMENTE = ()

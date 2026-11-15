@@ -10,10 +10,13 @@ HUB_ACCESOS = [
     {"clave": "expediente", "label": "Expediente digital", "url_name": "campus_expediente", "icon": "bi-folder", "estado": "listo"},
     {"clave": "credencial", "label": "Credencial", "url_name": "campus_credencial", "icon": "bi-person-badge", "estado": "listo"},
     {"clave": "aceptacion", "label": "Aceptación de materias", "url_name": "campus_aceptacion", "icon": "bi-check2-square", "estado": "listo"},
-    {"clave": "normativa", "label": "Normativa", "url_name": None, "icon": "bi-book", "estado": "proximamente"},
-    {"clave": "directorio", "label": "Directorio", "url_name": None, "icon": "bi-telephone", "estado": "proximamente"},
-    {"clave": "mesa", "label": "Mesa de ayuda", "url_name": None, "icon": "bi-life-preserver", "estado": "proximamente"},
-    {"clave": "facturacion", "label": "Facturación", "url_name": None, "icon": "bi-receipt", "estado": "proximamente"},
+    {"clave": "normativa", "label": "Normativa", "url_name": "campus_normativa", "icon": "bi-book", "estado": "listo"},
+    {"clave": "directorio", "label": "Directorio", "url_name": "campus_directorio", "icon": "bi-telephone", "estado": "listo"},
+    {"clave": "mesa", "label": "Mesa de ayuda", "url_name": "campus_ayuda", "icon": "bi-life-preserver", "estado": "listo"},
+    {"clave": "facturacion", "label": "Facturación", "url_name": "campus_facturacion", "icon": "bi-receipt", "estado": "listo"},
+    {"clave": "ofertas", "label": "Cursos recomendados", "url_name": "campus_ofertas", "icon": "bi-stars", "estado": "listo"},
+    {"clave": "continua", "label": "Educación continua", "url_name": "campus_continua", "icon": "bi-mortarboard", "estado": "listo"},
+    {"clave": "biblioteca", "label": "Biblioteca", "url_name": "campus_biblioteca", "icon": "bi-bookshelf", "estado": "listo"},
 ]
 
 CLAVES_VALIDAS = {item["clave"] for item in HUB_ACCESOS}

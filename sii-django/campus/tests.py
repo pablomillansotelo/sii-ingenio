@@ -84,7 +84,7 @@ class CampusShellTests(TestCase):
         self.assertContains(response, reverse("campus_kardex"))
         self.assertContains(response, reverse("campus_estado_cuenta"))
         self.assertContains(response, reverse("aula_dashboard"))
-        self.assertContains(response, "Próximamente")
+        self.assertContains(response, reverse("campus_ayuda"))
 
     def test_vendedor_y_docente_no_ven_campus(self):
         self.assertEqual(self.http_vend.get(reverse("campus_inicio")).status_code, 403)
@@ -579,7 +579,10 @@ class CampusHubTests(TestCase):
         self.assertContains(response, reverse("campus_estado_cuenta"))
         self.assertContains(response, reverse("campus_ficha"))
         self.assertContains(response, reverse("sii_horario"))
-        self.assertContains(response, "Próximamente")
+        self.assertContains(response, reverse("campus_facturacion"))
+        self.assertContains(response, reverse("campus_ofertas"))
+        self.assertContains(response, reverse("campus_continua"))
+        self.assertContains(response, reverse("campus_biblioteca"))
         self.assertNotContains(response, "Punto de venta")
         self.assertNotContains(response, reverse("Carrito"))
         self.assertNotContains(response, reverse("sii_alumno_crear"))

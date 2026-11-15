@@ -520,6 +520,104 @@ def ludico_reset(request, alumno_id):
 
 
 @login_required
+def normativa_staff(request):
+    from campus.models import ContactoDirectorio, DocumentoNormativa
+
+    if request.method == "POST":
+        accion = request.POST.get("accion")
+        publicado = bool(request.POST.get("publicado"))
+        if accion == "normativa":
+            DocumentoNormativa.objects.create(
+                titulo=(request.POST.get("titulo") or "").strip() or "Sin título",
+                cuerpo=(request.POST.get("cuerpo") or "").strip(),
+                archivo=request.FILES.get("archivo"),
+                publicado=publicado,
+                autor_id=request.user.pk,
+            )
+            messages.success(request, "Normativa guardada.")
+        elif accion == "directorio":
+            ContactoDirectorio.objects.create(
+                area=(request.POST.get("area") or "").strip(),
+                nombre=(request.POST.get("nombre") or "").strip(),
+                medio=(request.POST.get("medio") or "").strip(),
+                publicado=publicado,
+                autor_id=request.user.pk,
+            )
+            messages.success(request, "Contacto guardado.")
+        return redirect("sii_normativa")
+    return render(
+        request,
+        "sii/normativa.html",
+        {
+            "documentos": DocumentoNormativa.objects.all(),
+            "contactos": ContactoDirectorio.objects.all(),
+        },
+    )
+
+
+@login_required
+def biblioteca_staff(request):
+    from campus.models import RecursoBiblioteca
+    from sii.services.expediente import validar_archivo
+
+    if request.method == "POST":
+        archivo = request.FILES.get("archivo")
+        if archivo:
+            try:
+                validar_archivo(archivo)
+            except ValidationError as exc:
+                messages.error(request, " ".join(exc.messages))
+                return redirect("sii_biblioteca")
+        RecursoBiblioteca.objects.create(
+            titulo=(request.POST.get("titulo") or "").strip() or "Sin título",
+            descripcion=(request.POST.get("descripcion") or "").strip(),
+            url=(request.POST.get("url") or "").strip(),
+            archivo=archivo,
+            publicado=bool(request.POST.get("publicado")),
+            autor_id=request.user.pk,
+        )
+        messages.success(request, "Recurso de biblioteca guardado.")
+        return redirect("sii_biblioteca")
+    return render(request, "sii/biblioteca.html", {"recursos": RecursoBiblioteca.objects.all()})
+
+
+@login_required
+def ayuda_staff(request):
+    from campus.models import TicketAyuda
+
+    tickets = TicketAyuda.objects.select_related("alumno")
+    return render(request, "sii/ayuda.html", {"tickets": tickets})
+
+
+@login_required
+def ayuda_detalle(request, pk):
+    from campus.models import TicketAyuda, TicketRespuesta
+    from campus.services.ayuda import puede_transitar
+
+    ticket = get_object_or_404(TicketAyuda.objects.select_related("alumno"), pk=pk)
+    if request.method == "POST":
+        cuerpo = (request.POST.get("cuerpo") or "").strip()
+        nuevo = request.POST.get("estado") or ticket.estado
+        if not puede_transitar(ticket.estado, nuevo):
+            messages.error(request, "Esa transición de estado no está permitida.")
+        else:
+            if cuerpo:
+                TicketRespuesta.objects.create(
+                    ticket=ticket, autor_id=request.user.pk, cuerpo=cuerpo, es_staff=True
+                )
+            if nuevo != ticket.estado:
+                ticket.estado = nuevo
+                ticket.save(update_fields=["estado", "actualizado_en"])
+            messages.success(request, "Ticket actualizado.")
+            return redirect("sii_ayuda_detalle", pk=ticket.pk)
+    return render(
+        request,
+        "sii/ayuda_detalle.html",
+        {"ticket": ticket, "estados": TicketAyuda.ESTADO_CHOICES},
+    )
+
+
+@login_required
 @_solo_admin
 @require_POST
 def inscripcion_reintento(request):

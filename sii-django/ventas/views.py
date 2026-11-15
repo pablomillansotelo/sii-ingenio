@@ -3,7 +3,7 @@ from datetime import date
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.db.models import Count
-from .models import Cliente, Producto, Venta, VentaDetalle, Vendedor, EdicionCurso, Pago
+from .models import Cliente, Producto, SolicitudOferta, Venta, VentaDetalle, Vendedor, EdicionCurso, Pago
 from .forms import (
     AddClienteForm,
     EditarClienteForm,
@@ -640,3 +640,21 @@ def delete_pago_view(request):
         except (Pago.DoesNotExist, ValueError, TypeError):
             messages.error(request, "Pago no encontrado")
     return redirect("Pagos")
+
+
+@login_required
+@requiere_feature("ventas.solicitudes_oferta")
+def solicitudes_oferta_view(request):
+    if request.method == "POST":
+        solicitud = SolicitudOferta.objects.filter(pk=request.POST.get("id_solicitud")).first()
+        if solicitud and solicitud.estado == SolicitudOferta.ESTADO_ENVIADA:
+            solicitud.estado = SolicitudOferta.ESTADO_ATENDIDA
+            solicitud.atendida_en = timezone.now()
+            solicitud.save(update_fields=["estado", "atendida_en"])
+            messages.success(request, "Solicitud marcada. Inscribe al alumno desde el punto de venta para folio y cupo.")
+        return redirect("ventas_solicitudes_oferta")
+    return render(
+        request,
+        "ventas/solicitudes_oferta.html",
+        {"solicitudes": SolicitudOferta.objects.select_related("alumno", "edicion", "edicion__id_curso")},
+    )

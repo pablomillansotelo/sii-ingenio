@@ -117,6 +117,17 @@ FEATURES = {
     "campus.notificaciones": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "campus.ludico": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "sii.ludico": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
+    "campus.normativa": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "campus.directorio": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "sii.normativa": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
+    "campus.ayuda": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "sii.ayuda": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
+    "campus.facturacion": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "campus.ofertas": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "campus.continua": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "campus.biblioteca": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "sii.biblioteca": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
+    "ventas.solicitudes_oferta": {"roles": {VENDEDOR, ADMIN}, "scopes": {VENDEDOR: "all", ADMIN: "all"}},
 }
 
 URL_FEATURES = {
@@ -238,6 +249,22 @@ URL_FEATURES = {
     "sii_ludico": "sii.ludico",
     "sii_ludico_reset": "sii.ludico",
     "sii_aceptaciones": "sii.aceptacion",
+    "campus_normativa": "campus.normativa",
+    "campus_normativa_archivo": "campus.normativa",
+    "campus_directorio": "campus.directorio",
+    "sii_normativa": "sii.normativa",
+    "campus_ayuda": "campus.ayuda",
+    "campus_ayuda_detalle": "campus.ayuda",
+    "sii_ayuda": "sii.ayuda",
+    "sii_ayuda_detalle": "sii.ayuda",
+    "campus_facturacion": "campus.facturacion",
+    "campus_ofertas": "campus.ofertas",
+    "campus_oferta_solicitar": "campus.ofertas",
+    "ventas_solicitudes_oferta": "ventas.solicitudes_oferta",
+    "campus_continua": "campus.continua",
+    "campus_biblioteca": "campus.biblioteca",
+    "campus_biblioteca_archivo": "campus.biblioteca",
+    "sii_biblioteca": "sii.biblioteca",
 }
 
 NAV = {
@@ -250,6 +277,7 @@ NAV = {
         {"label": "Clientes", "url_name": "Clientes", "icon": "bi-people", "feature": "ventas.clientes"},
         {"label": "Cursos", "url_name": "Inventario", "icon": "bi-collection", "feature": "ventas.cursos"},
         {"label": "Ediciones", "url_name": "Ediciones", "icon": "bi-calendar-event", "feature": "ventas.ediciones"},
+        {"label": "Solicitudes", "url_name": "ventas_solicitudes_oferta", "icon": "bi-inbox", "feature": "ventas.solicitudes_oferta"},
         {"label": "Vendedores", "url_name": "Vendedores", "icon": "bi-person-badge", "feature": "ventas.vendedores"},
     ],
     "sii": [
@@ -280,6 +308,9 @@ NAV = {
         {"label": "Horario", "url_name": "sii_horario", "icon": "bi-clock", "feature": "sii.horario"},
         {"label": "Mensajes", "url_name": "sii_mensajes", "icon": "bi-chat-dots", "feature": "sii.mensajes"},
         {"label": "Progreso Ingenio", "url_name": "sii_ludico", "icon": "bi-trophy", "feature": "sii.ludico"},
+        {"label": "Normativa", "url_name": "sii_normativa", "icon": "bi-book", "feature": "sii.normativa"},
+        {"label": "Biblioteca", "url_name": "sii_biblioteca", "icon": "bi-bookshelf", "feature": "sii.biblioteca"},
+        {"label": "Mesa de ayuda", "url_name": "sii_ayuda", "icon": "bi-life-preserver", "feature": "sii.ayuda"},
     ],
     "campus": [
         {"label": "Inicio", "url_name": "campus_inicio", "icon": "bi-house", "feature": "campus.inicio"},

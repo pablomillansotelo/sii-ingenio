@@ -75,7 +75,7 @@
 <script>
 const ediciones = {
   {% for i in Ediciones %}
-  {{ i.id_edicion }}: {curso:"{{ i.id_curso_id }}", codigo:"{{ i.codigo_edicion|escapejs }}", inicio:"{{ i.fecha_inicio|date:'Y-m-d' }}", fin:"{{ i.fecha_fin|date:'Y-m-d'|default:'' }}", cupo:"{{ i.cupo_maximo }}", precio:"{{ i.precio_edicion|default:'' }}", estado:"{{ i.estado|escapejs }}", activo:{% if i.activo %}true{% else %}false{% endif %}},
+  {{ i.id_edicion }}: {curso:"{{ i.id_curso_id }}", codigo:"{{ i.codigo_edicion|escapejs }}", inicio:"{{ i.fecha_inicio|date:'Y-m-d' }}", fin:"{{ i.fecha_fin|date:'Y-m-d'|default:'' }}", cupo:"{{ i.cupo_maximo }}", precio:"{{ i.precio_edicion|default:'' }}", estado:"{{ i.estado|escapejs }}", activo:{% if i.activo %}true{% else %}false{% endif %}, continua:{% if i.educacion_continua %}true{% else %}false{% endif %}},
   {% endfor %}
 };
 function editarEdicion(id) {
@@ -90,6 +90,8 @@ function editarEdicion(id) {
   document.getElementById("estado_edicion_editar").value = e.estado;
   const activo = document.getElementById("activo_edicion_editar");
   if (activo) activo.checked = e.activo;
+  const continua = document.getElementById("educacion_continua_edicion_editar");
+  if (continua) continua.checked = e.continua;
 }
 function eliminarEdicion(id) { document.getElementById("id_edicion_eliminar").value = id; }
 </script>

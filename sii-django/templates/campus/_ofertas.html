@@ -1,0 +1,23 @@
+{% for card in ofertas %}
+<article class="card shadow-sm campus-card mb-3">
+  <div class="card-body">
+    <p class="small text-muted mb-1">{{ card.etiqueta }}</p>
+    <h3 class="h6 mb-1">{{ card.curso.producto }}</h3>
+    <p class="small text-muted mb-2">{{ card.edicion.codigo_edicion }} · Cupo {{ card.cupo_disponible }} · {% if card.sin_costo %}Sin costo{% else %}${{ card.precio|floatformat:2 }}{% endif %}</p>
+    {% if card.ya_inscrito %}
+    <p class="small mb-0">Ya estás inscrito en esta edición.</p>
+    {% elif card.ya_solicitado %}
+    <p class="small mb-0">Solicitud enviada. Un asesor de Ventas te contactará; no hay cobro en línea ni inscripción automática.</p>
+    {% else %}
+    <form method="post" action="{% url 'campus_oferta_solicitar' card.edicion.pk %}" class="d-inline">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <button class="btn btn-primary btn-sm" type="submit">Inscribirme</button>
+    </form>
+    <a class="btn btn-outline-secondary btn-sm" href="{% url 'campus_ayuda' %}">Hablar con un asesor</a>
+    {% endif %}
+  </div>
+</article>
+{% empty %}
+<p class="text-muted">No hay ediciones abiertas para mostrar ahora.</p>
+{% endfor %}

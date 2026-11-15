@@ -1,0 +1,32 @@
+{% extends "campus/base.html" %}
+{% block title %}Mesa de ayuda · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Mesa de ayuda</h1>
+  <p class="text-muted">Tickets con folio y seguimiento. No es la bandeja de mensajes.</p>
+  <form method="post" enctype="multipart/form-data" class="card shadow-sm mb-3">
+    {% csrf_token %}
+    <div class="card-body">
+      <select class="form-select mb-2" name="categoria" required>
+        {% for val, label in categorias %}
+        <option value="{{ val }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+      <input class="form-control mb-2" name="asunto" placeholder="Asunto" required>
+      <textarea class="form-control mb-2" name="descripcion" rows="3" placeholder="Describe tu caso" required></textarea>
+      <input class="form-control form-control-sm mb-2" type="file" name="adjunto" accept=".pdf,.jpg,.jpeg,.png,.webp">
+      <button class="btn btn-primary" type="submit">Abrir ticket</button>
+    </div>
+  </form>
+  {% for t in tickets %}
+  <a class="card shadow-sm mb-2 text-decoration-none text-reset d-block" href="{% url 'campus_ayuda_detalle' t.pk %}">
+    <div class="card-body">
+      <p class="fw-semibold mb-1">{{ t.folio }} · {{ t.asunto }}</p>
+      <p class="small text-muted mb-0">{{ t.get_estado_display }} · {{ t.creado_en|date:"d/m/Y H:i" }}</p>
+    </div>
+  </a>
+  {% empty %}
+  <p class="text-muted">Aún no has abierto tickets.</p>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -287,3 +287,106 @@ class RetoSemanal(models.Model):
             return 0
         return min(100, int(round(100 * self.progreso / self.meta)))
 
+
+class DocumentoNormativa(models.Model):
+    titulo = models.CharField(max_length=200)
+    cuerpo = models.TextField(blank=True, default="")
+    archivo = models.FileField(upload_to="normativa/%Y/%m/", blank=True, null=True)
+    publicado = models.BooleanField(default=False)
+    autor_id = models.PositiveIntegerField(null=True, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "campus_documento_normativa"
+        ordering = ["titulo"]
+
+    def __str__(self):
+        return self.titulo
+
+
+class ContactoDirectorio(models.Model):
+    area = models.CharField(max_length=80)
+    nombre = models.CharField(max_length=120)
+    medio = models.CharField(max_length=160, help_text="Correo, teléfono o horario.")
+    publicado = models.BooleanField(default=False)
+    autor_id = models.PositiveIntegerField(null=True, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "campus_contacto_directorio"
+        ordering = ["area", "nombre"]
+
+    def __str__(self):
+        return f"{self.area}: {self.nombre}"
+
+
+class TicketAyuda(models.Model):
+    ESTADO_ABIERTO = "abierto"
+    ESTADO_ATENCION = "en_atencion"
+    ESTADO_RESUELTO = "resuelto"
+    ESTADO_CERRADO = "cerrado"
+    ESTADO_CHOICES = [
+        (ESTADO_ABIERTO, "Abierto"),
+        (ESTADO_ATENCION, "En atención"),
+        (ESTADO_RESUELTO, "Resuelto"),
+        (ESTADO_CERRADO, "Cerrado"),
+    ]
+    CATEGORIA_CHOICES = [
+        ("academico", "Académico"),
+        ("administrativo", "Administrativo"),
+        ("tecnico", "Técnico"),
+        ("otro", "Otro"),
+    ]
+
+    alumno = models.ForeignKey("sii.Alumno", on_delete=models.CASCADE, related_name="tickets")
+    folio = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES)
+    asunto = models.CharField(max_length=160)
+    descripcion = models.TextField()
+    adjunto = models.FileField(upload_to="ayuda/%Y/%m/", blank=True, null=True)
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_ABIERTO)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "campus_ticket_ayuda"
+        ordering = ["-creado_en"]
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.folio:
+            self.folio = f"AYU-{self.pk:06d}"
+            super().save(update_fields=["folio"])
+
+    def __str__(self):
+        return self.folio or str(self.pk)
+
+
+class TicketRespuesta(models.Model):
+    ticket = models.ForeignKey(TicketAyuda, on_delete=models.CASCADE, related_name="respuestas")
+    autor_id = models.PositiveIntegerField()
+    es_staff = models.BooleanField(default=False)
+    cuerpo = models.TextField()
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "campus_ticket_respuesta"
+        ordering = ["creado_en"]
+
+
+class RecursoBiblioteca(models.Model):
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True, default="")
+    url = models.URLField(blank=True, default="")
+    archivo = models.FileField(upload_to="biblioteca/%Y/%m/", blank=True, null=True)
+    publicado = models.BooleanField(default=False)
+    autor_id = models.PositiveIntegerField(null=True, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "campus_recurso_biblioteca"
+        ordering = ["titulo"]
+
+    def __str__(self):
+        return self.titulo
+

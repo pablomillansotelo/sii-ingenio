@@ -106,7 +106,8 @@ const productos = {
     descripcion: "{{ i.descripcion|default:''|escapejs }}",
     horas: "{{ i.duracion_horas|default:'' }}",
     modalidad: "{{ i.modalidad }}",
-    activo: {% if i.activo %}true{% else %}false{% endif %}
+    activo: {% if i.activo %}true{% else %}false{% endif %},
+    destacado: {% if i.destacado %}true{% else %}false{% endif %}
   },
   {% endfor %}
 };
@@ -123,6 +124,8 @@ function editarProducto(id) {
   set("modalidad_editar", p.modalidad);
   const activo = document.getElementById("activo_producto_editar");
   if (activo) activo.checked = p.activo;
+  const destacado = document.getElementById("destacado_producto_editar");
+  if (destacado) destacado.checked = p.destacado;
 }
 function eliminarProducto(id) {
   document.getElementById("id_producto_eliminar").value = id;

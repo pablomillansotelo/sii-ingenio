@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Normativa y directorio · Ingenio{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Normativa y directorio" subtitle="Solo lo publicado se ve en el campus. Los PDF van a Object Storage (prefijo normativa/)." %}
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h2 class="h6">Publicar normativa</h2>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="normativa">
+          <input class="form-control mb-2" name="titulo" placeholder="Título" required>
+          <textarea class="form-control mb-2" name="cuerpo" rows="3" placeholder="Texto"></textarea>
+          <input class="form-control form-control-sm mb-2" type="file" name="archivo" accept=".pdf">
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" name="publicado" id="n_pub">
+            <label class="form-check-label" for="n_pub">Publicar ahora</label>
+          </div>
+          <button class="btn btn-primary btn-sm" type="submit">Guardar</button>
+        </form>
+      </div>
+    </div>
+    {% for doc in documentos %}
+    <p class="small mb-1">{{ doc.titulo }} · {% if doc.publicado %}publicado{% else %}borrador{% endif %}</p>
+    {% endfor %}
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h2 class="h6">Publicar contacto</h2>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="directorio">
+          <input class="form-control mb-2" name="area" placeholder="Área" required>
+          <input class="form-control mb-2" name="nombre" placeholder="Nombre" required>
+          <input class="form-control mb-2" name="medio" placeholder="Correo o teléfono" required>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" name="publicado" id="d_pub">
+            <label class="form-check-label" for="d_pub">Publicar ahora</label>
+          </div>
+          <button class="btn btn-primary btn-sm" type="submit">Guardar</button>
+        </form>
+      </div>
+    </div>
+    {% for c in contactos %}
+    <p class="small mb-1">{{ c.area }} · {{ c.nombre }} · {% if c.publicado %}publicado{% else %}borrador{% endif %}</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

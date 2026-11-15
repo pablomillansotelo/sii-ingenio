@@ -1,0 +1,20 @@
+{% extends "campus/base.html" %}
+{% block title %}Biblioteca · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Biblioteca</h1>
+  <p class="text-muted">Acervo institucional de Ingenio. No son los recursos privados de un grupo del aula.</p>
+  {% for rec in recursos %}
+  <article class="card shadow-sm campus-card mb-3">
+    <div class="card-body">
+      <h2 class="h6 mb-1">{{ rec.titulo }}</h2>
+      {% if rec.descripcion %}<p class="small mb-2">{{ rec.descripcion }}</p>{% endif %}
+      {% if rec.url %}<a class="btn btn-outline-primary btn-sm" href="{{ rec.url }}" rel="noopener noreferrer">Abrir liga</a>{% endif %}
+      {% if rec.archivo %}<a class="btn btn-outline-secondary btn-sm" href="{% url 'campus_biblioteca_archivo' rec.pk %}">Descargar</a>{% endif %}
+    </div>
+  </article>
+  {% empty %}
+  <p class="text-muted">Aún no hay recursos publicados en la biblioteca de Ingenio.</p>
+  {% endfor %}
+</section>
+{% endblock %}

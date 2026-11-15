@@ -1,0 +1,9 @@
+{% extends "campus/base.html" %}
+{% block title %}Cursos recomendados · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Cursos recomendados</h1>
+  <p class="text-muted">Oferta de Ingenio. Inscribirme envía una solicitud a Ventas (folio y cupo). No hay pasarela de pago ni inscripción que se salte el cobro.</p>
+  {% include "campus/_ofertas.html" %}
+</section>
+{% endblock %}

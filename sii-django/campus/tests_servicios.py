@@ -1,0 +1,343 @@
+from datetime import date
+
+from django.contrib.auth.models import Group, User
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client, TestCase
+from django.urls import reverse
+
+from campus.models import ContactoDirectorio, DocumentoNormativa
+from sii.models import Alumno
+from sii.permissions import GRUPO_ADMINISTRADOR, GRUPO_ALUMNO, crear_grupos
+
+
+class CampusNormativaTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("norm1", "norm1@example.com", "secret123")
+        self.otro = User.objects.create_user("norm2", "norm2@example.com", "secret123")
+        self.admin = User.objects.create_user("normadm", "normadm@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.otro.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.admin.groups.add(Group.objects.get(name=GRUPO_ADMINISTRADOR))
+        Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Nora",
+            apellido="Mativa",
+            email="norm1@example.com",
+            curp="MANO000101MDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+        self.http_admin = Client()
+        self.http_admin.force_login(self.admin)
+
+    def test_borrador_no_se_ve_y_publicado_si(self):
+        DocumentoNormativa.objects.create(titulo="Borrador interno", cuerpo="secreto", publicado=False)
+        DocumentoNormativa.objects.create(
+            titulo="Reglamento de Ingenio",
+            cuerpo="Asistencia y evaluación.",
+            publicado=True,
+            archivo=SimpleUploadedFile("reglamento.pdf", b"%PDF-1.4 x", content_type="application/pdf"),
+        )
+        ContactoDirectorio.objects.create(
+            area="Control escolar", nombre="Ana Mesa", medio="control@ingenio.example", publicado=True
+        )
+        ContactoDirectorio.objects.create(
+            area="Oculto", nombre="No sale", medio="x@y.z", publicado=False
+        )
+        hub = self.http.get(reverse("campus_control_escolar"))
+        self.assertContains(hub, reverse("campus_normativa"))
+        self.assertContains(hub, reverse("campus_directorio"))
+        pagina = self.http.get(reverse("campus_normativa"))
+        self.assertContains(pagina, "Reglamento de Ingenio")
+        self.assertNotContains(pagina, "Borrador interno")
+        doc = DocumentoNormativa.objects.get(publicado=True)
+        self.assertTrue(doc.archivo.name.startswith("normativa/"))
+        pdf = self.http.get(reverse("campus_normativa_archivo", args=[doc.pk]))
+        self.assertEqual(pdf.status_code, 200)
+        directorio = self.http.get(reverse("campus_directorio"))
+        self.assertContains(directorio, "Ana Mesa")
+        self.assertNotContains(directorio, "No sale")
+        self.http_admin.post(
+            reverse("sii_normativa"),
+            {"accion": "directorio", "area": "Caja", "nombre": "Luis", "medio": "caja@ingenio.example", "publicado": "on"},
+        )
+        self.assertTrue(ContactoDirectorio.objects.filter(nombre="Luis", publicado=True).exists())
+
+
+class CampusAyudaTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("ayu1", "ayu1@example.com", "secret123")
+        self.otro = User.objects.create_user("ayu2", "ayu2@example.com", "secret123")
+        self.admin = User.objects.create_user("ayuadm", "ayuadm@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.otro.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.admin.groups.add(Group.objects.get(name=GRUPO_ADMINISTRADOR))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Aya",
+            apellido="Mesa",
+            email="ayu1@example.com",
+            curp="MEAY000101MDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        Alumno.objects.create(
+            user_id=self.otro.pk,
+            nombre="Otra",
+            apellido="Mesa",
+            email="ayu2@example.com",
+            curp="MEOT000101HDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+        self.http_otro = Client()
+        self.http_otro.force_login(self.otro)
+        self.http_admin = Client()
+        self.http_admin.force_login(self.admin)
+
+    def test_folio_aislamiento_y_transiciones(self):
+        from campus.models import TicketAyuda
+        from campus.services.ayuda import puede_transitar
+
+        self.http.post(
+            reverse("campus_ayuda"),
+            {"categoria": "academico", "asunto": "Kardex", "descripcion": "No veo una materia"},
+        )
+        ticket = TicketAyuda.objects.get()
+        self.assertTrue(ticket.folio.startswith("AYU-"))
+        propio = self.http.get(reverse("campus_ayuda_detalle", args=[ticket.pk]))
+        self.assertContains(propio, ticket.folio)
+        ajeno = self.http_otro.get(reverse("campus_ayuda_detalle", args=[ticket.pk]))
+        self.assertEqual(ajeno.status_code, 404)
+        self.assertTrue(puede_transitar(TicketAyuda.ESTADO_ABIERTO, TicketAyuda.ESTADO_ATENCION))
+        self.assertFalse(puede_transitar(TicketAyuda.ESTADO_CERRADO, TicketAyuda.ESTADO_ABIERTO))
+        self.http_admin.post(
+            reverse("sii_ayuda_detalle", args=[ticket.pk]),
+            {"cuerpo": "Lo revisamos", "estado": "en_atencion"},
+        )
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.estado, TicketAyuda.ESTADO_ATENCION)
+        self.assertEqual(ticket.respuestas.count(), 1)
+        self.http_admin.post(
+            reverse("sii_ayuda_detalle", args=[ticket.pk]),
+            {"estado": "abierto"},
+        )
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.estado, TicketAyuda.ESTADO_ABIERTO)
+        self.http_admin.post(
+            reverse("sii_ayuda_detalle", args=[ticket.pk]),
+            {"estado": "cerrado"},
+        )
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.estado, TicketAyuda.ESTADO_CERRADO)
+        self.http_admin.post(
+            reverse("sii_ayuda_detalle", args=[ticket.pk]),
+            {"estado": "en_atencion"},
+        )
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.estado, TicketAyuda.ESTADO_CERRADO)
+
+
+class CampusFacturacionTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        crear_grupos()
+        self.user = User.objects.create_user("fis1", "fis1@example.com", "secret123")
+        self.otro = User.objects.create_user("fis2", "fis2@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.otro.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Fina",
+            apellido="Cal",
+            email="fis1@example.com",
+            curp="CAFI000101MDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        Alumno.objects.create(
+            user_id=self.otro.pk,
+            nombre="Otra",
+            apellido="Cal",
+            email="fis2@example.com",
+            curp="CAOT000101HDFXXX09",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+        self.http_otro = Client()
+        self.http_otro.force_login(self.otro)
+
+    def test_guarda_datos_en_cliente_y_no_es_cfdi(self):
+        from ventas.models import Cliente
+
+        pagina = self.http.get(reverse("campus_facturacion"))
+        self.assertContains(pagina, "cuando Ingenio emita")
+        self.assertContains(pagina, "no es una factura")
+        self.assertNotContains(pagina, "Descargar XML")
+        malo = self.http.post(
+            reverse("campus_facturacion"),
+            {"rfc": "x", "razon_social": "A", "codigo_postal_fiscal": "1", "regimen_fiscal": "612"},
+        )
+        self.assertContains(malo, "RFC")
+        self.http.post(
+            reverse("campus_facturacion"),
+            {
+                "rfc": "XAXX010101000",
+                "razon_social": "Fina Cal",
+                "codigo_postal_fiscal": "06600",
+                "regimen_fiscal": "612",
+            },
+        )
+        cliente = Cliente.objects.get(id_alumno_sii=self.alumno)
+        self.assertEqual(cliente.rfc, "XAXX010101000")
+        self.assertIsNotNone(cliente.factura_solicitada_en)
+        ajeno = self.http_otro.get(reverse("campus_facturacion"))
+        self.assertNotContains(ajeno, "XAXX010101000")
+
+
+class CampusOfertasTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        from decimal import Decimal
+
+        from sii.models import Curso, Inscripcion, Periodo
+        from ventas.models import EdicionCurso, Producto
+
+        crear_grupos()
+        self.user = User.objects.create_user("ofer1", "ofer1@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Omar",
+            apellido="Ferta",
+            email="ofer1@example.com",
+            curp="FEOM000101HDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        hoy = date.today()
+        self.periodo = Periodo.objects.create(
+            nombre="Oferta", fecha_inicio=hoy.replace(day=1), fecha_fin=hoy.replace(year=hoy.year + 1)
+        )
+        self.curso = Curso.objects.create(nombre="Taller destacado")
+        self.curso_cerrado = Curso.objects.create(nombre="Sin edición")
+        self.prod = Producto.objects.create(
+            producto="Taller destacado",
+            precio_unitario=Decimal("0"),
+            destacado=True,
+            id_curso=self.curso,
+        )
+        Producto.objects.create(
+            producto="Sin edición",
+            precio_unitario=Decimal("500"),
+            destacado=True,
+            id_curso=self.curso_cerrado,
+        )
+        self.edicion = EdicionCurso.objects.create(
+            id_curso=self.prod,
+            codigo_edicion="TAL-A",
+            fecha_inicio=self.periodo.fecha_inicio,
+            precio_edicion=Decimal("0"),
+            estado=EdicionCurso.ESTADO_PROGRAMADA,
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+
+    def test_sin_edicion_no_se_ofrece_y_cta_no_crea_inscripcion(self):
+        from sii.models import Inscripcion
+        from ventas.models import SolicitudOferta
+
+        pagina = self.http.get(reverse("campus_ofertas"))
+        self.assertContains(pagina, "Taller destacado")
+        self.assertContains(pagina, "Sin costo")
+        self.assertContains(pagina, "TAL-A")
+        self.assertNotContains(pagina, "Sin edición")
+        self.assertContains(pagina, "pasarela de pago")
+        inicio = self.http.get(reverse("campus_inicio"))
+        self.assertContains(inicio, "Taller destacado")
+        self.http.post(reverse("campus_oferta_solicitar", args=[self.edicion.pk]))
+        self.assertEqual(SolicitudOferta.objects.filter(alumno=self.alumno, edicion=self.edicion).count(), 1)
+        self.assertFalse(Inscripcion.objects.filter(alumno=self.alumno).exists())
+        self.edicion.estado = self.edicion.ESTADO_CERRADA
+        self.edicion.save()
+        oculta = self.http.get(reverse("campus_ofertas"))
+        self.assertNotContains(oculta, "TAL-A")
+
+
+class CampusContinuaBibliotecaTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        from decimal import Decimal
+
+        from sii.models import Curso, Periodo
+        from ventas.models import EdicionCurso, Producto
+
+        crear_grupos()
+        self.user = User.objects.create_user("cont1", "cont1@example.com", "secret123")
+        self.admin = User.objects.create_user("contadm", "contadm@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.admin.groups.add(Group.objects.get(name=GRUPO_ADMINISTRADOR))
+        Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Cora",
+            apellido="Ntina",
+            email="cont1@example.com",
+            curp="NTCO000101MDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        hoy = date.today()
+        periodo = Periodo.objects.create(
+            nombre="Continua", fecha_inicio=hoy.replace(day=1), fecha_fin=hoy.replace(year=hoy.year + 1)
+        )
+        curso = Curso.objects.create(nombre="Taller corto")
+        prod = Producto.objects.create(producto="Taller corto", precio_unitario=Decimal("200"), id_curso=curso)
+        self.edicion = EdicionCurso.objects.create(
+            id_curso=prod,
+            codigo_edicion="COR-1",
+            fecha_inicio=periodo.fecha_inicio,
+            precio_edicion=Decimal("200"),
+            educacion_continua=True,
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+        self.http_admin = Client()
+        self.http_admin.force_login(self.admin)
+
+    def test_continua_reusa_cta_y_biblioteca_solo_publicados(self):
+        from campus.models import RecursoBiblioteca
+
+        pagina = self.http.get(reverse("campus_continua"))
+        self.assertContains(pagina, "COR-1")
+        self.assertContains(pagina, "Inscribirme")
+        self.assertContains(pagina, "$200")
+        vacia = self.http.get(reverse("campus_biblioteca"))
+        self.assertContains(vacia, "Aún no hay recursos publicados")
+        RecursoBiblioteca.objects.create(titulo="Borrador interno", publicado=False)
+        RecursoBiblioteca.objects.create(
+            titulo="Guía de estilo Ingenio",
+            descripcion="PDF institucional",
+            publicado=True,
+            archivo=SimpleUploadedFile("guia.pdf", b"%PDF-1.4 x", content_type="application/pdf"),
+        )
+        biblio = self.http.get(reverse("campus_biblioteca"))
+        self.assertContains(biblio, "Guía de estilo Ingenio")
+        self.assertNotContains(biblio, "Borrador interno")
+        rec = RecursoBiblioteca.objects.get(publicado=True)
+        self.assertTrue(rec.archivo.name.startswith("biblioteca/"))
+        pdf = self.http.get(reverse("campus_biblioteca_archivo", args=[rec.pk]))
+        self.assertEqual(pdf.status_code, 200)
+        self.http_admin.post(
+            reverse("sii_biblioteca"),
+            {"titulo": "Liga útil", "url": "https://ingenio.example/acervo", "publicado": "on"},
+        )
+        self.assertTrue(RecursoBiblioteca.objects.filter(titulo="Liga útil", publicado=True).exists())
+

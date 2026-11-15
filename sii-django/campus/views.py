@@ -3,11 +3,13 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from campus.forms import AparienciaForm, FichaAlumnoForm
+from campus.forms import AparienciaForm, DatosFiscalesForm, FichaAlumnoForm
 from campus.hub import CLAVES_VALIDAS, HUB_ACCESOS
-from campus.models import CampusFavorito, Hilo, Noticia
+from campus.models import CampusFavorito, ContactoDirectorio, DocumentoNormativa, Hilo, Noticia, RecursoBiblioteca, TicketAyuda, TicketRespuesta
+from campus.services.ayuda import puede_transitar
 from campus.services.avisos import bandeja_avisos, marcar_leido
 
 from campus.nav import MAS_PROXIMAMENTE, MAS_REALES
@@ -24,6 +26,8 @@ from campus.services.retos import sincronizar_retos
 from campus.services.constancia import construir_constancia, tipos_disponibles
 from campus.services.aceptacion import carga_del_periodo, ventana_abierta
 from campus.services.credencial import ficha_credencial
+from campus.services.fiscal import cliente_de_alumno
+from campus.services.ofertas import solicitar_inscripcion, tarjetas_educacion_continua, tarjetas_recomendadas
 from sii.identity import alumno_para_usuario
 from sii.models import AceptacionCarga, DocumentoExpediente, Inscripcion, SolicitudBaja
 from sii.services.expediente import resumen_tipos, validar_archivo
@@ -71,6 +75,7 @@ def inicio(request):
                 "cuenta": estado_cuenta(request.user),
                 "noticias": list(noticias_publicadas()),
                 "retos": retos,
+                "ofertas": tarjetas_recomendadas(alumno),
             },
         ),
     )
@@ -510,3 +515,167 @@ def aceptacion(request):
             },
         ),
     )
+
+
+@login_required
+@requiere_feature("campus.normativa")
+def normativa(request):
+    docs = DocumentoNormativa.objects.filter(publicado=True)
+    return render(request, "campus/normativa.html", _ctx(request, "control", {"documentos": docs}))
+
+
+@login_required
+@requiere_feature("campus.normativa")
+def normativa_archivo(request, pk):
+    doc = get_object_or_404(DocumentoNormativa, pk=pk, publicado=True)
+    if not doc.archivo:
+        raise Http404()
+    return FileResponse(doc.archivo.open("rb"), as_attachment=True, filename=doc.archivo.name.split("/")[-1])
+
+
+@login_required
+@requiere_feature("campus.directorio")
+def directorio(request):
+    contactos = ContactoDirectorio.objects.filter(publicado=True)
+    return render(request, "campus/directorio.html", _ctx(request, "control", {"contactos": contactos}))
+
+
+@login_required
+@requiere_feature("campus.ayuda")
+def ayuda(request):
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    if request.method == "POST":
+        asunto = (request.POST.get("asunto") or "").strip()
+        descripcion = (request.POST.get("descripcion") or "").strip()
+        categoria = request.POST.get("categoria")
+        adjunto = request.FILES.get("adjunto")
+        if adjunto:
+            try:
+                validar_archivo(adjunto)
+            except ValidationError as exc:
+                messages.error(request, " ".join(exc.messages))
+                adjunto = None
+                asunto = ""
+        if asunto and descripcion and categoria in dict(TicketAyuda.CATEGORIA_CHOICES):
+            ticket = TicketAyuda.objects.create(
+                alumno=alumno,
+                categoria=categoria,
+                asunto=asunto,
+                descripcion=descripcion,
+                adjunto=adjunto,
+            )
+            messages.success(request, f"Ticket {ticket.folio} abierto.")
+            return redirect("campus_ayuda_detalle", pk=ticket.pk)
+        if asunto or descripcion:
+            messages.error(request, "Completa categoría, asunto y descripción.")
+    tickets = TicketAyuda.objects.filter(alumno=alumno)
+    return render(
+        request,
+        "campus/ayuda.html",
+        _ctx(request, "control", {"tickets": tickets, "categorias": TicketAyuda.CATEGORIA_CHOICES}),
+    )
+
+
+@login_required
+@requiere_feature("campus.ayuda")
+def ayuda_detalle(request, pk):
+    alumno = alumno_para_usuario(request.user)
+    ticket = get_object_or_404(TicketAyuda, pk=pk, alumno=alumno)
+    if request.method == "POST" and ticket.estado != TicketAyuda.ESTADO_CERRADO:
+        cuerpo = (request.POST.get("cuerpo") or "").strip()
+        if cuerpo:
+            TicketRespuesta.objects.create(ticket=ticket, autor_id=request.user.pk, cuerpo=cuerpo, es_staff=False)
+            return redirect("campus_ayuda_detalle", pk=ticket.pk)
+    return render(request, "campus/ayuda_detalle.html", _ctx(request, "control", {"ticket": ticket}))
+
+
+@login_required
+@requiere_feature("campus.facturacion")
+def facturacion(request):
+    from django.utils import timezone as tz
+
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    cliente = cliente_de_alumno(alumno)
+    form = DatosFiscalesForm(request.POST or None, instance=cliente)
+    if request.method == "POST" and form.is_valid():
+        cliente = form.save(commit=False)
+        cliente.factura_solicitada_en = tz.now()
+        cliente.save()
+        messages.success(request, "Datos fiscales guardados. Aún no hay CFDI para descargar.")
+        return redirect("campus_facturacion")
+    return render(
+        request,
+        "campus/facturacion.html",
+        _ctx(request, "control", {"form": form, "cliente": cliente}),
+    )
+
+
+@login_required
+@requiere_feature("campus.ofertas")
+def ofertas(request):
+    alumno = alumno_para_usuario(request.user)
+    return render(
+        request,
+        "campus/ofertas.html",
+        _ctx(request, "control", {"ofertas": tarjetas_recomendadas(alumno)}),
+    )
+
+
+@login_required
+@require_POST
+@requiere_feature("campus.ofertas")
+def oferta_solicitar(request, edicion_id):
+    from ventas.models import EdicionCurso
+
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    edicion = get_object_or_404(EdicionCurso, pk=edicion_id)
+    destino = request.POST.get("next") or reverse("campus_ofertas")
+    try:
+        _, created = solicitar_inscripcion(alumno, edicion)
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect(destino)
+    if created:
+        messages.success(
+            request,
+            "Solicitud enviada a Ventas. Un asesor confirma folio y cupo; no se creó la inscripción ni un cobro.",
+        )
+    else:
+        messages.info(request, "Ya tenías una solicitud para esta edición.")
+    return redirect(destino)
+
+
+@login_required
+@requiere_feature("campus.continua")
+def continua(request):
+    alumno = alumno_para_usuario(request.user)
+    return render(
+        request,
+        "campus/continua.html",
+        _ctx(request, "control", {"ofertas": tarjetas_educacion_continua(alumno)}),
+    )
+
+
+@login_required
+@requiere_feature("campus.biblioteca")
+def biblioteca(request):
+    recursos = RecursoBiblioteca.objects.filter(publicado=True)
+    return render(request, "campus/biblioteca.html", _ctx(request, "control", {"recursos": recursos}))
+
+
+@login_required
+@requiere_feature("campus.biblioteca")
+def biblioteca_archivo(request, pk):
+    rec = get_object_or_404(RecursoBiblioteca, pk=pk, publicado=True)
+    if not rec.archivo:
+        raise Http404()
+    return FileResponse(rec.archivo.open("rb"), as_attachment=True, filename=rec.archivo.name.split("/")[-1])
