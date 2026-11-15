@@ -10,16 +10,29 @@
     {% include "includes/brand_colors.html" %}
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     <link rel="stylesheet" href="{% static 'css/campus.css' %}">
-    <link rel="icon" href="{% static 'img/logo.ico' %}">
+    {% include "includes/favicon.html" %}
     {% block extra_css %}{% endblock %}
   </head>
   <body class="campus-shell campus-tema-{{ campus_pref.tema|default:'claro' }}">
     <header class="campus-topbar">
+      <button
+        class="campus-menu-btn"
+        type="button"
+        id="campus-menu-btn"
+        data-campus-menu-toggle
+        aria-label="Abrir menú"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-controls="campus-drawer"
+      >
+        <i class="bi bi-list" aria-hidden="true"></i>
+      </button>
       <a class="campus-brand" href="{% url 'campus_inicio' %}">
         <img src="{% static 'img/logo-blanco.png' %}" alt="Ingenio" height="26">
         <span class="campus-brand-text">Campus</span>
       </a>
       {% block campus_header_actions %}
+      <div class="campus-topbar-actions">
       <a class="campus-bell" href="{% url 'campus_notificaciones' %}" aria-label="Notificaciones">
         <i class="bi bi-bell"></i>
         {% if campus_notif_nuevas %}<span class="campus-nav-badge">{{ campus_notif_nuevas }}</span>{% endif %}
@@ -35,6 +48,7 @@
       >
         <span class="campus-avatar-hole" aria-hidden="true">{{ campus_identidad.iniciales }}</span>
       </button>
+      </div>
       {% endblock %}
     </header>
 
@@ -50,7 +64,8 @@
     {% endif %}
 
     <div class="campus-layout">
-      <nav class="campus-sidenav" aria-label="Campus">
+      <div class="campus-drawer-backdrop" data-campus-menu-close hidden></div>
+      <nav class="campus-sidenav" id="campus-drawer" aria-label="Campus">
         {% include "campus/_nav_items.html" %}
       </nav>
       <main class="campus-main">

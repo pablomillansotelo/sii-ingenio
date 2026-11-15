@@ -80,15 +80,42 @@
 .campus-topbar {
   position: sticky;
   top: 0;
-  z-index: 1030;
+  z-index: 1090;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem;
   min-height: 3.5rem;
   padding: 0 1rem;
   background: var(--campus-accent, var(--ingenio-red, #ce0e2d));
   color: #fff;
+}
+
+.campus-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-left: -0.35rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.campus-menu-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.campus-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
 }
 
 .campus-brand {
@@ -161,7 +188,53 @@
 }
 
 .campus-sidenav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  position: fixed;
+  top: 3.5rem;
+  left: 0;
+  bottom: 0;
+  z-index: 1080;
+  width: min(18rem, 86vw);
+  background: #fff;
+  border-right: 1px solid var(--bs-border-color);
+  padding: 1rem 0.7rem;
+  transform: translateX(-105%);
+  transition: transform 0.2s ease;
+  overflow-y: auto;
+}
+
+.campus-sidenav.is-open {
+  transform: translateX(0);
+}
+
+.campus-sidenav .campus-nav-item {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 0.65rem;
+  font-size: 0.9rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.6rem;
+}
+
+.campus-sidenav .campus-nav-item.is-active {
+  background: color-mix(in srgb, var(--campus-accent, #ce0e2d) 12%, transparent);
+}
+
+.campus-drawer-backdrop {
   display: none;
+}
+
+.campus-drawer-backdrop:not([hidden]) {
+  display: block;
+  position: fixed;
+  top: 3.5rem;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1070;
+  background: rgba(16, 24, 40, 0.4);
 }
 
 .campus-main {
@@ -328,6 +401,11 @@
     padding-bottom: 0;
   }
 
+  .campus-menu-btn,
+  .campus-drawer-backdrop {
+    display: none !important;
+  }
+
   .campus-bottom-nav {
     display: none;
   }
@@ -344,19 +422,9 @@
     position: sticky;
     top: 3.5rem;
     height: calc(100vh - 3.5rem);
-  }
-
-  .campus-sidenav .campus-nav-item {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 0.65rem;
-    font-size: 0.9rem;
-    padding: 0.55rem 0.7rem;
-    border-radius: 0.6rem;
-  }
-
-  .campus-sidenav .campus-nav-item.is-active {
-    background: color-mix(in srgb, var(--campus-accent, #ce0e2d) 12%, transparent);
+    transform: none;
+    z-index: auto;
+    overflow-y: auto;
   }
 
   .campus-page {

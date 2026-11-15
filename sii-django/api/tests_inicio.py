@@ -223,6 +223,7 @@ class InicioContextosTests(TestCase):
         http.force_login(admin)
         response = http.get(reverse("inicio"))
         self.assertContains(response, "home-tabs")
+        self.assertContains(response, "data-home-tabs")
         self.assertContains(response, "Control escolar")
         self.assertContains(response, "Ventas")
         self.assertContains(response, "Dirección")

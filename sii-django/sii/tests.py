@@ -185,11 +185,14 @@ class StaticFilesProduccionTests(TestCase):
 
     REQUIRED = (
         "css/main.css",
+        "css/campus.css",
         "js/carrito.js",
         "js/shell.js",
+        "js/campus.js",
         "img/logo.png",
         "img/logo.ico",
         "img/logo-blanco.png",
+        "img/apple-touch-icon.png",
     )
 
     def test_whitenoise_esta_activo(self):
@@ -209,6 +212,19 @@ class StaticFilesProduccionTests(TestCase):
         self.assertContains(response, "css/main.css")
         self.assertContains(response, "img/logo-blanco.png")
         self.assertContains(response, "img/logo.ico")
+        self.assertContains(response, "apple-touch-icon.png")
+
+    def test_favicon_en_raiz(self):
+        response = self.client.get("/favicon.ico")
+        self.assertIn(response.status_code, (301, 302))
+        self.assertIn("logo.ico", response["Location"])
+
+    def test_apple_touch_icon_en_raiz(self):
+        response = self.client.get("/apple-touch-icon.png")
+        self.assertIn(response.status_code, (301, 302))
+        self.assertIn("apple-touch-icon.png", response["Location"])
+        precomposed = self.client.get("/apple-touch-icon-precomposed.png")
+        self.assertIn(precomposed.status_code, (301, 302))
 
 
 class RbacFase0Tests(TestCase):
