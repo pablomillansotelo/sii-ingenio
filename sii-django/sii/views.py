@@ -1,10 +1,12 @@
 from functools import wraps
 
 from django.contrib import messages
+from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -33,6 +35,7 @@ from sii.models import (
     CALIFICACION_MINIMA,
     Alumno,
     ActaFinal,
+    AceptacionCarga,
     Curso,
     Docente,
     DocenteCurso,
@@ -42,6 +45,7 @@ from sii.models import (
     SolicitudBaja,
     DocumentoExpediente,
 )
+from sii.utils_filtros import estados_validos
 
 
 def _solo_admin(view_func):
@@ -374,7 +378,19 @@ def solicitudes_baja(request):
     solicitudes = SolicitudBaja.objects.select_related(
         "alumno", "inscripcion__curso", "inscripcion__periodo"
     )
-    return render(request, "sii/solicitudes_baja.html", {"solicitudes": solicitudes})
+    estados = estados_validos(request.GET.get("estado"), SolicitudBaja.ESTADO_CHOICES)
+    if estados:
+        solicitudes = solicitudes.filter(estado__in=estados)
+    return render(
+        request,
+        "sii/solicitudes_baja.html",
+        {
+            "solicitudes": solicitudes,
+            "filtro_activo": ",".join(estados) if estados else "",
+            "filtro_etiqueta": ",".join(estados) if estados else "",
+            "filtro_limpiar_url": reverse("sii_solicitudes_baja"),
+        },
+    )
 
 
 @login_required
@@ -412,7 +428,19 @@ def solicitud_baja_resolver(request, pk):
 @login_required
 def expediente_staff(request):
     documentos = DocumentoExpediente.objects.select_related("alumno")
-    return render(request, "sii/expediente.html", {"documentos": documentos})
+    estados = estados_validos(request.GET.get("estado"), DocumentoExpediente.ESTADO_CHOICES)
+    if estados:
+        documentos = documentos.filter(estado__in=estados)
+    return render(
+        request,
+        "sii/expediente.html",
+        {
+            "documentos": documentos,
+            "filtro_activo": ",".join(estados) if estados else "",
+            "filtro_etiqueta": ",".join(estados) if estados else "",
+            "filtro_limpiar_url": reverse("sii_expediente"),
+        },
+    )
 
 
 @login_required
@@ -449,12 +477,32 @@ def expediente_revisar(request, pk):
 
 @login_required
 def aceptaciones(request):
+    from campus.services.aceptacion import ventana_abierta
+
     inscripciones = (
         Inscripcion.objects.filter(estado="activo")
         .select_related("alumno", "curso", "periodo", "aceptacion")
         .order_by("periodo__fecha_inicio", "alumno__apellido")
     )
-    return render(request, "sii/aceptaciones.html", {"inscripciones": inscripciones})
+    pendiente = request.GET.get("pendiente") == "1"
+    if pendiente:
+        hoy = timezone.localdate()
+        periodo_ids = [
+            periodo.pk for periodo in Periodo.objects.all() if ventana_abierta(periodo, hoy)
+        ]
+        inscripciones = inscripciones.filter(periodo_id__in=periodo_ids).filter(
+            Q(aceptacion__isnull=True) | Q(aceptacion__estado=AceptacionCarga.ESTADO_CAMBIO)
+        )
+    return render(
+        request,
+        "sii/aceptaciones.html",
+        {
+            "inscripciones": inscripciones,
+            "filtro_activo": "pendiente" if pendiente else "",
+            "filtro_etiqueta": "pendiente" if pendiente else "",
+            "filtro_limpiar_url": reverse("sii_aceptaciones"),
+        },
+    )
 
 
 @login_required
@@ -586,7 +634,19 @@ def ayuda_staff(request):
     from campus.models import TicketAyuda
 
     tickets = TicketAyuda.objects.select_related("alumno")
-    return render(request, "sii/ayuda.html", {"tickets": tickets})
+    estados = estados_validos(request.GET.get("estado"), TicketAyuda.ESTADO_CHOICES)
+    if estados:
+        tickets = tickets.filter(estado__in=estados)
+    return render(
+        request,
+        "sii/ayuda.html",
+        {
+            "tickets": tickets,
+            "filtro_activo": ",".join(estados) if estados else "",
+            "filtro_etiqueta": ",".join(estados) if estados else "",
+            "filtro_limpiar_url": reverse("sii_ayuda"),
+        },
+    )
 
 
 @login_required

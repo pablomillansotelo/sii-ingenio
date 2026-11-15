@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.utils import timezone
 from django.db.models import Count
 from .models import Cliente, Producto, SolicitudOferta, Venta, VentaDetalle, Vendedor, EdicionCurso, Pago
@@ -25,6 +26,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 
 from sii.rbac import has_feature, requiere_feature
+from sii.utils_filtros import estados_validos
 from .recibo import construir_pdf, venta_para_recibo
 from .services import (
     baja_inscripciones_de_venta,
@@ -581,16 +583,33 @@ def delete_edicion_view(request):
 
 @login_required
 def pagos_view(request):
+    pagos = Pago.objects.select_related("id_venta", "id_venta__id_cliente").order_by("-fecha_pago")
+    ventas = Venta.objects.filter(
+        estado="confirmada", estado_pago__in=["pendiente", "parcial"]
+    ).select_related("id_cliente")
+    estados = estados_validos(request.GET.get("estado_pago"), Venta.PAGO_CHOICES)
+    if estados:
+        ventas = ventas.filter(estado_pago__in=estados)
+        pagos = pagos.filter(id_venta__estado_pago__in=estados)
+    venta_id = request.GET.get("venta")
+    initial = {}
+    if venta_id and str(venta_id).isdigit():
+        ventas = ventas.filter(pk=venta_id)
+        pagos = pagos.filter(id_venta_id=venta_id)
+        if Venta.objects.filter(pk=venta_id).exists():
+            initial["id_venta"] = venta_id
+    etiqueta = ",".join(estados) if estados else (f"venta {venta_id}" if initial else "")
     return render(
         request,
         "ventas/pagos.html",
         {
-            "Pagos": Pago.objects.select_related("id_venta", "id_venta__id_cliente").order_by("-fecha_pago"),
-            "VentasPendientes": Venta.objects.filter(
-                estado="confirmada", estado_pago__in=["pendiente", "parcial"]
-            ).select_related("id_cliente"),
-            "form_pago": AddPagoForm(),
+            "Pagos": pagos,
+            "VentasPendientes": ventas,
+            "form_pago": AddPagoForm(initial=initial),
             "form_editar_pago": EditarPagoForm(),
+            "filtro_activo": etiqueta,
+            "filtro_etiqueta": etiqueta,
+            "filtro_limpiar_url": reverse("Pagos"),
         },
     )
 
@@ -653,8 +672,17 @@ def solicitudes_oferta_view(request):
             solicitud.save(update_fields=["estado", "atendida_en"])
             messages.success(request, "Solicitud marcada. Inscribe al alumno desde el punto de venta para folio y cupo.")
         return redirect("ventas_solicitudes_oferta")
+    solicitudes = SolicitudOferta.objects.select_related("alumno", "edicion", "edicion__id_curso")
+    estados = estados_validos(request.GET.get("estado"), SolicitudOferta.ESTADO_CHOICES)
+    if estados:
+        solicitudes = solicitudes.filter(estado__in=estados)
     return render(
         request,
         "ventas/solicitudes_oferta.html",
-        {"solicitudes": SolicitudOferta.objects.select_related("alumno", "edicion", "edicion__id_curso")},
+        {
+            "solicitudes": solicitudes,
+            "filtro_activo": ",".join(estados) if estados else "",
+            "filtro_etiqueta": ",".join(estados) if estados else "",
+            "filtro_limpiar_url": reverse("ventas_solicitudes_oferta"),
+        },
     )
