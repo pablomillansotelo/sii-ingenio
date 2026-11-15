@@ -8,7 +8,7 @@ from django.views.decorators.http import require_POST
 
 from campus.forms import AparienciaForm, DatosFiscalesForm, FichaAlumnoForm
 from campus.hub import CLAVES_VALIDAS, HUB_ACCESOS
-from campus.models import CampusFavorito, ContactoDirectorio, DocumentoNormativa, Hilo, Noticia, TicketAyuda, TicketRespuesta
+from campus.models import CampusFavorito, ContactoDirectorio, DocumentoNormativa, Hilo, Noticia, RecursoBiblioteca, TicketAyuda, TicketRespuesta
 from campus.services.ayuda import puede_transitar
 from campus.services.avisos import bandeja_avisos, marcar_leido
 
@@ -27,7 +27,7 @@ from campus.services.constancia import construir_constancia, tipos_disponibles
 from campus.services.aceptacion import carga_del_periodo, ventana_abierta
 from campus.services.credencial import ficha_credencial
 from campus.services.fiscal import cliente_de_alumno
-from campus.services.ofertas import solicitar_inscripcion, tarjetas_recomendadas
+from campus.services.ofertas import solicitar_inscripcion, tarjetas_educacion_continua, tarjetas_recomendadas
 from sii.identity import alumno_para_usuario
 from sii.models import AceptacionCarga, DocumentoExpediente, Inscripcion, SolicitudBaja
 from sii.services.expediente import resumen_tipos, validar_archivo
@@ -652,3 +652,30 @@ def oferta_solicitar(request, edicion_id):
     else:
         messages.info(request, "Ya tenías una solicitud para esta edición.")
     return redirect(destino)
+
+
+@login_required
+@requiere_feature("campus.continua")
+def continua(request):
+    alumno = alumno_para_usuario(request.user)
+    return render(
+        request,
+        "campus/continua.html",
+        _ctx(request, "control", {"ofertas": tarjetas_educacion_continua(alumno)}),
+    )
+
+
+@login_required
+@requiere_feature("campus.biblioteca")
+def biblioteca(request):
+    recursos = RecursoBiblioteca.objects.filter(publicado=True)
+    return render(request, "campus/biblioteca.html", _ctx(request, "control", {"recursos": recursos}))
+
+
+@login_required
+@requiere_feature("campus.biblioteca")
+def biblioteca_archivo(request, pk):
+    rec = get_object_or_404(RecursoBiblioteca, pk=pk, publicado=True)
+    if not rec.archivo:
+        raise Http404()
+    return FileResponse(rec.archivo.open("rb"), as_attachment=True, filename=rec.archivo.name.split("/")[-1])

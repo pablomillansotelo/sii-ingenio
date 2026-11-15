@@ -36,4 +36,7 @@ urlpatterns = [
     path("facturacion/", views.facturacion, name="campus_facturacion"),
     path("recomendados/", views.ofertas, name="campus_ofertas"),
     path("recomendados/<int:edicion_id>/solicitar/", views.oferta_solicitar, name="campus_oferta_solicitar"),
+    path("educacion-continua/", views.continua, name="campus_continua"),
+    path("biblioteca/", views.biblioteca, name="campus_biblioteca"),
+    path("biblioteca/<int:pk>/archivo/", views.biblioteca_archivo, name="campus_biblioteca_archivo"),
 ]

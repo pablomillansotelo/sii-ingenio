@@ -95,7 +95,6 @@ class CampusAparienciaTests(TestCase):
         self.assertTrue(pref.ayuda_guiada)
         self.assertTrue(pref.asistente_ia)
         pagina = self.http.get(reverse("campus_configuracion"))
-        self.assertContains(pagina, "Próximamente")
         self.assertContains(pagina, "No hay un chatbot")
         self.assertNotContains(pagina, "Escribe tu pregunta")
         inicio = self.http.get(reverse("campus_inicio"))

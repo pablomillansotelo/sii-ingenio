@@ -12,11 +12,13 @@
     </li>
     {% endfor %}
   </ul>
+  {% if mas_proximamente %}
   <p class="text-muted small mt-3 mb-2">Próximamente</p>
   <ul class="list-unstyled campus-mas-soon">
     {% for label in mas_proximamente %}
     <li class="text-muted">{{ label }}</li>
     {% endfor %}
   </ul>
+  {% endif %}
 </section>
 {% endblock %}

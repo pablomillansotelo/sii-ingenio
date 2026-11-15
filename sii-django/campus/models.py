@@ -373,3 +373,20 @@ class TicketRespuesta(models.Model):
         db_table = "campus_ticket_respuesta"
         ordering = ["creado_en"]
 
+
+class RecursoBiblioteca(models.Model):
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True, default="")
+    url = models.URLField(blank=True, default="")
+    archivo = models.FileField(upload_to="biblioteca/%Y/%m/", blank=True, null=True)
+    publicado = models.BooleanField(default=False)
+    autor_id = models.PositiveIntegerField(null=True, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "campus_recurso_biblioteca"
+        ordering = ["titulo"]
+
+    def __str__(self):
+        return self.titulo
+

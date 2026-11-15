@@ -24,6 +24,7 @@ urlpatterns = [
     path("progreso/", views.ludico, name="sii_ludico"),
     path("progreso/<int:alumno_id>/reset/", views.ludico_reset, name="sii_ludico_reset"),
     path("normativa/", views.normativa_staff, name="sii_normativa"),
+    path("biblioteca/", views.biblioteca_staff, name="sii_biblioteca"),
     path("ayuda/", views.ayuda_staff, name="sii_ayuda"),
     path("ayuda/<int:pk>/", views.ayuda_detalle, name="sii_ayuda_detalle"),
     path("inscripciones/reintento/", views.inscripcion_reintento, name="sii_inscripcion_reintento"),

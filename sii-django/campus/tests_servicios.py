@@ -271,3 +271,73 @@ class CampusOfertasTests(TestCase):
         oculta = self.http.get(reverse("campus_ofertas"))
         self.assertNotContains(oculta, "TAL-A")
 
+
+class CampusContinuaBibliotecaTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        from decimal import Decimal
+
+        from sii.models import Curso, Periodo
+        from ventas.models import EdicionCurso, Producto
+
+        crear_grupos()
+        self.user = User.objects.create_user("cont1", "cont1@example.com", "secret123")
+        self.admin = User.objects.create_user("contadm", "contadm@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.admin.groups.add(Group.objects.get(name=GRUPO_ADMINISTRADOR))
+        Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Cora",
+            apellido="Ntina",
+            email="cont1@example.com",
+            curp="NTCO000101MDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        hoy = date.today()
+        periodo = Periodo.objects.create(
+            nombre="Continua", fecha_inicio=hoy.replace(day=1), fecha_fin=hoy.replace(year=hoy.year + 1)
+        )
+        curso = Curso.objects.create(nombre="Taller corto")
+        prod = Producto.objects.create(producto="Taller corto", precio_unitario=Decimal("200"), id_curso=curso)
+        self.edicion = EdicionCurso.objects.create(
+            id_curso=prod,
+            codigo_edicion="COR-1",
+            fecha_inicio=periodo.fecha_inicio,
+            precio_edicion=Decimal("200"),
+            educacion_continua=True,
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+        self.http_admin = Client()
+        self.http_admin.force_login(self.admin)
+
+    def test_continua_reusa_cta_y_biblioteca_solo_publicados(self):
+        from campus.models import RecursoBiblioteca
+
+        pagina = self.http.get(reverse("campus_continua"))
+        self.assertContains(pagina, "COR-1")
+        self.assertContains(pagina, "Inscribirme")
+        self.assertContains(pagina, "$200")
+        vacia = self.http.get(reverse("campus_biblioteca"))
+        self.assertContains(vacia, "Aún no hay recursos publicados")
+        RecursoBiblioteca.objects.create(titulo="Borrador interno", publicado=False)
+        RecursoBiblioteca.objects.create(
+            titulo="Guía de estilo Ingenio",
+            descripcion="PDF institucional",
+            publicado=True,
+            archivo=SimpleUploadedFile("guia.pdf", b"%PDF-1.4 x", content_type="application/pdf"),
+        )
+        biblio = self.http.get(reverse("campus_biblioteca"))
+        self.assertContains(biblio, "Guía de estilo Ingenio")
+        self.assertNotContains(biblio, "Borrador interno")
+        rec = RecursoBiblioteca.objects.get(publicado=True)
+        self.assertTrue(rec.archivo.name.startswith("biblioteca/"))
+        pdf = self.http.get(reverse("campus_biblioteca_archivo", args=[rec.pk]))
+        self.assertEqual(pdf.status_code, 200)
+        self.http_admin.post(
+            reverse("sii_biblioteca"),
+            {"titulo": "Liga útil", "url": "https://ingenio.example/acervo", "publicado": "on"},
+        )
+        self.assertTrue(RecursoBiblioteca.objects.filter(titulo="Liga útil", publicado=True).exists())
+

@@ -556,6 +556,32 @@ def normativa_staff(request):
 
 
 @login_required
+def biblioteca_staff(request):
+    from campus.models import RecursoBiblioteca
+    from sii.services.expediente import validar_archivo
+
+    if request.method == "POST":
+        archivo = request.FILES.get("archivo")
+        if archivo:
+            try:
+                validar_archivo(archivo)
+            except ValidationError as exc:
+                messages.error(request, " ".join(exc.messages))
+                return redirect("sii_biblioteca")
+        RecursoBiblioteca.objects.create(
+            titulo=(request.POST.get("titulo") or "").strip() or "Sin título",
+            descripcion=(request.POST.get("descripcion") or "").strip(),
+            url=(request.POST.get("url") or "").strip(),
+            archivo=archivo,
+            publicado=bool(request.POST.get("publicado")),
+            autor_id=request.user.pk,
+        )
+        messages.success(request, "Recurso de biblioteca guardado.")
+        return redirect("sii_biblioteca")
+    return render(request, "sii/biblioteca.html", {"recursos": RecursoBiblioteca.objects.all()})
+
+
+@login_required
 def ayuda_staff(request):
     from campus.models import TicketAyuda
 

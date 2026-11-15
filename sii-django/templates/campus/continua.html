@@ -1,0 +1,9 @@
+{% extends "campus/base.html" %}
+{% block title %}Educación continua · Campus Ingenio{% endblock %}
+{% block content %}
+<section class="campus-page">
+  <h1 class="campus-page-title">Educación continua</h1>
+  <p class="text-muted">Cursos cortos etiquetados por Ventas, distintos de tus materias del aula. Inscribirme pide folio y cupo; no hay cobro en línea.</p>
+  {% include "campus/_ofertas.html" %}
+</section>
+{% endblock %}
