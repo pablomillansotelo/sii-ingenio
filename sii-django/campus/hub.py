@@ -14,6 +14,7 @@ HUB_ACCESOS = [
     {"clave": "directorio", "label": "Directorio", "url_name": "campus_directorio", "icon": "bi-telephone", "estado": "listo"},
     {"clave": "mesa", "label": "Mesa de ayuda", "url_name": "campus_ayuda", "icon": "bi-life-preserver", "estado": "listo"},
     {"clave": "facturacion", "label": "Facturación", "url_name": "campus_facturacion", "icon": "bi-receipt", "estado": "listo"},
+    {"clave": "ofertas", "label": "Cursos recomendados", "url_name": "campus_ofertas", "icon": "bi-stars", "estado": "listo"},
 ]
 
 CLAVES_VALIDAS = {item["clave"] for item in HUB_ACCESOS}

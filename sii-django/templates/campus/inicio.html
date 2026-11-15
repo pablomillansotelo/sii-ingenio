@@ -115,6 +115,15 @@
     {% endfor %}
   </section>
 
+  {% if ofertas %}
+  <section aria-labelledby="ofertas-titulo" class="mt-4">
+    <h2 class="h5 mb-2" id="ofertas-titulo">Cursos recomendados</h2>
+    <p class="small text-muted">Inscribirme pide a Ventas el folio y el cupo. No hay cobro en línea.</p>
+    {% include "campus/_ofertas.html" %}
+    <a class="btn btn-outline-primary btn-sm" href="{% url 'campus_ofertas' %}">Ver todos</a>
+  </section>
+  {% endif %}
+
   {% if noticias %}
   <section aria-labelledby="noticias-titulo" class="mt-4">
     <h2 class="h5 mb-2" id="noticias-titulo">Noticias de Ingenio</h2>

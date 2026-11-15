@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from campus.forms import AparienciaForm, DatosFiscalesForm, FichaAlumnoForm
@@ -26,6 +27,7 @@ from campus.services.constancia import construir_constancia, tipos_disponibles
 from campus.services.aceptacion import carga_del_periodo, ventana_abierta
 from campus.services.credencial import ficha_credencial
 from campus.services.fiscal import cliente_de_alumno
+from campus.services.ofertas import solicitar_inscripcion, tarjetas_recomendadas
 from sii.identity import alumno_para_usuario
 from sii.models import AceptacionCarga, DocumentoExpediente, Inscripcion, SolicitudBaja
 from sii.services.expediente import resumen_tipos, validar_archivo
@@ -73,6 +75,7 @@ def inicio(request):
                 "cuenta": estado_cuenta(request.user),
                 "noticias": list(noticias_publicadas()),
                 "retos": retos,
+                "ofertas": tarjetas_recomendadas(alumno),
             },
         ),
     )
@@ -611,3 +614,41 @@ def facturacion(request):
         "campus/facturacion.html",
         _ctx(request, "control", {"form": form, "cliente": cliente}),
     )
+
+
+@login_required
+@requiere_feature("campus.ofertas")
+def ofertas(request):
+    alumno = alumno_para_usuario(request.user)
+    return render(
+        request,
+        "campus/ofertas.html",
+        _ctx(request, "control", {"ofertas": tarjetas_recomendadas(alumno)}),
+    )
+
+
+@login_required
+@require_POST
+@requiere_feature("campus.ofertas")
+def oferta_solicitar(request, edicion_id):
+    from ventas.models import EdicionCurso
+
+    alumno = alumno_para_usuario(request.user)
+    if alumno is None:
+        messages.error(request, "No hay un expediente de alumno ligado a tu cuenta.")
+        return redirect("campus_inicio")
+    edicion = get_object_or_404(EdicionCurso, pk=edicion_id)
+    destino = request.POST.get("next") or reverse("campus_ofertas")
+    try:
+        _, created = solicitar_inscripcion(alumno, edicion)
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect(destino)
+    if created:
+        messages.success(
+            request,
+            "Solicitud enviada a Ventas. Un asesor confirma folio y cupo; no se creó la inscripción ni un cobro.",
+        )
+    else:
+        messages.info(request, "Ya tenías una solicitud para esta edición.")
+    return redirect(destino)

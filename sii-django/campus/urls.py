@@ -34,4 +34,6 @@ urlpatterns = [
     path("ayuda/", views.ayuda, name="campus_ayuda"),
     path("ayuda/<int:pk>/", views.ayuda_detalle, name="campus_ayuda_detalle"),
     path("facturacion/", views.facturacion, name="campus_facturacion"),
+    path("recomendados/", views.ofertas, name="campus_ofertas"),
+    path("recomendados/<int:edicion_id>/solicitar/", views.oferta_solicitar, name="campus_oferta_solicitar"),
 ]

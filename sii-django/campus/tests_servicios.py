@@ -202,3 +202,72 @@ class CampusFacturacionTests(TestCase):
         ajeno = self.http_otro.get(reverse("campus_facturacion"))
         self.assertNotContains(ajeno, "XAXX010101000")
 
+
+class CampusOfertasTests(TestCase):
+    databases = {"default", "auth"}
+
+    def setUp(self):
+        from decimal import Decimal
+
+        from sii.models import Curso, Inscripcion, Periodo
+        from ventas.models import EdicionCurso, Producto
+
+        crear_grupos()
+        self.user = User.objects.create_user("ofer1", "ofer1@example.com", "secret123")
+        self.user.groups.add(Group.objects.get(name=GRUPO_ALUMNO))
+        self.alumno = Alumno.objects.create(
+            user_id=self.user.pk,
+            nombre="Omar",
+            apellido="Ferta",
+            email="ofer1@example.com",
+            curp="FEOM000101HDFXXX01",
+            fecha_nacimiento=date(2000, 1, 1),
+        )
+        hoy = date.today()
+        self.periodo = Periodo.objects.create(
+            nombre="Oferta", fecha_inicio=hoy.replace(day=1), fecha_fin=hoy.replace(year=hoy.year + 1)
+        )
+        self.curso = Curso.objects.create(nombre="Taller destacado")
+        self.curso_cerrado = Curso.objects.create(nombre="Sin edición")
+        self.prod = Producto.objects.create(
+            producto="Taller destacado",
+            precio_unitario=Decimal("0"),
+            destacado=True,
+            id_curso=self.curso,
+        )
+        Producto.objects.create(
+            producto="Sin edición",
+            precio_unitario=Decimal("500"),
+            destacado=True,
+            id_curso=self.curso_cerrado,
+        )
+        self.edicion = EdicionCurso.objects.create(
+            id_curso=self.prod,
+            codigo_edicion="TAL-A",
+            fecha_inicio=self.periodo.fecha_inicio,
+            precio_edicion=Decimal("0"),
+            estado=EdicionCurso.ESTADO_PROGRAMADA,
+        )
+        self.http = Client()
+        self.http.force_login(self.user)
+
+    def test_sin_edicion_no_se_ofrece_y_cta_no_crea_inscripcion(self):
+        from sii.models import Inscripcion
+        from ventas.models import SolicitudOferta
+
+        pagina = self.http.get(reverse("campus_ofertas"))
+        self.assertContains(pagina, "Taller destacado")
+        self.assertContains(pagina, "Sin costo")
+        self.assertContains(pagina, "TAL-A")
+        self.assertNotContains(pagina, "Sin edición")
+        self.assertContains(pagina, "pasarela de pago")
+        inicio = self.http.get(reverse("campus_inicio"))
+        self.assertContains(inicio, "Taller destacado")
+        self.http.post(reverse("campus_oferta_solicitar", args=[self.edicion.pk]))
+        self.assertEqual(SolicitudOferta.objects.filter(alumno=self.alumno, edicion=self.edicion).count(), 1)
+        self.assertFalse(Inscripcion.objects.filter(alumno=self.alumno).exists())
+        self.edicion.estado = self.edicion.ESTADO_CERRADA
+        self.edicion.save()
+        oculta = self.http.get(reverse("campus_ofertas"))
+        self.assertNotContains(oculta, "TAL-A")
+

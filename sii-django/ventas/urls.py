@@ -35,4 +35,5 @@ urlpatterns = [
     path("add_pago/", views.add_pago_view, name="AddPago"),
     path("edit_pago/", views.edit_pago_view, name="EditPago"),
     path("delete_pago/", views.delete_pago_view, name="DeletePago"),
+    path("solicitudes/", views.solicitudes_oferta_view, name="ventas_solicitudes_oferta"),
 ]

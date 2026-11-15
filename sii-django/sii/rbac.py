@@ -123,6 +123,8 @@ FEATURES = {
     "campus.ayuda": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
     "sii.ayuda": {"roles": {ADMIN}, "scopes": {ADMIN: "all"}},
     "campus.facturacion": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "campus.ofertas": {"roles": {ALUMNO}, "scopes": {ALUMNO: "own"}},
+    "ventas.solicitudes_oferta": {"roles": {VENDEDOR, ADMIN}, "scopes": {VENDEDOR: "all", ADMIN: "all"}},
 }
 
 URL_FEATURES = {
@@ -253,6 +255,9 @@ URL_FEATURES = {
     "sii_ayuda": "sii.ayuda",
     "sii_ayuda_detalle": "sii.ayuda",
     "campus_facturacion": "campus.facturacion",
+    "campus_ofertas": "campus.ofertas",
+    "campus_oferta_solicitar": "campus.ofertas",
+    "ventas_solicitudes_oferta": "ventas.solicitudes_oferta",
 }
 
 NAV = {
@@ -265,6 +270,7 @@ NAV = {
         {"label": "Clientes", "url_name": "Clientes", "icon": "bi-people", "feature": "ventas.clientes"},
         {"label": "Cursos", "url_name": "Inventario", "icon": "bi-collection", "feature": "ventas.cursos"},
         {"label": "Ediciones", "url_name": "Ediciones", "icon": "bi-calendar-event", "feature": "ventas.ediciones"},
+        {"label": "Solicitudes", "url_name": "ventas_solicitudes_oferta", "icon": "bi-inbox", "feature": "ventas.solicitudes_oferta"},
         {"label": "Vendedores", "url_name": "Vendedores", "icon": "bi-person-badge", "feature": "ventas.vendedores"},
     ],
     "sii": [

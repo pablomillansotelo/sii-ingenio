@@ -22,6 +22,7 @@ MAS_REALES = (
     {"label": "Directorio", "url_name": "campus_directorio", "icon": "bi-telephone"},
     {"label": "Mesa de ayuda", "url_name": "campus_ayuda", "icon": "bi-life-preserver"},
     {"label": "Facturación", "url_name": "campus_facturacion", "icon": "bi-receipt"},
+    {"label": "Cursos recomendados", "url_name": "campus_ofertas", "icon": "bi-stars"},
 )
 
 MAS_PROXIMAMENTE = ()

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Solicitudes de inscripción · Ingenio{% endblock %}
+{% block content %}
+{% include "includes/page_header.html" with title="Solicitudes de inscripción" subtitle="El alumno pidió inscribirse. Cierra el folio y el cupo en Ventas; no se crea Inscripcion desde aquí." %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>Alumno</th><th>Edición</th><th>Estado</th><th>Fecha</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for s in solicitudes %}
+        <tr>
+          <td>{{ s.alumno }}</td>
+          <td>{{ s.edicion.codigo_edicion }} · {{ s.edicion.id_curso }}</td>
+          <td>{{ s.get_estado_display }}</td>
+          <td>{{ s.creada_en|date:"d/m/Y H:i" }}</td>
+          <td>
+            {% if s.estado == "enviada" %}
+            <form method="post">{% csrf_token %}
+              <input type="hidden" name="id_solicitud" value="{{ s.pk }}">
+              <button class="btn btn-outline-primary btn-sm" type="submit">Marcar atendida</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No hay solicitudes.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

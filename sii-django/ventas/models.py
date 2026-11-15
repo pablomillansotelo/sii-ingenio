@@ -79,6 +79,7 @@ class Producto(models.Model):
     duracion_horas = models.SmallIntegerField(blank=True, null=True)
     modalidad = models.CharField(max_length=20, choices=MODALIDAD_CHOICES, default="online")
     activo = models.BooleanField(default=True)
+    destacado = models.BooleanField(default=False)
     id_curso = models.OneToOneField(
         "sii.Curso",
         models.SET_NULL,
@@ -125,6 +126,7 @@ class EdicionCurso(models.Model):
         default=False,
         help_text="Si está activo, oculta recursos de secciones aún no desbloqueadas. Por defecto el candado es solo lúdico.",
     )
+    educacion_continua = models.BooleanField(default=False)
 
     class Meta:
         managed = True
@@ -156,6 +158,39 @@ class EdicionCurso(models.Model):
         plazas = int(plazas)
         self.cupo_ocupado = max(0, int(self.cupo_ocupado or 0) - max(0, plazas))
         self.save(update_fields=["cupo_ocupado"])
+
+
+class SolicitudOferta(models.Model):
+    ESTADO_ENVIADA = "enviada"
+    ESTADO_ATENDIDA = "atendida"
+    ESTADO_CHOICES = [
+        (ESTADO_ENVIADA, "Enviada"),
+        (ESTADO_ATENDIDA, "Atendida"),
+    ]
+
+    id_solicitud = models.AutoField(primary_key=True)
+    alumno = models.ForeignKey(
+        "sii.Alumno",
+        models.CASCADE,
+        related_name="solicitudes_oferta",
+    )
+    edicion = models.ForeignKey(
+        EdicionCurso,
+        models.CASCADE,
+        related_name="solicitudes",
+    )
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_ENVIADA)
+    creada_en = models.DateTimeField(auto_now_add=True)
+    atendida_en = models.DateTimeField(blank=True, null=True)
+    nota = models.TextField(blank=True, default="")
+
+    class Meta:
+        db_table = "solicitud_oferta"
+        ordering = ["-creada_en"]
+        unique_together = (("alumno", "edicion"),)
+
+    def __str__(self):
+        return f"SOL-{self.pk} {self.edicion.codigo_edicion}"
 
 
 class Venta(models.Model):
