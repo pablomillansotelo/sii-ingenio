@@ -375,5 +375,6 @@ class AulaActividadTests(TestCase):
         )
         hoy = self.http_profe.get(reverse("inicio"))
         self.assertContains(hoy, "Por calificar")
-        self.assertContains(hoy, "Entregas sin nota")
+        self.assertContains(hoy, "Ensayo")
+        self.assertContains(hoy, "Calificar")
 

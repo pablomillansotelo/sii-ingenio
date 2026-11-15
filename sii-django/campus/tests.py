@@ -103,7 +103,7 @@ class CampusShellTests(TestCase):
 
     def test_alumno_aterriza_en_campus(self):
         self.assertEqual(destino_post_login(self.alum_user), "campus_inicio")
-        self.assertEqual(destino_post_login(self.vend_user), "ventas_home")
+        self.assertEqual(destino_post_login(self.vend_user), "inicio")
         self.http_alum.logout()
         clave = "".join(("sec", "ret123"))
         self.assertTrue(self.client.login(username=self.alum_user.get_username(), password=clave))

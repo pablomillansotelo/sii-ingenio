@@ -1,5 +1,7 @@
 from django.urls import reverse
 
+from api.inicio.cache import memo
+from api.inicio.contextos import CONTEXTOS
 from sii.rbac import (
     HOY_SHORTCUTS,
     NAV,
@@ -29,7 +31,11 @@ def ingenio_shell(request):
         title = "SII"
     else:
         module = "inicio"
-        title = "Hoy"
+        ctx = getattr(request, "inicio_ctx", None)
+        if ctx and ctx in CONTEXTOS:
+            title = f"Hoy · {CONTEXTOS[ctx]['label']}"
+        else:
+            title = "Hoy"
 
     catalogo = [
         {"key": "ventas", "label": "Ventas", "icon": "bi-cart3"},
@@ -56,12 +62,6 @@ def ingenio_shell(request):
         permitidos = modulos_permitidos(user)
         features = features_de(user)
         display_name = (user.get_full_name() or user.get_username()).strip()
-        if has_feature(user, "ventas.pagos"):
-            pagos_pendientes = Venta.objects.filter(estado_pago="pendiente").count()
-        if has_feature(user, "aula.calificar"):
-            from aula.services import entregas_pendientes_qs
-
-            pendientes_calificar = entregas_pendientes_qs(user).count()
 
     modules = []
     for item in catalogo:
@@ -90,8 +90,24 @@ def ingenio_shell(request):
     def _badge_de(item):
         kind = item.get("badge")
         if kind == "pagos":
+            if not pagos_pendientes and has_feature(user, "ventas.pagos"):
+                from ventas.models import Venta
+
+                nonlocal_pagos = memo(
+                    request,
+                    "pagos_pendientes",
+                    lambda: Venta.objects.filter(
+                        estado="confirmada", estado_pago__in=["pendiente", "parcial"]
+                    ).count(),
+                )
+                return nonlocal_pagos or None
             return pagos_pendientes or None
         if kind == "calificar":
+            if not pendientes_calificar and has_feature(user, "aula.calificar"):
+                from aula.services import entregas_pendientes_qs
+
+                n = memo(request, "pendientes_calificar", lambda: entregas_pendientes_qs(user).count())
+                return n or None
             return pendientes_calificar or None
         return None
 
@@ -105,7 +121,10 @@ def ingenio_shell(request):
         }
     ]
     if module == "inicio":
+        ctx_activo = getattr(request, "inicio_ctx", None)
         for item in HOY_SHORTCUTS:
+            if item.get("contexto") and ctx_activo and item["contexto"] != ctx_activo:
+                continue
             if not visible_en_menu(user, item):
                 continue
             sidebar.append({
@@ -120,6 +139,9 @@ def ingenio_shell(request):
             sidebar.append({**item, "badge": _badge_de(item)})
 
     en_pagos = path.startswith("/ventas/pagos")
+    memo_store = getattr(request, "_inicio_memo", {}) or {}
+    pagos_pendientes = memo_store.get("pagos_pendientes", pagos_pendientes) or pagos_pendientes
+    pendientes_calificar = memo_store.get("pendientes_calificar", pendientes_calificar) or pendientes_calificar
     return {
         "ingenio_module": module,
         "ingenio_title": title,

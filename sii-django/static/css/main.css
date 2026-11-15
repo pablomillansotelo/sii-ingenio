@@ -286,3 +286,37 @@
     padding: 1.25rem 1rem 2rem;
   }
 }
+
+/* Inicio por rol */
+.home-tabs {
+  overflow-x: auto;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+.home-tabs .nav-link {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.home-item {
+  min-height: 44px;
+}
+.home-cta {
+  width: 100%;
+}
+.home-widget-empty {
+  min-height: 44px;
+}
+.home-chip {
+  color: inherit;
+}
+.home-chip:hover {
+  border-color: #ce0e2d;
+}
+@media (min-width: 576px) {
+  .home-cta {
+    width: auto;
+    display: inline-block;
+  }
+}

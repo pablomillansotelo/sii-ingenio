@@ -1,11 +1,21 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 from django.core.exceptions import ValidationError
 
 from campus.models import Hilo, HiloParticipante, MensajeCampus, MensajeLectura
 from sii.identity import alumno_para_usuario, docente_para_usuario, es_administrador
 from sii.models import DocenteCurso, Inscripcion
 from sii.services.expediente import validar_archivo as validar_adjunto
+
+
+def hilos_no_leidos_qs(user, para_control=None):
+    no_leido = MensajeCampus.objects.filter(hilo_id=OuterRef("pk")).exclude(autor_id=user.pk).filter(
+        ~Exists(MensajeLectura.objects.filter(mensaje_id=OuterRef("pk"), user_id=user.pk))
+    )
+    qs = Hilo.objects.annotate(_sin_leer=Exists(no_leido)).filter(_sin_leer=True)
+    if para_control is True:
+        return qs.filter(para_control=True).order_by("creado_en")
+    return qs.filter(participantes__user_id=user.pk).distinct().order_by("creado_en")
 
 
 def hilos_visibles(user):

@@ -2,6 +2,7 @@
 {% block title %}Pagos · Ingenio{% endblock %}
 {% block content %}
 {% include "includes/page_header.html" with title="Pagos" subtitle="Cobros aplicados a cada folio." action_modal="#modalAgregar" action_label="Registrar pago" %}
+{% include "includes/filtro_chip.html" %}
 
 {% if VentasPendientes %}
 <div class="card shadow-sm mb-3">

@@ -1,0 +1,14 @@
+{% if conteos %}
+<section class="home-conteos mt-4">
+  <div class="row g-2">
+    {% for chip in conteos %}
+    <div class="col-6 col-md-auto">
+      <a class="home-chip small text-decoration-none d-block px-3 py-2 rounded border bg-white" href="{% url chip.url_name %}">
+        <span class="text-muted">{{ chip.label }}</span>
+        <strong class="ms-1">{{ chip.value }}</strong>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

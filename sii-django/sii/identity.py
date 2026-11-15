@@ -34,16 +34,21 @@ def alumno_para_usuario(user):
 def docente_para_usuario(user):
     if user is None or not user.is_authenticated:
         return None
+    if hasattr(user, "_ingenio_docente"):
+        return user._ingenio_docente
     docente = Docente.objects.filter(user_id=user.pk).first()
     if docente:
+        user._ingenio_docente = docente
         return docente
     email = (getattr(user, "email", None) or "").strip()
     if not email:
+        user._ingenio_docente = None
         return None
     docente = Docente.objects.filter(email__iexact=email).first()
     if docente and docente.user_id != user.pk:
         docente.user_id = user.pk
         docente.save(update_fields=["user_id"])
+    user._ingenio_docente = docente
     return docente
 
 
@@ -115,13 +120,6 @@ def destino_post_login(user):
 
     if es_persona_campus(user) and has_feature(user, "campus.inicio"):
         return "campus_inicio"
-    permitidos = modulos_permitidos(user)
-    if permitidos == {"aula"}:
-        return "aula_dashboard"
-    if permitidos == {"ventas"}:
-        return "ventas_home"
-    if permitidos == {"sii"}:
-        return "sii_home"
     return "inicio"
 
 

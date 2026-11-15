@@ -123,22 +123,24 @@ class InicioEscritorioTests(TestCase):
     def test_inicio_es_escritorio_no_menu(self):
         response = self.http.get(reverse("inicio"))
         self.assertContains(response, "Hoy")
-        self.assertContains(response, "Nueva venta")
+        self.assertContains(response, "Control escolar")
+        self.assertContains(response, "Ventas")
+        self.assertContains(response, "Dirección")
+        self.assertContains(response, "home-tabs")
         self.assertNotContains(response, "Entrar a Ventas")
         self.assertNotContains(response, "Entrar a SII")
         self.assertNotContains(response, "Accesos rápidos")
-        self.assertContains(response, "Pagos pendientes")
-        self.assertContains(response, "Control escolar")
-        self.assertContains(response, "Fecha")
-        self.assertContains(response, "Total")
-        self.assertContains(response, "por cobrar")
-        self.assertContains(response, "Registrar pago")
-        self.assertContains(response, "table-row-link")
+        self.assertNotContains(response, "table-row-link")
+        self.assertNotContains(response, "<table")
         self.assertContains(response, "img/logo-blanco.png")
         self.assertContains(response, "bi-list")
         self.assertContains(response, 'id="sidebarIngenio"')
         self.assertContains(response, "sidebar-link")
-        self.assertContains(response, "text-bg-warning")
+        ventas = self.http.get(reverse("inicio") + "?ctx=ventas")
+        self.assertContains(ventas, "Nueva venta")
+        self.assertContains(ventas, "Registrar pago")
+        self.assertContains(ventas, "Pagos por confirmar")
+        self.assertNotContains(ventas, "<table")
 
     def test_ventas_usa_sidebar_no_dropdown_de_seccion(self):
         response = self.http.get(reverse("ventas_home"))
@@ -503,4 +505,18 @@ class IdentidadActasHorarioTests(TestCase):
         self.assertContains(aula, "Lunes")
         redir = self.http_alum.get(reverse("horario"))
         self.assertRedirects(redir, reverse("sii_horario"))
+
+
+from api.tests_inicio import (  # noqa: E402,F401
+    InicioAterrizajeTests,
+    InicioContextosTests,
+    InicioDireccionTests,
+    InicioDocenteTests,
+    InicioEscolarTests,
+    InicioFiltrosTests,
+    InicioFrameworkTests,
+    InicioFranjaTests,
+    InicioMatrizYQueriesTests,
+    InicioVentasTests,
+)
 
