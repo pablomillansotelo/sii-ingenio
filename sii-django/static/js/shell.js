@@ -53,6 +53,7 @@
   });
 
   const NAME_HEADERS = /nombre|alumno|cliente|curso|periodo|vendedor/i;
+  const EMAIL_HEADERS = /e-?mail|correo/i;
 
   document.querySelectorAll(".table-responsive table").forEach((table) => {
     table.classList.add("table-stack");
@@ -64,6 +65,11 @@
         table
           .querySelectorAll(`tr > :nth-child(${index + 1})`)
           .forEach((cell) => cell.classList.add("table-col-name"));
+      }
+      if (EMAIL_HEADERS.test(label)) {
+        table
+          .querySelectorAll(`tr > :nth-child(${index + 1})`)
+          .forEach((cell) => cell.classList.add("table-col-email"));
       }
       if (!label) {
         table
