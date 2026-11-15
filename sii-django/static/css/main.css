@@ -369,6 +369,22 @@
 }
 
 @media (max-width: 639.98px) {
+  .shell-main,
+  .card,
+  .table-responsive,
+  .table-stack {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .table-stack {
+    width: 100%;
+  }
+
   .table-stack thead {
     display: none;
   }
@@ -380,17 +396,23 @@
     border: 1px solid var(--bs-border-color, #d0d5dd);
     border-radius: 0.75rem;
     background: #fff;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .table-stack tbody td {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.75rem;
+    display: grid;
+    grid-template-columns: minmax(0, 34%) minmax(0, 1fr);
+    align-items: start;
+    column-gap: 0.75rem;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     padding: 0.45rem 0.85rem;
     border: 0;
-    min-width: 0;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .table-stack tbody td::before {
@@ -398,8 +420,7 @@
     color: #667085;
     font-size: 0.75rem;
     font-weight: 600;
-    flex: 0 0 38%;
-    max-width: 38%;
+    min-width: 0;
   }
 
   .table-stack tbody td:not([data-label])::before,
@@ -407,11 +428,36 @@
     content: none;
   }
 
-  .table-stack .table-col-name {
+  .table-stack tbody td > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .table-stack .table-col-name,
+  .table-stack .table-col-email {
     min-width: 0;
     white-space: normal;
-    overflow-wrap: break-word;
-    word-break: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .table-stack .table-col-name a {
+    text-decoration: none;
+  }
+
+  .table-stack .table-col-name a:hover,
+  .table-stack .table-col-name a:focus-visible {
+    text-decoration: underline;
+  }
+
+  .table-stack .badge {
+    display: inline-block;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    text-align: left;
+    line-height: 1.35;
   }
 
   .table-stack tbody td[colspan] {
@@ -420,8 +466,10 @@
 
   .table-stack .table-col-actions,
   .table-stack tbody td:not([data-label]) {
+    display: flex;
     justify-content: flex-end;
     flex-wrap: wrap;
+    gap: 0.35rem;
   }
 
   .table-stack tfoot {
@@ -434,6 +482,8 @@
   .table-stack tfoot td {
     display: flex;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     border: 0;
   }
 }
