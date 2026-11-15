@@ -11,8 +11,9 @@ from api.inicio.widgets import Item, Widget, WidgetData
 from aula.models import Actividad, AvisoGrupo
 from aula.services import entregas_pendientes_qs, url_aula_grupo
 from campus.services.mensajes import hilos_no_leidos_qs
-from sii.identity import docente_para_usuario, ediciones_visibles
+from sii.identity import docente_para_usuario
 from sii.models import ActaFinal, HorarioSlot, Inscripcion
+from ventas.models import EdicionCurso
 
 
 def _curso_ids(user):
@@ -23,6 +24,15 @@ def _curso_ids(user):
         return list(docente.cursos_asignados.values_list("curso_id", flat=True))
 
     return memo_user(user, "curso_ids", _ids)
+
+
+def _ediciones_asignadas(user):
+    ids = _curso_ids(user)
+    qs = EdicionCurso.objects.filter(
+        id_curso__id_curso_id__in=ids,
+        id_curso__id_curso__isnull=False,
+    ).select_related("id_curso", "id_curso__id_curso")
+    return ids, qs
 
 
 def _clases_hoy(user, hoy):
@@ -94,12 +104,9 @@ def _por_calificar(user, hoy):
 
 
 def _grupos(user, hoy):
-    ids = _curso_ids(user)
-    qs = (
-        ediciones_visibles(user)
-        .filter(activo=True, estado="en_curso")
-        .annotate(alumnos=Count("inscripciones_sii", filter=Q(inscripciones_sii__estado="activo")))
-        .select_related("id_curso")
+    ids, qs = _ediciones_asignadas(user)
+    qs = qs.filter(activo=True, estado="en_curso").annotate(
+        alumnos=Count("inscripciones_sii", filter=Q(inscripciones_sii__estado="activo"))
     )
     count, filas = cola(qs.order_by("codigo_edicion"), user)
     items = []
@@ -169,12 +176,11 @@ def _cierran(user, hoy):
 
 
 def _sin_aviso(user, hoy):
+    ids, qs = _ediciones_asignadas(user)
     qs = (
-        ediciones_visibles(user)
-        .filter(activo=True, estado="en_curso")
+        qs.filter(activo=True, estado="en_curso")
         .annotate(tiene_aviso=Exists(AvisoGrupo.objects.filter(publicado=True, edicion=OuterRef("pk"))))
         .filter(tiene_aviso=False)
-        .select_related("id_curso")
     )
     count, filas = cola(qs, user)
     items = []
@@ -195,7 +201,11 @@ def _sin_aviso(user, hoy):
         items=items,
         cta_url=reverse_home("aula_dashboard", "docente.sin_aviso"),
         cta_label="Publicar aviso",
-        mensaje_vacio="Todos tus grupos tienen aviso",
+        mensaje_vacio=(
+            "Aún no tienes grupos asignados. Control escolar te los asigna en Docentes."
+            if not ids
+            else "Todos tus grupos tienen aviso"
+        ),
     )
 
 

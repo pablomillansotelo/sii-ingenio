@@ -1,15 +1,15 @@
 from datetime import timedelta
 
-from django.db import connection
-from django.db.models import Exists, OuterRef
+from django.db.models import Count, Exists, OuterRef, Q, Sum
 
 from api.inicio.cache import memo_user
 from api.inicio.registro import registrar
 from api.inicio.utils import dinero, reverse_home
 from api.inicio.widgets import Widget, WidgetData
 from aula.models import CalificacionActividad
-from campus.models import TicketAyuda, TicketRespuesta
-from ventas.models import EdicionCurso
+from campus.models import AvisoInstitucional, TicketAyuda, TicketRespuesta
+from sii.models import ActaFinal, Alumno, DocumentoExpediente, SolicitudBaja
+from ventas.models import EdicionCurso, Pago, SolicitudOferta, Venta
 
 ALERTA_DANGER = 5
 
@@ -24,52 +24,57 @@ def _kpis(user, hoy):
     def _load():
         inicio_mes = hoy.replace(day=1)
         limite = hoy - timedelta(days=7)
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT
-                  (SELECT COALESCE(SUM(monto), 0) FROM tra_pago WHERE date(fecha_pago) >= %s AND estado = 'aplicado'),
-                  (SELECT COUNT(*) FROM tra_venta WHERE fecha >= %s AND estado = 'confirmada'),
-                  (SELECT COUNT(*) FROM tra_venta WHERE estado = 'confirmada' AND estado_pago IN ('pendiente', 'parcial')),
-                  (SELECT COUNT(*) FROM tra_solicitud_baja WHERE estado = 'enviada'),
-                  (SELECT COUNT(*) FROM tra_documento_expediente WHERE estado = 'en_revision'),
-                  (SELECT COUNT(*) FROM campus_ticket_ayuda WHERE estado IN ('abierto', 'en_atencion')),
-                  (SELECT COUNT(*) FROM cat_alumno WHERE estado = 'activo'),
-                  (SELECT COUNT(*) FROM tra_acta_final a JOIN cat_periodo p ON a.periodo_id = p.id
-                     WHERE a.estado = 'borrador' AND p.fecha_fin < %s AND p.cerrado = 0),
-                  (SELECT COUNT(*) FROM solicitud_oferta WHERE date(creada_en) >= %s),
-                  (SELECT COUNT(*) FROM campus_aviso_institucional WHERE publicado = 1 AND tipo = 'importante'
-                     AND (vigencia_inicio IS NULL OR vigencia_inicio <= %s)
-                     AND (vigencia_fin IS NULL OR vigencia_fin >= %s))
-                """,
-                [inicio_mes, inicio_mes, hoy, inicio_mes, hoy, hoy],
-            )
-            row = cursor.fetchone()
-        pendientes = CalificacionActividad.objects.filter(entregado=True, calificacion__isnull=True)
-        sin_nota = pendientes.count()
-        viejas = pendientes.filter(fecha_entrega__lt=limite).count()
-        grupos = EdicionCurso.objects.filter(activo=True, estado="en_curso").count()
-        sin_respuesta = (
+        cobrado = (
+            Pago.objects.filter(estado="aplicado", fecha_pago__date__gte=inicio_mes).aggregate(total=Sum("monto"))[
+                "total"
+            ]
+            or 0
+        )
+        ventas = Venta.objects.aggregate(
+            mes=Count("pk", filter=Q(fecha__gte=inicio_mes, estado="confirmada")),
+            por_cobrar=Count(
+                "pk",
+                filter=Q(estado="confirmada", estado_pago__in=["pendiente", "parcial"]),
+            ),
+        )
+        tickets = (
             TicketAyuda.objects.filter(estado__in=["abierto", "en_atencion"])
             .annotate(staff=Exists(TicketRespuesta.objects.filter(ticket=OuterRef("pk"), es_staff=True)))
-            .filter(staff=False)
-            .count()
+            .aggregate(
+                abiertos=Count("pk"),
+                sin_respuesta=Count("pk", filter=Q(staff=False)),
+            )
+        )
+        notas = CalificacionActividad.objects.filter(entregado=True, calificacion__isnull=True).aggregate(
+            sin_nota=Count("pk"),
+            viejas=Count("pk", filter=Q(fecha_entrega__lt=limite)),
+        )
+        avisos = AvisoInstitucional.objects.filter(
+            publicado=True,
+            tipo=AvisoInstitucional.TIPO_IMPORTANTE,
+        ).filter(
+            Q(vigencia_inicio__isnull=True) | Q(vigencia_inicio__lte=hoy),
+            Q(vigencia_fin__isnull=True) | Q(vigencia_fin__gte=hoy),
         )
         return {
-            "cobrado": row[0] if row else 0,
-            "ventas_mes": row[1] if row else 0,
-            "por_cobrar": row[2] if row else 0,
-            "bajas": row[3] if row else 0,
-            "expedientes": row[4] if row else 0,
-            "tickets": row[5] if row else 0,
-            "alumnos": row[6] if row else 0,
-            "actas": row[7] if row else 0,
-            "solicitudes": row[8] if row else 0,
-            "avisos": row[9] if row else 0,
-            "sin_nota": sin_nota,
-            "viejas": viejas,
-            "grupos": grupos,
-            "sin_respuesta": sin_respuesta,
+            "cobrado": cobrado or 0,
+            "ventas_mes": ventas["mes"],
+            "por_cobrar": ventas["por_cobrar"],
+            "bajas": SolicitudBaja.objects.filter(estado="enviada").count(),
+            "expedientes": DocumentoExpediente.objects.filter(estado="en_revision").count(),
+            "tickets": tickets["abiertos"],
+            "alumnos": Alumno.objects.filter(estado="activo").count(),
+            "actas": ActaFinal.objects.filter(
+                estado="borrador",
+                periodo__fecha_fin__lt=hoy,
+                periodo__cerrado=False,
+            ).count(),
+            "solicitudes": SolicitudOferta.objects.filter(creada_en__date__gte=inicio_mes).count(),
+            "avisos": avisos.count(),
+            "sin_nota": notas["sin_nota"],
+            "viejas": notas["viejas"],
+            "grupos": EdicionCurso.objects.filter(activo=True, estado="en_curso").count(),
+            "sin_respuesta": tickets["sin_respuesta"],
         }
 
     return memo_user(user, f"dir-kpis:{hoy}", _load)
