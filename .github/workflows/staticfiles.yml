@@ -46,3 +46,55 @@ jobs:
         env:
           DJANGO_TEST: "1"
 
+  tests-postgres:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sii-django
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: sii_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias
+        run: python -m pip install -r requirements.txt
+      - name: Crear base de autenticación
+        run: |
+          python - <<'PY'
+          import psycopg2
+          conn = psycopg2.connect(host="127.0.0.1", user="ci", dbname="sii_test")
+          conn.autocommit = True
+          with conn.cursor() as cur:
+              cur.execute("SELECT 1 FROM pg_database WHERE datname = 'sii_auth_test'")
+              if cur.fetchone() is None:
+                  cur.execute("CREATE DATABASE sii_auth_test")
+          PY
+      - name: Suite contra Postgres
+        run: python manage.py test
+        env:
+          DJANGO_TEST_POSTGRES: "1"
+          DB_NAME: sii_test
+          DB_USER: ci
+          DB_HOST: 127.0.0.1
+          DB_PORT: "5432"
+          DB_SSLMODE: disable
+          AUTH_NAME: sii_auth_test
+          AUTH_USER: ci
+          AUTH_HOST: 127.0.0.1
+          AUTH_PORT: "5432"
+          AUTH_SSLMODE: disable
+
