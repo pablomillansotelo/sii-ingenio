@@ -11,6 +11,14 @@
   ],
   "routes": [
     {
+      "src": "/favicon.ico",
+      "dest": "/staticfiles/img/logo.ico"
+    },
+    {
+      "src": "/apple-touch-icon(.*)\\.png",
+      "dest": "/staticfiles/img/apple-touch-icon.png"
+    },
+    {
       "src": "/static/(.*)",
       "dest": "/staticfiles/$1"
     },

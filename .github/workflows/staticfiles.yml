@@ -27,7 +27,10 @@ jobs:
           test -f staticfiles/img/logo.ico
           test -f staticfiles/img/logo-blanco.png
           test -f staticfiles/css/main.css
+          test -f staticfiles/css/campus.css
           test -f staticfiles/js/carrito.js
+          test -f staticfiles/js/campus.js
+          test -f staticfiles/img/apple-touch-icon.png
 
   tests:
     runs-on: ubuntu-latest

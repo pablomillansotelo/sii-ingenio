@@ -52,6 +52,40 @@
     });
   });
 
+  const NAME_HEADERS = /nombre|alumno|cliente|curso|periodo|vendedor/i;
+
+  document.querySelectorAll(".table-responsive table").forEach((table) => {
+    table.classList.add("table-stack");
+    const headers = Array.from(table.querySelectorAll("thead th")).map((th) =>
+      th.textContent.replace(/\s+/g, " ").trim()
+    );
+    headers.forEach((label, index) => {
+      if (NAME_HEADERS.test(label)) {
+        table
+          .querySelectorAll(`tr > :nth-child(${index + 1})`)
+          .forEach((cell) => cell.classList.add("table-col-name"));
+      }
+      if (!label) {
+        table
+          .querySelectorAll(`tr > :nth-child(${index + 1})`)
+          .forEach((cell) => cell.classList.add("table-col-actions"));
+      }
+    });
+    table.querySelectorAll("tbody tr").forEach((row) => {
+      Array.from(row.children).forEach((cell, index) => {
+        if (cell.hasAttribute("colspan") || cell.querySelector(".empty-state")) return;
+        if (!cell.getAttribute("data-label") && headers[index]) {
+          cell.setAttribute("data-label", headers[index]);
+        }
+      });
+    });
+  });
+
+  const activeTab = document.querySelector("[data-home-tabs] .nav-link.active");
+  if (activeTab && typeof activeTab.scrollIntoView === "function") {
+    activeTab.scrollIntoView({ inline: "center", block: "nearest", behavior: "auto" });
+  }
+
   document.querySelectorAll("[data-table-filter]").forEach((group) => {
     const table = document.getElementById(group.getAttribute("data-table-filter"));
     if (!table) return;

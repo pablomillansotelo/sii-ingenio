@@ -2,6 +2,9 @@
   const masPanel = document.getElementById("campus-mas-panel");
   const perfilPanel = document.getElementById("campus-perfil-panel");
   const perfilBtn = document.getElementById("campus-perfil-btn");
+  const menuBtn = document.getElementById("campus-menu-btn");
+  const drawer = document.getElementById("campus-drawer");
+  const drawerBackdrop = document.querySelector(".campus-drawer-backdrop");
   const loader = document.getElementById("campus-loader");
   const html = document.documentElement;
   const PREF_KEY = "campus-ingenio-prefs";
@@ -51,6 +54,7 @@
 
   document.querySelectorAll("[data-campus-mas-open]").forEach(function (btn) {
     btn.addEventListener("click", function () {
+      setDrawer(false);
       abrir(masPanel, btn);
     });
   });
@@ -63,6 +67,7 @@
 
   if (perfilBtn && perfilPanel) {
     perfilBtn.addEventListener("click", function () {
+      setDrawer(false);
       if (perfilPanel.hidden) {
         abrir(perfilPanel, perfilBtn);
       } else {
@@ -71,10 +76,37 @@
     });
   }
 
+  function setDrawer(open) {
+    if (!drawer || !menuBtn) return;
+    drawer.classList.toggle("is-open", open);
+    menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    menuBtn.setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
+    if (drawerBackdrop) drawerBackdrop.hidden = !open;
+  }
+
+  if (menuBtn && drawer) {
+    menuBtn.addEventListener("click", function () {
+      setDrawer(!drawer.classList.contains("is-open"));
+    });
+  }
+  document.querySelectorAll("[data-campus-menu-close]").forEach(function (el) {
+    el.addEventListener("click", function () {
+      setDrawer(false);
+    });
+  });
+  if (drawer) {
+    drawer.querySelectorAll("a[href]").forEach(function (link) {
+      link.addEventListener("click", function () {
+        setDrawer(false);
+      });
+    });
+  }
+
   document.addEventListener("keydown", function (event) {
     if (event.key !== "Escape") return;
     cerrar(masPanel);
     cerrar(perfilPanel, perfilBtn);
+    setDrawer(false);
   });
 
   const form = document.getElementById("campus-apariencia-form");

@@ -1,8 +1,12 @@
+import re
 from datetime import date, timedelta
 from decimal import Decimal
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth.models import Group, User
-from django.test import Client, TestCase
+from django.contrib.staticfiles import finders
+from django.test import Client, SimpleTestCase, TestCase
 from django.urls import reverse
 
 from sii.identity import destino_post_login
@@ -15,6 +19,32 @@ from campus.services.cursos import tarjetas_curso_actual
 from campus.services.identidad import identidad_campus, iniciales_de
 from sii.services.avance import avance_academico
 from ventas.models import Cliente, EdicionCurso, Pago, Producto, Venta, VentaDetalle, Vendedor
+
+STATIC_TAG = re.compile(r"""\{%\s*static\s+['"]([^'"]+)['"]""")
+INCLUDE_TAG = re.compile(r"""\{%\s*include\s+['"]([^'"]+)['"]""")
+
+
+def _static_refs(template_rel, seen=None):
+    seen = seen if seen is not None else set()
+    if template_rel in seen:
+        return []
+    seen.add(template_rel)
+    path = Path(settings.BASE_DIR) / "templates" / template_rel
+    text = path.read_text(encoding="utf-8")
+    refs = STATIC_TAG.findall(text)
+    for included in INCLUDE_TAG.findall(text):
+        refs.extend(_static_refs(included, seen))
+    return refs
+
+
+class CampusStaticAssetsTests(SimpleTestCase):
+    def test_assets_del_template_base_existen_en_finders(self):
+        refs = _static_refs("campus/base.html")
+        self.assertIn("css/campus.css", refs)
+        self.assertIn("js/campus.js", refs)
+        self.assertTrue(refs)
+        for rel in refs:
+            self.assertTrue(finders.find(rel), f"No está en finders: {rel}")
 
 
 class CampusShellTests(TestCase):
@@ -62,6 +92,10 @@ class CampusShellTests(TestCase):
         self.assertContains(response, "campus-sidenav")
         self.assertContains(response, 'id="campus-perfil-btn"')
         self.assertContains(response, "css/campus.css")
+        self.assertContains(response, "js/campus.js")
+        self.assertContains(response, "data-campus-menu-toggle")
+        self.assertContains(response, 'id="campus-drawer"')
+        self.assertContains(response, "data-campus-mas-open")
 
     def test_control_escolar_y_calendario_existen(self):
         control = self.http_alum.get(reverse("campus_control_escolar"))

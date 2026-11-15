@@ -3,13 +3,23 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views.generic import RedirectView
 
 from . import views
 from .views import CustomLoginView
 
 urlpatterns = [
+    path(
+        "favicon.ico",
+        RedirectView.as_view(url="/static/img/logo.ico", permanent=False),
+        name="favicon",
+    ),
+    re_path(
+        r"^apple-touch-icon.*\.png$",
+        RedirectView.as_view(url="/static/img/apple-touch-icon.png", permanent=False),
+        name="apple_touch_icon",
+    ),
     path("admin/", admin.site.urls),
     path("", CustomLoginView.as_view(template_name="login.html"), name="login"),
     path("logout/", auth_views.LogoutView.as_view(next_page="login"), name="logout"),
